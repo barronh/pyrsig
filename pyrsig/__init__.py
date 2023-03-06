@@ -4,7 +4,43 @@ __version__ = '0.1.0'
 import pandas as pd
 
 
-def progress(blocknum, readsize, totalsize):
+_keys = (
+    'tropomi.offl.no2.nitrogendioxide_tropospheric_column',
+    'tropomi.offl.no2.air_mass_factor_troposphere',
+    'tropomi.offl.hcho.formaldehyde_tropospheric_vertical_column',
+    'tropomi.offl.co.carbonmonoxide_total_column',
+    'tropomi.offl.ch4.methane_mixing_ratio',
+    'tropomi.offl.ch4.methane_mixing_ratio',
+    'tropomi.offl.ch4.methane_mixing_ratio_bias_corrected',
+    'viirsnoaa.jrraod.AOD550', 'viirsnoaa.vaooo.AerosolOpticalDepth_at_550nm',
+    'airnow.pm25', 'airnow.pm10',
+    'airnow.ozone', 'airnow.no', 'airnow.no2', 'airnow.nox', 'airnow.so2',
+    'airnow.co', 'airnow.temperature', 'airnow.pressure', 'airnow.rh',
+    'airnow2.pm25', 'airnow2.ozone', 'airnow2.no2', 'airnow2.so2',
+    'airnow2.co',
+    'aqs.pm25', 'aqs.pm25_daily_average', 'aqs.pm25_daily_filter', 'aqs.pm10',
+    'aqs.ozone', 'aqs.ozone_8hour_average', 'aqs.ozone_daily_8hour_maximum',
+    'aqs.co', 'aqs.so2', 'aqs.no2', 'aqs.nox', 'aqs.noy', 'aqs.rh',
+    'aqs.temperature', 'aqs.pressure',
+    'ceilometer.aerosol_layer_heights',
+    'cmaq.equates.conus.aconc.O3', 'cmaq.equates.conus.aconc.NO2',
+    'cmaq.equates.conus.aconc.PM25'
+    'metar.elevation', 'metar.visibility', 'metar.seaLevelPress',
+    'metar.temperature', 'metar.dewpoint', 'metar.relativeHumidity',
+    'metar.windDir', 'metar.windSpeed', 'metar.windGustSpeed', 'metar.wind',
+    'metar.altimeter', 'metar.minTemp24Hour', 'metar.maxTemp24Hour',
+    'metar.precip1Hour', 'metar.precip3Hour', 'metar.precip6Hour',
+    'metar.precip24Hour', 'metar.pressChange3Hour', 'metar.snowCover'
+    'nesdis.pm25', 'nesdis.co', 'nesdis.co2', 'nesdis.ch4', 'nesdis.n2o',
+    'nesdis.nh3', 'nesdis.nox', 'nesdis.so2', 'nesdis.tnmhc'
+    'pandora.ozone',
+    'purpleair.pm25_corrected', 'purpleair.pm25_corrected_hourly',
+    'purpleair.pm25_corrected_daily', 'purpleair.pm25_corrected_monthly',
+    'purpleair.pm25_corrected_yearly',
+)
+
+
+def _progress(blocknum, readsize, totalsize):
     """
     Arguments
     ---------
@@ -31,7 +67,7 @@ def progress(blocknum, readsize, totalsize):
             print('.', end='', flush=True)
 
 
-def getfile(url, outpath, maxtries=5, verbose=1):
+def _getfile(url, outpath, maxtries=5, verbose=1):
     """
     Arguments
     ---------
@@ -64,7 +100,7 @@ def getfile(url, outpath, maxtries=5, verbose=1):
     # Try to download the file maxtries times
     tries = 0
     if verbose > 0:
-        reporthook = progress
+        reporthook = _progress
     else:
         reporthook = None
     while dlsize <= 0 and tries < maxtries:
@@ -99,14 +135,6 @@ class RsigApi:
 
     Properties
     ----------
-    capabilities
-      Full xml text describing all RSIG capabilities. Refreshed every time,
-      so slow because this service is slow.
-
-    keys
-      List of all keys that RSIG can process. Slow because it depends on
-      capabilities
-
     grid_kw
       Dictionary of regridding IOAPI properties. Defaults to 12US1
 
@@ -118,15 +146,25 @@ class RsigApi:
 
     Methods
     -------
+    capabilities
+      Full xml text describing all RSIG capabilities. Refreshed every time,
+      so slow because this service is slow.
+
+    keys
+      List of keys that RSIG can process. Using offline=False is slow because
+      it depends on capabilities method.
+
     to_dataframe
-    Access data from RSIG as a pandas.DataFrame
+        Access data from RSIG as a pandas.DataFrame
 
     to_ioapi
-    Access data from RSIG as a xarray.Dataset
+        Access data from RSIG as a xarray.Dataset
 
     """
-    @property
     def capabilities(self):
+        """
+        At this time, the capabilities does not list cmaq.*
+        """
         import requests
         if self._capabilities is None:
             self._capabilities = requests.get(
@@ -135,19 +173,29 @@ class RsigApi:
             )
         return self._capabilities
 
-    @property
-    def keys(self):
+    def keys(self, offline=True):
+        """
+        Arguments
+        ---------
+        offline : bool
+            If True, uses small cached set of coverages.
+            If False, finds all coverages from capabilities.
+        """
         if self._keys is None:
-            self._keys = []
-            for line in self.capabilities.text.split('\n'):
-                if line.startswith('            <name>'):
-                    self._keys.append(line.split('name')[1][1:-2])
+            if offline:
+                self._keys = tuple(_keys)
+            else:
+                self._keys = []
+                for line in self.capabilities().text.split('\n'):
+                    if line.startswith('            <name>'):
+                        self._keys.append(line.split('name')[1][1:-2])
 
         return self._keys
 
     def __init__(
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
-        tropomi_kw=None, purpleair_kw=None, server='ofmpub.epa.gov', compress=1
+        tropomi_kw=None, purpleair_kw=None, server='ofmpub.epa.gov',
+        compress=1, workdir='.'
     ):
         """
         Arguments
@@ -171,14 +219,17 @@ class RsigApi:
           'ofmpub.epa.gov', 'maple.hesc.epa.gov'
         compress : int
             1 to compress; 0 to not
+        workdir : str
+            Working directory (must exist) defaults to .
         """
         self._keys = None
         self._capabilities = None
         self.server = server
         self.key = key
         self.compress = compress
+        self.workdir = workdir
         if bbox is None:
-            self.bbox = (-126, -24, 50, -66)
+            self.bbox = (-126, 24, -66, 50)
         else:
             self.bbox = bbox
         if bdate is None:
@@ -218,26 +269,28 @@ class RsigApi:
 
         self.purpleair_kw = purpleair_kw
 
-        def _get_file(
-            self, formatstr, key=None, bdate=None, edate=None, bbox=None,
-            grid=False, grid_kw=None, purpleair_kw=None, request='GetCoverage',
-            compress=0
-        ):
-            """
-            Build url, outpath, and download the file. Returns outpath
-            """
-            url, outpath = self._build_url(
-                formatstr, key=key, bdate=bdate, edate=edate, bbox=bbox,
-                grid=grid, grid_kw=grid_kw, purpleair_kw=purpleair_kw,
-                request=request, compress=compress
-            )
-            getfile(url, outpath)
-            return outpath
+    def _get_file(
+        self, formatstr, key=None, bdate=None, edate=None, bbox=None,
+        grid=False, grid_kw=None, purpleair_kw=None, request='GetCoverage',
+        compress=0, verbose=0
+    ):
+        """
+        Build url, outpath, and download the file. Returns outpath
+        """
+        url, outpath = self._build_url(
+            formatstr, key=key, bdate=bdate, edate=edate, bbox=bbox,
+            grid=grid, grid_kw=grid_kw, purpleair_kw=purpleair_kw,
+            request=request, compress=compress
+        )
+        if verbose > 0:
+            print(url)
+        _getfile(url, outpath, verbose=verbose)
+        return outpath
 
     def _build_url(
         self, formatstr, key=None, bdate=None, edate=None, bbox=None,
         grid=False, grid_kw=None, purpleair_kw=None, request='GetCoverage',
-        compress=0
+        compress=1
     ):
         """
         formatstr : str
@@ -292,7 +345,7 @@ class RsigApi:
             f'&COMPRESS={compress}'
         ) + purpleairstr + tropomistr + gridstr
         outpath = (
-            f'./{key}_{bdate:%Y-%m-%dT%H:%M:%SZ}'
+            f'{self.workdir}/{key}_{bdate:%Y-%m-%dT%H:%M:%SZ}'
             f'_{edate:%Y-%m-%dT%H:%M:%SZ}'
         )
 
@@ -327,30 +380,80 @@ class RsigApi:
             raise KeyError('GDTYP only implemented for ')
 
     def to_dataframe(
-        self, key=None, bdate=None, edate=None, bbox=None, purpleair_kw=None
+        self, key=None, bdate=None, edate=None, bbox=None, tropomi_kw=None,
+        purpleair_kw=None, verbose=0
     ):
         """
+        All arguments default to those provided during initialization.
+
         Arguments
         ---------
+        key : str
+          Default key for query (e.g., 'aqs.o3', 'purpleair.pm25_corrected',
+          or 'tropomi.offl.no2.nitrogendioxide_tropospheric_column')
+        bdate : str or pd.Datetime
+          beginning date (inclusive) defaults to yesterday at 0Z
+        edate : str or pd.Datetime
+          ending date (inclusive) defaults to bdate + 23:59:59
+        bbox : tuple
+          wlon, slat, elon, nlat in decimal degrees (-180 to 180)
+        grid_kw : dict
+          Dictionary of IOAPI mapping parameters
+        tropomi_kw : dict
+          Dictionary of TropOMI filter parameters
+        purpleair_kw : dict
+          Dictionary of purpleair filter parameters and api_key
 
+        Returns
+        -------
+        df : pandas.DataFrame
+            Results from download
         """
         outpath = self._get_file(
             'ascii', key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=False, purpleair_kw=purpleair_kw, compress=1
+            grid=False, purpleair_kw=purpleair_kw, verbose=verbose,
+            compress=1
         )
-        return pd.read_csv(outpath, delimiter='\t')
+        return pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
 
     def to_ioapi(
         self, key=None, bdate=None, edate=None, bbox=None,
-        grid_kw=None, purpleair_kw=None
+        grid_kw=None, tropomi_kw=None, purpleair_kw=None, verbose=0
     ):
+        """
+        All arguments default to those provided during initialization.
+
+        Arguments
+        ---------
+        key : str
+          Default key for query (e.g., 'aqs.o3', 'purpleair.pm25_corrected',
+          or 'tropomi.offl.no2.nitrogendioxide_tropospheric_column')
+        bdate : str or pd.Datetime
+          beginning date (inclusive) defaults to yesterday at 0Z
+        edate : str or pd.Datetime
+          ending date (inclusive) defaults to bdate + 23:59:59
+        bbox : tuple
+          wlon, slat, elon, nlat in decimal degrees (-180 to 180)
+        grid_kw : dict
+          Dictionary of IOAPI mapping parameters
+        tropomi_kw : dict
+          Dictionary of TropOMI filter parameters
+        purpleair_kw : dict
+          Dictionary of purpleair filter parameters and api_key
+
+        Returns
+        -------
+        ds : xarray.Dataset
+            Results from download
+        """
         import gzip
         import xarray as xr
         import shutil
         import os
         outpath = self._get_file(
             'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=True, grid_kw=grid_kw, purpleair_kw=purpleair_kw, compress=1
+            grid=True, grid_kw=grid_kw, purpleair_kw=purpleair_kw, compress=1,
+            verbose=verbose
         )
         if os.path.exists(outpath[:-3]):
             print('Using cached:', outpath[:-3])
@@ -359,6 +462,7 @@ class RsigApi:
                 with open(outpath[:-3], 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
                     f_out.flush()
+
         f = xr.open_dataset(outpath[:-3], engine='netcdf4')
 
         return f
