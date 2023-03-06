@@ -450,6 +450,8 @@ class RsigApi:
         import xarray as xr
         import shutil
         import os
+        import numpy as np
+
         outpath = self._get_file(
             'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
             grid=True, grid_kw=grid_kw, purpleair_kw=purpleair_kw, compress=1,
@@ -464,5 +466,34 @@ class RsigApi:
                     f_out.flush()
 
         f = xr.open_dataset(outpath[:-3], engine='netcdf4')
+        lvls = f.attrs['VGLVLS']
+        tflag = f['TFLAG'][:, 0, :].astype('i').values
+        yyyyjjj = tflag[:, 0]
+        yyyyjjj = np.where(yyyyjjj < 1, 1970001, yyyyjjj)
+        HHMMSS = tflag[:, 1]
+        tstrs = []
+        for j, t in zip(yyyyjjj, HHMMSS):
+            tstrs.append(f'{j:07d}T{t:06d}')
+        try:
+            time = pd.to_datetime(tstrs, format='%Y%jT%H%M%S')
+            f.coords['TSTEP'] = time
+        except:
+            pass
+        f.coords['LAY'] = (lvls[:-1] + lvls[1:]) / 2.
+        f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
+        f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
+        props = {k: v for k, v in f.attrs.items()}
+        props['x_0'] = -props['XORIG']
+        props['y_0'] = -props['YORIG']
+        props.setdefault(
+            'earth_radius', self.grid_kw.get('earth_radius', 6370000.)
+        )
+
+        if f.attrs['GDTYP'] == 2:
+            f.attrs['proj4str'] = (
+                '+proj=lcc +lat_1={P_ALP} +lat_2={P_BET} +lat_0={YCENT}'
+                ' +lon_0={XCENT} +R={earth_radius} +x_0={x_0} +y_0={y_0}'
+                ' +to_meter={XCELL} +no_defs'
+            ).format(**props)
 
         return f
