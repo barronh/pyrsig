@@ -490,7 +490,7 @@ class RsigApi:
         )
 
         if f.attrs['GDTYP'] == 2:
-            f.attrs['proj4str'] = (
+            f.attrs['crs_proj4'] = (
                 '+proj=lcc +lat_1={P_ALP} +lat_2={P_BET} +lat_0={YCENT}'
                 ' +lon_0={XCENT} +R={earth_radius} +x_0={x_0} +y_0={y_0}'
                 ' +to_meter={XCELL} +no_defs'
