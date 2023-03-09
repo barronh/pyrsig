@@ -1,4 +1,4 @@
-__all__ = ['RsigApi']
+__all__ = ['RsigApi', 'open_ioapi']
 __version__ = '0.1.0'
 
 import pandas as pd
@@ -129,6 +129,41 @@ def _getfile(url, outpath, maxtries=5, verbose=1):
         print('')
 
 
+def open_ioapi(path, earth_radius=6370000.):
+    import xarray as xr
+    import numpy as np
+    f = xr.open_dataset(path, engine='netcdf4')
+    lvls = f.attrs['VGLVLS']
+    tflag = f['TFLAG'][:, 0, :].astype('i').values
+    yyyyjjj = tflag[:, 0]
+    yyyyjjj = np.where(yyyyjjj < 1, 1970001, yyyyjjj)
+    HHMMSS = tflag[:, 1]
+    tstrs = []
+    for j, t in zip(yyyyjjj, HHMMSS):
+        tstrs.append(f'{j:07d}T{t:06d}')
+    try:
+        time = pd.to_datetime(tstrs, format='%Y%jT%H%M%S')
+        f.coords['TSTEP'] = time
+    except Exception:
+        pass
+    f.coords['LAY'] = (lvls[:-1] + lvls[1:]) / 2.
+    f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
+    f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
+    props = {k: v for k, v in f.attrs.items()}
+    props['x_0'] = -props['XORIG']
+    props['y_0'] = -props['YORIG']
+    props.setdefault('earth_radius', earth_radius)
+
+    if f.attrs['GDTYP'] == 2:
+        f.attrs['crs_proj4'] = (
+            '+proj=lcc +lat_1={P_ALP} +lat_2={P_BET} +lat_0={YCENT}'
+            ' +lon_0={XCENT} +R={earth_radius} +x_0={x_0} +y_0={y_0}'
+            ' +to_meter={XCELL} +no_defs'
+        ).format(**props)
+
+    return f
+
+
 class RsigApi:
     """
     RsigApi is a python-based interface to RSIG's web-based API
@@ -138,11 +173,16 @@ class RsigApi:
     grid_kw
       Dictionary of regridding IOAPI properties. Defaults to 12US1
 
+    viirsnoaa_kw
+      Dictionary of filter properties
+
     tropomi_kw
       Dictionary of filter properties
 
     purpleair_kw
-      Dictionary of filter properties and api_key
+      Dictionary of filter properties and api_key. Unlike other options,
+      purpleair_kw will not work with the defaults. The user *must* update the
+      api_key property to their own key. Contact PurpleAir for more details.
 
     Methods
     -------
@@ -194,8 +234,8 @@ class RsigApi:
 
     def __init__(
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
-        tropomi_kw=None, purpleair_kw=None, server='ofmpub.epa.gov',
-        compress=1, workdir='.'
+        tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None,
+        server='ofmpub.epa.gov', compress=1, workdir='.'
     ):
         """
         Arguments
@@ -210,17 +250,32 @@ class RsigApi:
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
         grid_kw : dict
-          Dictionary of IOAPI mapping parameters
+          Dictionary of IOAPI mapping parameters see default for details.
+        viirsnoaa_kw : dict
+          Dictionary of VIIRS NOAA filter parameters default
+          {'minimum_quality': 'high'} options include 'high' or 'medium')
         tropomi_kw : dict
-          Dictionary of TropOMI filter parameters
+          Dictionary of TropOMI filter parameters default
+          {'minimum_quality': 75, 'maximum_cloud_fraction': 1.0} options
+          are 0-100 and 0-1.
         purpleair_kw : dict
-          Dictionary of purpleair filter parameters and api_key
+          Dictionary of purpleair filter parameters and api_key.
+          {
+            'out_in_flag': 0, # options 0, 2, ''
+            'freq': 'hourly', # options hourly, daily, monthly, yearly
+            'maximum_difference': 5, # integer
+            'maximum_ratio': 0.70, # float
+            'agg_pct': 75, # 0-100
+            'api_key': '<your key here>'
+          }
         server : str
-          'ofmpub.epa.gov', 'maple.hesc.epa.gov'
+          'ofmpub.epa.gov' for external  users
+          'maple.hesc.epa.gov' for on EPA VPN users
         compress : int
-            1 to compress; 0 to not
+            1 to transfer files with gzip compression
+            0 to transfer uncompressed files (slow)
         workdir : str
-            Working directory (must exist) defaults to .
+            Working directory (must exist) defaults to '.'
         """
         self._keys = None
         self._capabilities = None
@@ -256,31 +311,34 @@ class RsigApi:
         self.grid_kw = grid_kw
 
         if tropomi_kw is None:
-            tropomi_kw = dict(minimum_quality=75, maximum_cloud_fraction=1.0)
+            tropomi_kw = {'minimum_quality': 75, 'maximum_cloud_fraction': 1.0}
 
         self.tropomi_kw = tropomi_kw
 
+        if viirsnoaa_kw is None:
+            viirsnoaa_kw = {'minimum_quality': 'high'}
+
+        self.viirsnoaa_kw = viirsnoaa_kw
+
         if purpleair_kw is None:
-            purpleair_kw = dict(
-                out_in_flag=0, freq='hourly',
-                maximum_difference=5, maximum_ratio=0.70,
-                agg_pct=75, api_key='<your key here'
-            )
+            purpleair_kw = {
+                'out_in_flag': 0, 'freq': 'hourly',
+                'maximum_difference': 5, 'maximum_ratio': 0.70,
+                'agg_pct': 75, 'api_key': '<your key here>'
+            }
 
         self.purpleair_kw = purpleair_kw
 
-    def _get_file(
+    def get_file(
         self, formatstr, key=None, bdate=None, edate=None, bbox=None,
-        grid=False, grid_kw=None, purpleair_kw=None, request='GetCoverage',
-        compress=0, verbose=0
+        grid=False, request='GetCoverage', compress=0, verbose=0
     ):
         """
         Build url, outpath, and download the file. Returns outpath
         """
         url, outpath = self._build_url(
             formatstr, key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=grid, grid_kw=grid_kw, purpleair_kw=purpleair_kw,
-            request=request, compress=compress
+            grid=grid, request=request, compress=compress
         )
         if verbose > 0:
             print(url)
@@ -289,7 +347,7 @@ class RsigApi:
 
     def _build_url(
         self, formatstr, key=None, bdate=None, edate=None, bbox=None,
-        grid=False, grid_kw=None, purpleair_kw=None, request='GetCoverage',
+        grid=False, request='GetCoverage',
         compress=1
     ):
         """
@@ -311,10 +369,11 @@ class RsigApi:
             edate = pd.to_datetime(edate)
         if bbox is None:
             bbox = self.bbox
-        if grid_kw is None:
-            grid_kw = self.grid_kw
-        if purpleair_kw is None:
-            purpleair_kw = self.purpleair_kw
+
+        grid_kw = self.grid_kw
+        purpleair_kw = self.purpleair_kw
+        tropomi_kw = self.tropomi_kw
+        viirsnoaa_kw = self.viirsnoaa_kw
         if compress is None:
             compress = self.compress
         wlon, slat, elon, nlat = bbox
@@ -322,10 +381,22 @@ class RsigApi:
             gridstr = self._build_grid(grid_kw)
         else:
             gridstr = ''
+
+        if key.startswith('viirsnoaa'):
+            viirsnoaastr = '&MINIMUM_QUALITY={minimum_quality}'.format(
+                **viirsnoaa_kw
+            )
+        else:
+            viirsnoaastr = ''
+
         if key.startswith('tropomi'):
-            tropomistr = '&MINIMUM_QUALITY=75&MAXIMUM_CLOUD_FRACTION=1.000000'
+            tropomistr = (
+                '&MINIMUM_QUALITY={minimum_quality}'
+                '&MAXIMUM_CLOUD_FRACTION={maximum_cloud_fraction}'
+            ).format(**tropomi_kw)
         else:
             tropomistr = ''
+
         if key.startswith('purpleair'):
             purpleairstr = (
                 '&OUT_IN_FLAG={out_in_flag}&MAXIMUM_DIFFERENCE='
@@ -343,7 +414,7 @@ class RsigApi:
             f'&BBOX={wlon},{slat},{elon},{nlat}'
             f'&COVERAGE={key}'
             f'&COMPRESS={compress}'
-        ) + purpleairstr + tropomistr + gridstr
+        ) + purpleairstr + viirsnoaastr + tropomistr + gridstr
         outpath = (
             f'{self.workdir}/{key}_{bdate:%Y-%m-%dT%H:%M:%SZ}'
             f'_{edate:%Y-%m-%dT%H:%M:%SZ}'
@@ -380,8 +451,7 @@ class RsigApi:
             raise KeyError('GDTYP only implemented for ')
 
     def to_dataframe(
-        self, key=None, bdate=None, edate=None, bbox=None, tropomi_kw=None,
-        purpleair_kw=None, verbose=0
+        self, key=None, bdate=None, edate=None, bbox=None, verbose=0
     ):
         """
         All arguments default to those provided during initialization.
@@ -397,28 +467,23 @@ class RsigApi:
           ending date (inclusive) defaults to bdate + 23:59:59
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
-        grid_kw : dict
-          Dictionary of IOAPI mapping parameters
-        tropomi_kw : dict
-          Dictionary of TropOMI filter parameters
-        purpleair_kw : dict
-          Dictionary of purpleair filter parameters and api_key
+        verbose : int
+          level of verbosity
 
         Returns
         -------
         df : pandas.DataFrame
             Results from download
         """
-        outpath = self._get_file(
+        outpath = self.get_file(
             'ascii', key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=False, purpleair_kw=purpleair_kw, verbose=verbose,
+            grid=False, verbose=verbose,
             compress=1
         )
         return pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
 
     def to_ioapi(
-        self, key=None, bdate=None, edate=None, bbox=None,
-        grid_kw=None, tropomi_kw=None, purpleair_kw=None, verbose=0
+        self, key=None, bdate=None, edate=None, bbox=None, verbose=0
     ):
         """
         All arguments default to those provided during initialization.
@@ -434,12 +499,6 @@ class RsigApi:
           ending date (inclusive) defaults to bdate + 23:59:59
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
-        grid_kw : dict
-          Dictionary of IOAPI mapping parameters
-        tropomi_kw : dict
-          Dictionary of TropOMI filter parameters
-        purpleair_kw : dict
-          Dictionary of purpleair filter parameters and api_key
 
         Returns
         -------
@@ -447,15 +506,12 @@ class RsigApi:
             Results from download
         """
         import gzip
-        import xarray as xr
         import shutil
         import os
-        import numpy as np
 
-        outpath = self._get_file(
+        outpath = self.get_file(
             'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=True, grid_kw=grid_kw, purpleair_kw=purpleair_kw, compress=1,
-            verbose=verbose
+            grid=True, compress=1, verbose=verbose
         )
         if os.path.exists(outpath[:-3]):
             print('Using cached:', outpath[:-3])
@@ -465,35 +521,6 @@ class RsigApi:
                     shutil.copyfileobj(f_in, f_out)
                     f_out.flush()
 
-        f = xr.open_dataset(outpath[:-3], engine='netcdf4')
-        lvls = f.attrs['VGLVLS']
-        tflag = f['TFLAG'][:, 0, :].astype('i').values
-        yyyyjjj = tflag[:, 0]
-        yyyyjjj = np.where(yyyyjjj < 1, 1970001, yyyyjjj)
-        HHMMSS = tflag[:, 1]
-        tstrs = []
-        for j, t in zip(yyyyjjj, HHMMSS):
-            tstrs.append(f'{j:07d}T{t:06d}')
-        try:
-            time = pd.to_datetime(tstrs, format='%Y%jT%H%M%S')
-            f.coords['TSTEP'] = time
-        except:
-            pass
-        f.coords['LAY'] = (lvls[:-1] + lvls[1:]) / 2.
-        f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
-        f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
-        props = {k: v for k, v in f.attrs.items()}
-        props['x_0'] = -props['XORIG']
-        props['y_0'] = -props['YORIG']
-        props.setdefault(
-            'earth_radius', self.grid_kw.get('earth_radius', 6370000.)
-        )
-
-        if f.attrs['GDTYP'] == 2:
-            f.attrs['crs_proj4'] = (
-                '+proj=lcc +lat_1={P_ALP} +lat_2={P_BET} +lat_0={YCENT}'
-                ' +lon_0={XCENT} +R={earth_radius} +x_0={x_0} +y_0={y_0}'
-                ' +to_meter={XCELL} +no_defs'
-            ).format(**props)
+        f = open_ioapi(outpath[:-3])
 
         return f
