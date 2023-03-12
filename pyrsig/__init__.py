@@ -352,6 +352,11 @@ class RsigApi:
             ).replace(hour=0, minute=0, second=0, microsecond=0, nanosecond=0)
 
         self.bdate = pd.to_datetime(bdate)
+        if edate is None:
+            self.edate = edate
+        else:
+            self.edate = pd.to_datetime(edate)
+
         self.corners = corners
         if grid_kw is None:
             grid_kw = '12US1'
@@ -418,9 +423,12 @@ class RsigApi:
             bdate = pd.to_datetime(bdate)
 
         if edate is None:
-            edate = (
-                bdate + pd.to_timedelta('+1day') + pd.to_timedelta('-1s')
-            )
+            if self.edate is None:
+                edate = (
+                    bdate + pd.to_timedelta('+1day') + pd.to_timedelta('-1s')
+                )
+            else:
+                edate = self.edate
         else:
             edate = pd.to_datetime(edate)
 
