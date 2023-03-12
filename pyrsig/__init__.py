@@ -3,6 +3,53 @@ __version__ = '0.1.0'
 
 import pandas as pd
 
+_def_grid_kw = {
+    '12US1': dict(
+        GDNAM='12US1', GDTYP=2, NCOLS=459, NROWS=299,
+        XORIG=-2556000.0, YORIG=-1728000.0, XCELL=12000., YCELL=12000.,
+        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
+    ),
+    '1US1': dict(
+        GDNAM='1US1', GDTYP=2, NCOLS=459 * 12, NROWS=299 * 12,
+        XORIG=-2556000.0, YORIG=-1728000.0, XCELL=1000., YCELL=1000.,
+        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
+    ),
+    '12US2': dict(
+        GDNAM='12US2', GDTYP=2, NCOLS=396, NROWS=246,
+        XORIG=-2412000.0, YORIG=-1620000.0, XCELL=12000., YCELL=12000.,
+        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
+    ),
+    '1US2': dict(
+        GDNAM='1US2', GDTYP=2, NCOLS=396 * 12, NROWS=246 * 12,
+        XORIG=-2412000.0, YORIG=-1620000.0, XCELL=1000., YCELL=1000.,
+        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
+    ),
+    '36US3': dict(
+        GDNAM='36US3', GDTYP=2, NCOLS=172, NROWS=148,
+        XORIG=-2952000.0, YORIG=-2772000.0, XCELL=36000., YCELL=36000.,
+        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
+    ),
+    '108NHEMI2': dict(
+        GDNAM='108NHEMI2', GDTYP=6, NCOLS=187, NROWS=187,
+        XORIG=-10098000.0, YORIG=-10098000.0, XCELL=108000., YCELL=108000.,
+        P_ALP=1., P_BET=45., P_GAM=-98., XCENT=-98., YCENT=90.
+    ),
+    '36NHEMI2': dict(
+        GDNAM='36NHEMI2', GDTYP=6, NCOLS=187 * 3, NROWS=187 * 3,
+        XORIG=-10098000.0, YORIG=-10098000.0, XCELL=36000., YCELL=36000.,
+        P_ALP=1., P_BET=45., P_GAM=-98., XCENT=-98., YCENT=90.
+    ),
+}
+
+_shared_grid_kw = dict(
+    VGTYP=7, VGTOP=5000., NLAYS=35, earth_radius=6370000., g=9.81, R=287.04,
+    A=50., T0=290, P0=1000e2, REGRID_AGGREGATE='None'
+)
+
+for key in _def_grid_kw:
+    for pk, pv in _shared_grid_kw.items():
+        _def_grid_kw[key].setdefault(pk, pv)
+
 
 _keys = (
     'tropomi.offl.no2.nitrogendioxide_tropospheric_column',
@@ -38,6 +85,8 @@ _keys = (
     'purpleair.pm25_corrected_daily', 'purpleair.pm25_corrected_monthly',
     'purpleair.pm25_corrected_yearly',
 )
+
+_point_prefixes = ('airnow', 'aqs', 'purpleair', 'pandora')
 
 
 def _progress(blocknum, readsize, totalsize):
@@ -126,7 +175,8 @@ def _getfile(url, outpath, maxtries=5, verbose=1):
             print('Failed', url, t1 - t0)
         tries += 1
 
-        print('')
+        if verbose > 0:
+            print('')
 
 
 def open_ioapi(path, earth_radius=6370000.):
@@ -141,11 +191,13 @@ def open_ioapi(path, earth_radius=6370000.):
     tstrs = []
     for j, t in zip(yyyyjjj, HHMMSS):
         tstrs.append(f'{j:07d}T{t:06d}')
+
     try:
         time = pd.to_datetime(tstrs, format='%Y%jT%H%M%S')
         f.coords['TSTEP'] = time
     except Exception:
         pass
+
     f.coords['LAY'] = (lvls[:-1] + lvls[1:]) / 2.
     f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
     f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
@@ -221,21 +273,21 @@ class RsigApi:
             If True, uses small cached set of coverages.
             If False, finds all coverages from capabilities.
         """
-        if self._keys is None:
-            if offline:
-                self._keys = tuple(_keys)
-            else:
-                self._keys = []
-                for line in self.capabilities().text.split('\n'):
-                    if line.startswith('            <name>'):
-                        self._keys.append(line.split('name')[1][1:-2])
+        if offline:
+            keys = tuple(_keys)
+        else:
+            keys = []
+            for line in self.capabilities().text.split('\n'):
+                if line.startswith('            <name>'):
+                    keys.append(line.split('name')[1][1:-2])
 
-        return self._keys
+        return keys
 
     def __init__(
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
         tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None,
-        server='ofmpub.epa.gov', compress=1, workdir='.'
+        server='ofmpub.epa.gov', compress=1, corners=1, encoding=None,
+        workdir='.'
     ):
         """
         Arguments
@@ -249,8 +301,10 @@ class RsigApi:
           ending date (inclusive) defaults to bdate + 23:59:59
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
-        grid_kw : dict
-          Dictionary of IOAPI mapping parameters see default for details.
+        grid_kw : str or dict
+          If str, must be 12US1, 1US1, 12US2, 1US2, 36US3, 108NHEMI2, 36NHEMI2
+            and will be used to set parameters based on EPA domains.
+          If dict, IOAPI mapping parameters see default for details.
         viirsnoaa_kw : dict
           Dictionary of VIIRS NOAA filter parameters default
           {'minimum_quality': 'high'} options include 'high' or 'medium')
@@ -274,6 +328,10 @@ class RsigApi:
         compress : int
             1 to transfer files with gzip compression
             0 to transfer uncompressed files (slow)
+        encoding : dict
+            IF encoding is provided, netCDF files will be stored as NetCDF4
+            with encoding for all variables. If _FillValue is provided, it will
+            not be applied to TFLAG and COUNT.
         workdir : str
             Working directory (must exist) defaults to '.'
         """
@@ -283,6 +341,7 @@ class RsigApi:
         self.key = key
         self.compress = compress
         self.workdir = workdir
+        self.encoding = encoding
         if bbox is None:
             self.bbox = (-126, 24, -66, 50)
         else:
@@ -293,20 +352,13 @@ class RsigApi:
             ).replace(hour=0, minute=0, second=0, microsecond=0, nanosecond=0)
 
         self.bdate = pd.to_datetime(bdate)
-        if edate is None:
-            edate = (
-                self.bdate + pd.to_timedelta('+1day') + pd.to_timedelta('-1s')
-            )
-
-        self.edate = pd.to_datetime(edate)
+        self.corners = corners
         if grid_kw is None:
-            grid_kw = dict(
-                GDTYP=2, VGTYP=7, NCOLS=459, NROWS=299, NLAYS=35,
-                XORIG=-2556000.0, YORIG=-1728000.0, XCELL=12000., YCELL=12000.,
-                VGTOP=5000., P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97.,
-                YCENT=40., earth_radius=6370000., g=9.81, R=287.04, A=50.,
-                T0=290, P0=1000e2, corners=1
-            )
+            grid_kw = '12US1'
+        if isinstance(grid_kw, str):
+            if grid_kw not in _def_grid_kw:
+                raise KeyError('unknown grid, you must specify properites')
+            grid_kw = _def_grid_kw[grid_kw].copy()
 
         self.grid_kw = grid_kw
 
@@ -359,17 +411,32 @@ class RsigApi:
         """
         if key is None:
             key = self.key
+
         if bdate is None:
             bdate = self.bdate
         else:
             bdate = pd.to_datetime(bdate)
+
         if edate is None:
-            edate = self.edate
+            edate = (
+                bdate + pd.to_timedelta('+1day') + pd.to_timedelta('-1s')
+            )
         else:
             edate = pd.to_datetime(edate)
+
         if bbox is None:
             bbox = self.bbox
 
+        if edate < bdate:
+            raise ValueError('edate cannot be before bdate')
+
+        if bbox[2] < bbox[0]:
+            raise ValueError('elon cannot be less than wlon')
+
+        if bbox[3] < bbox[1]:
+            raise ValueError('nlat cannot be less than slat')
+
+        corners = self.corners
         grid_kw = self.grid_kw
         purpleair_kw = self.purpleair_kw
         tropomi_kw = self.tropomi_kw
@@ -407,6 +474,11 @@ class RsigApi:
         else:
             purpleairstr = ''
 
+        if any([key.startswith(pre) for pre in _point_prefixes]):
+            cornerstr = ''
+        else:
+            cornerstr = f'&CORNERS={corners}'
+
         url = (
             f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION=1.0.0'
             f'&REQUEST={request}&FORMAT={formatstr}'
@@ -414,7 +486,8 @@ class RsigApi:
             f'&BBOX={wlon},{slat},{elon},{nlat}'
             f'&COVERAGE={key}'
             f'&COMPRESS={compress}'
-        ) + purpleairstr + viirsnoaastr + tropomistr + gridstr
+        ) + purpleairstr + viirsnoaastr + tropomistr + gridstr + cornerstr
+
         outpath = (
             f'{self.workdir}/{key}_{bdate:%Y-%m-%dT%H:%M:%SZ}'
             f'_{edate:%Y-%m-%dT%H:%M:%SZ}'
@@ -441,12 +514,18 @@ class RsigApi:
         """
         grid_kw.setdefault('earth_radius', 6370000)
         if grid_kw.get('GDTYP', 2) == 2:
-            return (
-                '&REGRID=weighted&CORNERS={corners}'
+            gridstr = (
+                '&REGRID=weighted'
                 '&LAMBERT={P_ALP},{P_BET},{XCENT},{YCENT}'
                 '&ELLIPSOID={earth_radius},{earth_radius}'
                 '&GRID={NCOLS},{NROWS},{XORIG},{YORIG},{XCELL},{YCELL}'
             ).format(**grid_kw)
+            if grid_kw.get('REGRID_AGGREGATE', 'None').strip() != 'None':
+                gridstr += (
+                    "&REGRID_AGGREGATE={REGRID_AGGREGATE}".format(**grid_kw)
+                )
+
+            return gridstr
         else:
             raise KeyError('GDTYP only implemented for ')
 
@@ -483,7 +562,8 @@ class RsigApi:
         return pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
 
     def to_ioapi(
-        self, key=None, bdate=None, edate=None, bbox=None, verbose=0
+        self, key=None, bdate=None, edate=None, bbox=None, removegz=False,
+        verbose=0
     ):
         """
         All arguments default to those provided during initialization.
@@ -499,6 +579,8 @@ class RsigApi:
           ending date (inclusive) defaults to bdate + 23:59:59
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
+        removegz : bool
+          If True, then remove the downloaded gz file. Bad for caching.
 
         Returns
         -------
@@ -509,10 +591,12 @@ class RsigApi:
         import shutil
         import os
 
+        # always use compression for network speed.
         outpath = self.get_file(
             'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
             grid=True, compress=1, verbose=verbose
         )
+        # Uncompress the netcdf file. If encoding is available, apply it
         if os.path.exists(outpath[:-3]):
             print('Using cached:', outpath[:-3])
         else:
@@ -520,7 +604,21 @@ class RsigApi:
                 with open(outpath[:-3], 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
                     f_out.flush()
+            if self.encoding is not None:
+                import xarray as xr
+
+                with xr.open_dataset(outpath[:-3]) as tmpf:
+                    tmpf.load()
+                for key in tmpf.data_vars:
+                    tvar = tmpf[key]
+                    tvar.encoding.update(self.encoding)
+                    if key in ('TFLAG', 'COUNT'):
+                        tvar.encoding.pop('_FillValue', '')
+
+                tmpf.to_netcdf(outpath[:-3], format='NETCDF4_CLASSIC')
 
         f = open_ioapi(outpath[:-3])
+        if removegz:
+            os.remove(outpath)
 
         return f

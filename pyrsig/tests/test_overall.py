@@ -18,18 +18,76 @@ def test_tropomi():
     import tempfile
 
     with tempfile.TemporaryDirectory() as td:
-        rsigapi = RsigApi(bdate='2022-03-01', workdir=td)
+        rsigapi = RsigApi(
+            bdate='2022-03-01', workdir=td,
+            bbox=(-97, 20, -65, 50)
+        )
         ds = rsigapi.to_ioapi(
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
 
 
-def test_aqs():
+def test_tropomi_encoding_remove():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2022-03-02', workdir=td,
+            bbox=(-97, 20, -65, 50), encoding={'zlib': True, 'complevel': 1}
+        )
+        ds = rsigapi.to_ioapi(
+            'tropomi.offl.no2.nitrogendioxide_tropospheric_column',
+            removegz=True
+        )
+        print(ds.dims)
+
+
+def _test_viirsnoaa():
+    """currently not operational. I don't yet know why"""
     from .. import RsigApi
     import tempfile
 
     with tempfile.TemporaryDirectory() as td:
         rsigapi = RsigApi(bdate='2022-03-01', workdir=td)
+        ds = rsigapi.to_ioapi(
+            'viirsnoaa.jrraod.AOD550'
+        )
+        print(ds.dims)
+
+
+def test_aqs_ozone_cache():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2022-03-01T00', edate='2022-03-01T01', workdir=td
+        )
         df = rsigapi.to_dataframe('aqs.ozone')
         print(df.shape)
+        df = rsigapi.to_dataframe('aqs.ozone')
+        print(df.shape)
+
+
+def test_aqs_no2_verbose():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2022-03-01T00', edate='2022-03-01T01', workdir=td
+        )
+        df = rsigapi.to_dataframe('aqs.no2', verbose=1)
+        print(df.shape)
+
+
+def test_capabilities():
+    from .. import RsigApi
+
+    rsigapi = RsigApi()
+    keys = rsigapi.keys()
+    print(len(keys))
+    keys = rsigapi.keys(offline=False)
+    print(len(keys))
