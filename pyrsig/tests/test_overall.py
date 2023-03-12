@@ -83,6 +83,20 @@ def test_aqs_no2_verbose():
         print(df.shape)
 
 
+def test_aqs_no2_unittime():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2022-03-01T00', edate='2022-03-01T01', workdir=td
+        )
+        df = rsigapi.to_dataframe(
+            'aqs.no2', unit_keys=False, parse_dates=True, verbose=1
+        )
+        print(df.shape)
+
+
 def test_capabilities():
     from .. import RsigApi
 

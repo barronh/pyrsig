@@ -538,7 +538,8 @@ class RsigApi:
             raise KeyError('GDTYP only implemented for ')
 
     def to_dataframe(
-        self, key=None, bdate=None, edate=None, bbox=None, verbose=0
+        self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
+        parse_dates=False, verbose=0
     ):
         """
         All arguments default to those provided during initialization.
@@ -554,6 +555,11 @@ class RsigApi:
           ending date (inclusive) defaults to bdate + 23:59:59
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
+        unit_keys : bool
+          If True, keep unit in column name.
+          If False, move last parenthetical part of key to attrs of Series.
+        parse_dates : bool
+          If True, parse Timestamp(UTC)
         verbose : int
           level of verbosity
 
@@ -567,7 +573,32 @@ class RsigApi:
             grid=False, verbose=verbose,
             compress=1
         )
-        return pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
+        df = pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
+        if not unit_keys:
+            columns = [k for k in df.columns]
+            newcolumns = []
+            unit_dict = {}
+            for k in columns:
+                if '(' not in k:
+                    newk = k
+                    unit = 'unknown'
+                else:
+                    idx = k.rfind('(')
+                    newk = k[:idx]
+                    unit = k[idx+1:-1]
+                unit_dict[newk] = unit
+                newcolumns.append(newk)
+            df.columns = newcolumns
+            for k in newcolumns:
+                if hasattr(df[k], 'attrs'):
+                    df[k].attrs.update(dict(units=unit_dict.get(k, 'unknown')))
+        if parse_dates:
+            if 'Timestamp(UTC)' in df:
+                df['time'] = pd.to_datetime(df['Timestamp(UTC)'])
+            if 'Timestamp' in df:
+                df['time'] = pd.to_datetime(df['Timestamp'])
+
+        return df
 
     def to_ioapi(
         self, key=None, bdate=None, edate=None, bbox=None, removegz=False,
