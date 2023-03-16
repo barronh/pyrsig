@@ -9,6 +9,11 @@ _def_grid_kw = {
         XORIG=-2556000.0, YORIG=-1728000.0, XCELL=12000., YCELL=12000.,
         P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
     ),
+    '4US1': dict(
+        GDNAM='4US1', GDTYP=2, NCOLS=459 * 3, NROWS=299 * 3,
+        XORIG=-2556000.0, YORIG=-1728000.0, XCELL=4000., YCELL=4000.,
+        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
+    ),
     '1US1': dict(
         GDNAM='1US1', GDTYP=2, NCOLS=459 * 12, NROWS=299 * 12,
         XORIG=-2556000.0, YORIG=-1728000.0, XCELL=1000., YCELL=1000.,
@@ -17,6 +22,11 @@ _def_grid_kw = {
     '12US2': dict(
         GDNAM='12US2', GDTYP=2, NCOLS=396, NROWS=246,
         XORIG=-2412000.0, YORIG=-1620000.0, XCELL=12000., YCELL=12000.,
+        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
+    ),
+    '4US2': dict(
+        GDNAM='4US2', GDTYP=2, NCOLS=396 * 3, NROWS=246 * 3,
+        XORIG=-2412000.0, YORIG=-1620000.0, XCELL=4000., YCELL=4000.,
         P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
     ),
     '1US2': dict(
