@@ -6,6 +6,7 @@ Create a 4km gridded product on a US grid, but only download
 data from NC.
 """
 
+import matplotlib.pyplot as plt
 import pyrsig
 import pandas as pd
 import xarray as xr
@@ -51,4 +52,6 @@ Z = (outds['DAILY_NO2'] / outds['COUNT'])
 
 qm = Z.plot()
 qm.axes.set(facecolor='gainsboro')
-qm.figure.show()
+plt.show()
+# Or save the figure
+qm.figure.savefig('conus4k.png')

@@ -54,5 +54,6 @@ tax.plot(tomids.index.values, tomids.values, marker='s', color='r')
 ax.set(ylabel='AQS NO2 ppb')
 tax.set(ylim=(0, 1.7e16), ylabel='TropOMI NO2 molecules/cm$^2$')
 
-# Save out figure
-fig.savefig('phoenix.png')
+plt.show()
+# Or save out figure
+#fig.savefig('phoenix.png')
