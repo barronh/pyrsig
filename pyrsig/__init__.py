@@ -231,44 +231,22 @@ class RsigApi:
 
     Properties
     ----------
-    grid_kw
+    grid_kw : dict
       Dictionary of regridding IOAPI properties. Defaults to 12US1
 
-    viirsnoaa_kw
+    viirsnoaa_kw : dict
       Dictionary of filter properties
 
-    tropomi_kw
+    tropomi_kw : dict
       Dictionary of filter properties
 
-    purpleair_kw
+    purpleair_kw : dict
       Dictionary of filter properties and api_key. Unlike other options,
       purpleair_kw will not work with the defaults. The user *must* update the
       api_key property to their own key. Contact PurpleAir for more details.
 
-    Methods
-    -------
-    capabilities
-      Full xml text describing all RSIG capabilities. Refreshed every time,
-      so slow because this service is slow.
-
-    keys
-      List of keys that RSIG can process. Using offline=False is slow because
-      it depends on capabilities method.
-
-    to_dataframe
-        Access data from RSIG as a pandas.DataFrame
-
-    to_ioapi
-        Access data from RSIG as a xarray.Dataset
-
     """
     def describe(self, key):
-        """
-        Arguments
-        ---------
-        key : str
-            Coverage to be described (see .keys())
-        """
         import requests
         if key not in self._description:
             r = requests.get(
@@ -281,6 +259,7 @@ class RsigApi:
     def capabilities(self):
         """
         At this time, the capabilities does not list cmaq.*
+
         """
         import requests
         if self._capabilities is None:
@@ -297,6 +276,7 @@ class RsigApi:
         offline : bool
             If True, uses small cached set of coverages.
             If False, finds all coverages from capabilities.
+
         """
         if offline:
             keys = tuple(_keys)
@@ -351,14 +331,15 @@ class RsigApi:
           'ofmpub.epa.gov' for external  users
           'maple.hesc.epa.gov' for on EPA VPN users
         compress : int
-            1 to transfer files with gzip compression
-            0 to transfer uncompressed files (slow)
+          1 to transfer files with gzip compression
+          0 to transfer uncompressed files (slow)
         encoding : dict
-            IF encoding is provided, netCDF files will be stored as NetCDF4
-            with encoding for all variables. If _FillValue is provided, it will
-            not be applied to TFLAG and COUNT.
+          IF encoding is provided, netCDF files will be stored as NetCDF4
+          with encoding for all variables. If _FillValue is provided, it will
+          not be applied to TFLAG and COUNT.
         workdir : str
-            Working directory (must exist) defaults to '.'
+          Working directory (must exist) defaults to '.'
+
         """
         self._description = {}
         self._keys = None
@@ -418,6 +399,7 @@ class RsigApi:
     ):
         """
         Build url, outpath, and download the file. Returns outpath
+
         """
         url, outpath = self._build_url(
             formatstr, key=key, bdate=bdate, edate=edate, bbox=bbox,
@@ -434,11 +416,14 @@ class RsigApi:
         compress=1
     ):
         """
+        Arguments
+        ---------
         formatstr : str
           'xdr', 'ascii', 'netcdf-ioapi', 'netcdf-coards'
         request : str
             'GetCoverage' or 'GetMetadata'
         all other keywords see __init__
+
         """
         if key is None:
             key = self.key
@@ -545,6 +530,7 @@ class RsigApi:
     def _build_grid(self, grid_kw):
         """
         Build the regrid portion of the URL
+
         """
         grid_kw.setdefault('earth_radius', 6370000)
         if grid_kw.get('GDTYP', 2) == 2:
@@ -593,6 +579,7 @@ class RsigApi:
         -------
         df : pandas.DataFrame
             Results from download
+
         """
         outpath = self.get_file(
             'ascii', key=key, bdate=bdate, edate=edate, bbox=bbox,
@@ -651,6 +638,7 @@ class RsigApi:
         -------
         ds : xarray.Dataset
             Results from download
+
         """
         import gzip
         import shutil
