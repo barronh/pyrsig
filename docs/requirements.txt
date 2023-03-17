@@ -1,7 +1,9 @@
+requests
 numpy
 matplotlib
 pandas
 xarray
+netcdf4
 sphinx
 sphinx_rtd_theme
 sphinx_gallery
