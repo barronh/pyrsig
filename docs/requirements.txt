@@ -1,0 +1,11 @@
+numpy
+matplotlib
+pandas
+xarray
+sphinx
+sphinx_rtd_theme
+sphinx_gallery
+sphinx_design
+sphinx-copybutton
+pydata-sphinx-theme<0.9.0
+myst_nb
