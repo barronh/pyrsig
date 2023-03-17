@@ -11,6 +11,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r docs/requirements.txt
+      - name: Install pyrsig
+          pip install -e . --force-reinstall
       - name: Sphinx build
         run: |
           cd docs
