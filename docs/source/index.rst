@@ -6,12 +6,18 @@
 pyrsig User's Guide
 ===================
 
-About
------
+Python interface to RSIG Web API
 
 The key value of pyrsig is to present RSIG data in pandas DataFrames and
 xarray Datasets. This makes it easy to do advanced analyses in a pythonic
 way. Example analyses are provided, but the sky is the limit.
+
+Install
+-------
+
+```bash
+pip install git+https://github.com/barronh/pyrsig.git
+```
 
 * :doc:`auto_examples/index`
 * :doc:`api`
