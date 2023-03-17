@@ -16,6 +16,8 @@ pip install git+https://github.com/barronh/pyrsig.git
 import pyrsig
 
 rsigapi = pyrsig.RsigApi(bdate='2022-03-01')
+print([k for k in rsigapi.keys() if 'ozone' in k])
+# ['airnow.ozone', 'airnow2.ozone', 'aqs.ozone', 'aqs.ozone_8hour_average', 'aqs.ozone_daily_8hour_maximum', 'pandora.ozone']
 df = rsigapi.to_dataframe('aqs.ozone')
 print(df.shape, *df.columns)
 # (26760, 6) Timestamp(UTC) LONGITUDE(deg) LATITUDE(deg) STATION(-) ozone(ppb) SITE_NAME
@@ -56,4 +58,21 @@ print(ds.data_vars)
 #     LATITUDE   (TSTEP, LAY, ROW, COL) float32 ...
 #     COUNT      (TSTEP, LAY, ROW, COL) int32 ...
 #     NO2        (TSTEP, LAY, ROW, COL) float32 ...
+```
+
+## Get List of Possible
+
+```python
+import pyrsig
+
+rsigapi = pyrsig.RsigApi()
+keys = rsigapi.keys()
+print(len(keys), keys)
+# 80 ('airnow.pm25', ... 'aqs.ozone', ... 'cmaq.equates.conus.aconc.O3', ... 'hms.smoke',
+#     'metar.wind', ... 'pandora.ozone', 'purpleair.pm25_corrected', ...
+#     'tropomi.offl.no2.nitrogendioxide_tropospheric_column', ...
+#     'viirsnoaa.jrraod.AOD550', ...)
+keys = rsigapi.keys(offline=False) # slow and likely to many options
+print(len(keys))
+# 3875
 ```

@@ -25,6 +25,8 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.gz
+*.nc
 MANIFEST
 
 # PyInstaller
@@ -70,6 +72,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/build/
 
 # PyBuilder
 target/

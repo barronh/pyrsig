@@ -62,6 +62,29 @@ for key in _def_grid_kw:
 
 
 _keys = (
+    'airnow.pm25', 'airnow.pm10', 'airnow.ozone', 'airnow.no', 'airnow.no2',
+    'airnow.nox', 'airnow.so2', 'airnow.co', 'airnow.temperature',
+    'airnow.pressure', 'airnow.rh', 'airnow2.pm25', 'airnow2.ozone',
+    'airnow2.no2', 'airnow2.so2', 'airnow2.co',
+    'aqs.pm25', 'aqs.pm25_daily_average', 'aqs.pm25_daily_filter', 'aqs.pm10',
+    'aqs.ozone', 'aqs.ozone_8hour_average', 'aqs.ozone_daily_8hour_maximum',
+    'aqs.co', 'aqs.so2', 'aqs.no2', 'aqs.nox', 'aqs.noy', 'aqs.rh',
+    'aqs.temperature', 'aqs.pressure',
+    'ceilometer.aerosol_layer_heights',
+    'cmaq.equates.conus.aconc.O3', 'cmaq.equates.conus.aconc.NO2',
+    'cmaq.equates.conus.aconc.PM25',
+    'hms.fire_ecosys', 'hms.fire_power', 'hms.smoke',
+    'metar.elevation', 'metar.visibility', 'metar.seaLevelPress',
+    'metar.temperature', 'metar.dewpoint', 'metar.relativeHumidity',
+    'metar.windDir', 'metar.windSpeed', 'metar.windGustSpeed', 'metar.wind',
+    'metar.altimeter', 'metar.minTemp24Hour', 'metar.maxTemp24Hour',
+    'metar.precip1Hour', 'metar.precip3Hour', 'metar.precip6Hour',
+    'metar.precip24Hour', 'metar.pressChange3Hour', 'metar.snowCover'
+    'nesdis.pm25', 'nesdis.co', 'nesdis.co2', 'nesdis.ch4', 'nesdis.n2o',
+    'nesdis.nh3', 'nesdis.nox', 'nesdis.so2', 'nesdis.tnmhc',
+    'pandora.ozone', 'purpleair.pm25_corrected',
+    'purpleair.pm25_corrected_hourly', 'purpleair.pm25_corrected_daily',
+    'purpleair.pm25_corrected_monthly', 'purpleair.pm25_corrected_yearly',
     'tropomi.offl.no2.nitrogendioxide_tropospheric_column',
     'tropomi.offl.no2.air_mass_factor_troposphere',
     'tropomi.offl.hcho.formaldehyde_tropospheric_vertical_column',
@@ -70,30 +93,6 @@ _keys = (
     'tropomi.offl.ch4.methane_mixing_ratio',
     'tropomi.offl.ch4.methane_mixing_ratio_bias_corrected',
     'viirsnoaa.jrraod.AOD550', 'viirsnoaa.vaooo.AerosolOpticalDepth_at_550nm',
-    'airnow.pm25', 'airnow.pm10',
-    'airnow.ozone', 'airnow.no', 'airnow.no2', 'airnow.nox', 'airnow.so2',
-    'airnow.co', 'airnow.temperature', 'airnow.pressure', 'airnow.rh',
-    'airnow2.pm25', 'airnow2.ozone', 'airnow2.no2', 'airnow2.so2',
-    'airnow2.co',
-    'aqs.pm25', 'aqs.pm25_daily_average', 'aqs.pm25_daily_filter', 'aqs.pm10',
-    'aqs.ozone', 'aqs.ozone_8hour_average', 'aqs.ozone_daily_8hour_maximum',
-    'aqs.co', 'aqs.so2', 'aqs.no2', 'aqs.nox', 'aqs.noy', 'aqs.rh',
-    'aqs.temperature', 'aqs.pressure',
-    'ceilometer.aerosol_layer_heights',
-    'cmaq.equates.conus.aconc.O3', 'cmaq.equates.conus.aconc.NO2',
-    'cmaq.equates.conus.aconc.PM25'
-    'metar.elevation', 'metar.visibility', 'metar.seaLevelPress',
-    'metar.temperature', 'metar.dewpoint', 'metar.relativeHumidity',
-    'metar.windDir', 'metar.windSpeed', 'metar.windGustSpeed', 'metar.wind',
-    'metar.altimeter', 'metar.minTemp24Hour', 'metar.maxTemp24Hour',
-    'metar.precip1Hour', 'metar.precip3Hour', 'metar.precip6Hour',
-    'metar.precip24Hour', 'metar.pressChange3Hour', 'metar.snowCover'
-    'nesdis.pm25', 'nesdis.co', 'nesdis.co2', 'nesdis.ch4', 'nesdis.n2o',
-    'nesdis.nh3', 'nesdis.nox', 'nesdis.so2', 'nesdis.tnmhc'
-    'pandora.ozone',
-    'purpleair.pm25_corrected', 'purpleair.pm25_corrected_hourly',
-    'purpleair.pm25_corrected_daily', 'purpleair.pm25_corrected_monthly',
-    'purpleair.pm25_corrected_yearly',
 )
 
 _point_prefixes = ('airnow', 'aqs', 'purpleair', 'pandora')
@@ -263,6 +262,22 @@ class RsigApi:
         Access data from RSIG as a xarray.Dataset
 
     """
+    def describe(self, key):
+        """
+        Arguments
+        ---------
+        key : str
+            Coverage to be described (see .keys())
+        """
+        import requests
+        if key not in self._description:
+            r = requests.get(
+                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
+                f'1.0.0&REQUEST=DescribeCoverage&COVERAGE={key}&compress=1'
+            )
+            self._description[key] = r.text
+        return self._description[key]
+
     def capabilities(self):
         """
         At this time, the capabilities does not list cmaq.*
@@ -345,6 +360,7 @@ class RsigApi:
         workdir : str
             Working directory (must exist) defaults to '.'
         """
+        self._description = {}
         self._keys = None
         self._capabilities = None
         self.server = server
