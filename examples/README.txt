@@ -1,4 +1,4 @@
-ACT Example Gallery
+pyrsig Example Gallery
 ===================
 
 This gallery houses examples on how to use pyrsig to do various
