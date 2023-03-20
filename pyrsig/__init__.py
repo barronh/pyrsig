@@ -125,7 +125,7 @@ def _progress(blocknum, readsize, totalsize):
             print('.', end='', flush=True)
 
 
-def _getfile(url, outpath, maxtries=5, verbose=1):
+def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
     """
     Arguments
     ---------
@@ -135,6 +135,9 @@ def _getfile(url, outpath, maxtries=5, verbose=1):
         path to save file to
     maxtries : int
         try this many times before quitting
+    overwrite : bool
+        If True, overwrite existing files.
+        If False, reuse existing files.
     """
     import time
     from urllib.request import urlretrieve
@@ -144,7 +147,7 @@ def _getfile(url, outpath, maxtries=5, verbose=1):
     ssl._create_default_https_context = ssl._create_unverified_context
 
     # If the file exists, get the current size
-    if os.path.exists(outpath):
+    if not overwrite and os.path.exists(outpath):
         stat = os.stat(outpath)
         dlsize = stat.st_size
     else:
@@ -230,7 +233,7 @@ class RsigApi:
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
         tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None,
         server='ofmpub.epa.gov', compress=1, corners=1, encoding=None,
-        workdir='.'
+        overwrite=False, workdir='.'
     ):
         """
         RsigApi is a python-based interface to RSIG's web-based API
@@ -275,6 +278,9 @@ class RsigApi:
           IF encoding is provided, netCDF files will be stored as NetCDF4
           with encoding for all variables. If _FillValue is provided, it will
           not be applied to TFLAG and COUNT.
+        overwrite : bool
+          If True, overwrite downloaded files in workdir.
+          If False, reuse downloaded files in workdir.
         workdir : str
           Working directory (must exist) defaults to '.'
 
@@ -291,8 +297,9 @@ class RsigApi:
 
         purpleair_kw : dict
           Dictionary of filter properties and api_key. Unlike other options,
-          purpleair_kw will not work with the defaults. The user *must* update the
-          api_key property to their own key. Contact PurpleAir for more details.
+          purpleair_kw will not work with the defaults. The user *must* update
+          teh api_key property to their own key. Contact PurpleAir for more
+          details.
 
         """
         self._description = {}
@@ -303,6 +310,7 @@ class RsigApi:
         self.compress = compress
         self.workdir = workdir
         self.encoding = encoding
+        self.overwrite = overwrite
         if bbox is None:
             self.bbox = (-126, 24, -66, 50)
         else:
@@ -391,19 +399,22 @@ class RsigApi:
 
     def get_file(
         self, formatstr, key=None, bdate=None, edate=None, bbox=None,
-        grid=False, request='GetCoverage', compress=0, verbose=0
+        grid=False, request='GetCoverage', compress=0, overwrite=None,
+        verbose=0
     ):
         """
         Build url, outpath, and download the file. Returns outpath
 
         """
+        if overwrite is None:
+            overwrite = self.overwrite
         url, outpath = self._build_url(
             formatstr, key=key, bdate=bdate, edate=edate, bbox=bbox,
             grid=grid, request=request, compress=compress
         )
         if verbose > 0:
             print(url)
-        _getfile(url, outpath, verbose=verbose)
+        _getfile(url, outpath, verbose=verbose, overwrite=overwrite)
         return outpath
 
     def _build_url(
@@ -646,7 +657,7 @@ class RsigApi:
             grid=True, compress=1, verbose=verbose
         )
         # Uncompress the netcdf file. If encoding is available, apply it
-        if os.path.exists(outpath[:-3]):
+        if not self.overwrite and os.path.exists(outpath[:-3]):
             print('Using cached:', outpath[:-3])
         else:
             with gzip.open(outpath, 'rb') as f_in:
@@ -667,6 +678,60 @@ class RsigApi:
                 tmpf.to_netcdf(outpath[:-3], format='NETCDF4_CLASSIC')
 
         f = open_ioapi(outpath[:-3])
+        if removegz:
+            os.remove(outpath)
+
+        return f
+
+    def to_netcdf(
+        self, key=None, bdate=None, edate=None, bbox=None, grid=False,
+        removegz=False, verbose=0
+    ):
+        """
+        All arguments default to those provided during initialization.
+
+        Arguments
+        ---------
+        key : str
+          Default key for query (e.g., 'aqs.o3', 'purpleair.pm25_corrected',
+          or 'tropomi.offl.no2.nitrogendioxide_tropospheric_column')
+        bdate : str or pd.Datetime
+          beginning date (inclusive) defaults to yesterday at 0Z
+        edate : str or pd.Datetime
+          ending date (inclusive) defaults to bdate + 23:59:59
+        bbox : tuple
+          wlon, slat, elon, nlat in decimal degrees (-180 to 180)
+        grid : bool
+          Add column and row variables with grid assignments.
+        removegz : bool
+          If True, then remove the downloaded gz file. Bad for caching.
+
+        Returns
+        -------
+        ds : xarray.Dataset
+            Results from download
+
+        """
+        import gzip
+        import shutil
+        import os
+        import xarray as xr
+
+        # always use compression for network speed.
+        outpath = self.get_file(
+            'netcdf-coards', key=key, bdate=bdate, edate=edate, bbox=bbox,
+            grid=grid, compress=1, verbose=verbose
+        )
+        # Uncompress the netcdf file. If encoding is available, apply it
+        if not self.overwrite and os.path.exists(outpath[:-3]):
+            print('Using cached:', outpath[:-3])
+        else:
+            with gzip.open(outpath, 'rb') as f_in:
+                with open(outpath[:-3], 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                    f_out.flush()
+
+        f = xr.open_dataset(outpath[:-3])
         if removegz:
             os.remove(outpath)
 
