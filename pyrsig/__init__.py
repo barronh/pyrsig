@@ -226,68 +226,6 @@ def open_ioapi(path, earth_radius=6370000.):
 
 
 class RsigApi:
-    """
-    RsigApi is a python-based interface to RSIG's web-based API
-
-    Properties
-    ----------
-    grid_kw : dict
-      Dictionary of regridding IOAPI properties. Defaults to 12US1
-
-    viirsnoaa_kw : dict
-      Dictionary of filter properties
-
-    tropomi_kw : dict
-      Dictionary of filter properties
-
-    purpleair_kw : dict
-      Dictionary of filter properties and api_key. Unlike other options,
-      purpleair_kw will not work with the defaults. The user *must* update the
-      api_key property to their own key. Contact PurpleAir for more details.
-
-    """
-    def describe(self, key):
-        import requests
-        if key not in self._description:
-            r = requests.get(
-                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
-                f'1.0.0&REQUEST=DescribeCoverage&COVERAGE={key}&compress=1'
-            )
-            self._description[key] = r.text
-        return self._description[key]
-
-    def capabilities(self):
-        """
-        At this time, the capabilities does not list cmaq.*
-
-        """
-        import requests
-        if self._capabilities is None:
-            self._capabilities = requests.get(
-                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
-                '1.0.0&REQUEST=GetCapabilities&compress=1'
-            )
-        return self._capabilities
-
-    def keys(self, offline=True):
-        """
-        Arguments
-        ---------
-        offline : bool
-            If True, uses small cached set of coverages.
-            If False, finds all coverages from capabilities.
-
-        """
-        if offline:
-            keys = tuple(_keys)
-        else:
-            keys = []
-            for line in self.capabilities().text.split('\n'):
-                if line.startswith('            <name>'):
-                    keys.append(line.split('name')[1][1:-2])
-
-        return keys
-
     def __init__(
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
         tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None,
@@ -295,6 +233,8 @@ class RsigApi:
         workdir='.'
     ):
         """
+        RsigApi is a python-based interface to RSIG's web-based API
+
         Arguments
         ---------
         key : str
@@ -308,8 +248,8 @@ class RsigApi:
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
         grid_kw : str or dict
           If str, must be 12US1, 1US1, 12US2, 1US2, 36US3, 108NHEMI2, 36NHEMI2
-            and will be used to set parameters based on EPA domains.
-          If dict, IOAPI mapping parameters see default for details.
+          and will be used to set parameters based on EPA domains. If dict,
+          IOAPI mapping parameters see default for details.
         viirsnoaa_kw : dict
           Dictionary of VIIRS NOAA filter parameters default
           {'minimum_quality': 'high'} options include 'high' or 'medium')
@@ -319,14 +259,12 @@ class RsigApi:
           are 0-100 and 0-1.
         purpleair_kw : dict
           Dictionary of purpleair filter parameters and api_key.
-          {
             'out_in_flag': 0, # options 0, 2, ''
             'freq': 'hourly', # options hourly, daily, monthly, yearly
             'maximum_difference': 5, # integer
             'maximum_ratio': 0.70, # float
             'agg_pct': 75, # 0-100
             'api_key': '<your key here>'
-          }
         server : str
           'ofmpub.epa.gov' for external  users
           'maple.hesc.epa.gov' for on EPA VPN users
@@ -339,6 +277,22 @@ class RsigApi:
           not be applied to TFLAG and COUNT.
         workdir : str
           Working directory (must exist) defaults to '.'
+
+        Properties
+        ----------
+        grid_kw : dict
+          Dictionary of regridding IOAPI properties. Defaults to 12US1
+
+        viirsnoaa_kw : dict
+          Dictionary of filter properties
+
+        tropomi_kw : dict
+          Dictionary of filter properties
+
+        purpleair_kw : dict
+          Dictionary of filter properties and api_key. Unlike other options,
+          purpleair_kw will not work with the defaults. The user *must* update the
+          api_key property to their own key. Contact PurpleAir for more details.
 
         """
         self._description = {}
@@ -392,6 +346,48 @@ class RsigApi:
             }
 
         self.purpleair_kw = purpleair_kw
+
+    def describe(self, key):
+        import requests
+        if key not in self._description:
+            r = requests.get(
+                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
+                f'1.0.0&REQUEST=DescribeCoverage&COVERAGE={key}&compress=1'
+            )
+            self._description[key] = r.text
+        return self._description[key]
+
+    def capabilities(self):
+        """
+        At this time, the capabilities does not list cmaq.*
+
+        """
+        import requests
+        if self._capabilities is None:
+            self._capabilities = requests.get(
+                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
+                '1.0.0&REQUEST=GetCapabilities&compress=1'
+            )
+        return self._capabilities
+
+    def keys(self, offline=True):
+        """
+        Arguments
+        ---------
+        offline : bool
+            If True, uses small cached set of coverages.
+            If False, finds all coverages from capabilities.
+
+        """
+        if offline:
+            keys = tuple(_keys)
+        else:
+            keys = []
+            for line in self.capabilities().text.split('\n'):
+                if line.startswith('            <name>'):
+                    keys.append(line.split('name')[1][1:-2])
+
+        return keys
 
     def get_file(
         self, formatstr, key=None, bdate=None, edate=None, bbox=None,

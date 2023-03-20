@@ -26,9 +26,13 @@ Installation
 `pyrsig` is avalable through pypi.org, but is still in rapid development. You
 can get the latest release from pypi via the command below.
 
+.. code-block::
+
     pip install pyrsig
 
 Or, you can get the latest version with this command.
+
+.. code-block::
 
     pip install git+https://github.com/barronh/pyrsig.git
 
@@ -53,6 +57,5 @@ Quick Links
    :caption: Table of Contents
 
    self
-   pyrsig
-   modules
    auto_examples/index
+   pyrsig
