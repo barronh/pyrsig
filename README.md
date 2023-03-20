@@ -4,9 +4,22 @@ Python interface to RSIG Web API
 
 ## Install
 
+From pypi.org (most stable):
+
+```bash
+pip install pyrsig
+```
+
+From github (latest):
+
 ```bash
 pip install git+https://github.com/barronh/pyrsig.git
 ```
+
+## User Guide
+
+Examples and more information are available at 
+https://barronh.github.io/pyrsig
 
 ## Example
 
