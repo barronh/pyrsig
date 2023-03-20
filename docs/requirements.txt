@@ -7,8 +7,9 @@ pandas
 xarray
 netcdf4
 pycno
+pyproj
 sphinx
-sphinx_rtd_theme
+sphinx-rtd-theme
 sphinx-gallery
 sphinx_design
 sphinx-copybutton
