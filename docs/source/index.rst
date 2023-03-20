@@ -57,5 +57,5 @@ Quick Links
    :caption: Table of Contents
 
    self
-   auto_examples/index
+   auto_examples
    pyrsig
