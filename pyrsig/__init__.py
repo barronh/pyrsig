@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'open_ioapi']
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 import pandas as pd
 
@@ -98,6 +98,59 @@ _keys = (
 _point_prefixes = ('airnow', 'aqs', 'purpleair', 'pandora')
 
 
+def parsexml(root):
+    """Recursive xml parsing:
+    Given a root, return dictionaries for each element and its children.
+    Each element has children, attributes (attr), tag, and text.
+    If any of these has no elements, it will be removed.
+    """
+    out = dict(
+        children=[], attr=root.attrib, text=root.text,
+        tag=root.tag.split('}')[1]
+    )
+    for child in root:
+        childd = parsexml(child)
+        out['children'].append(childd)
+    if len(out['children']) == 0:
+        del out['children']
+    if out['text'] is None:
+        out['text'] = ''
+    out['text'] = out['text'].strip()
+    if len(out['text']) == 0:
+        del out['text']
+    if len(out['attr']) == 0:
+        del out['attr']
+    return out
+
+
+def coverages_from_xml(txt):
+    """Based on xml text, create coverage data"""
+    import xml.etree.ElementTree as ET
+    root = ET.fromstring(txt)
+    xmlout = parsexml(root)
+    out = []
+    for c in xmlout['children']:
+        record = {k: v for k, v in c.items() if k != 'children'}
+        kids = c['children']
+        for e in kids:
+            if 'attr' not in e and len(e.get('children', [])) == 0:
+                record[e['tag']] = e.get('text', '')
+            if e['tag'] == 'lonLatEnvelope':
+                envtxt = ''
+                for p in e['children']:
+                    envtxt += ' ' + p['text']
+                record['bbox_str'] = envtxt
+            if e['tag'] == 'domainSet':
+                for s in e['children']:
+                    if s['tag'] == 'temporalDomain':
+                        for tp in s['children']:
+                            for te in tp['children']:
+                                record[te['tag']] = te['text']
+        out.append(record)
+
+    return out
+
+
 def _progress(blocknum, readsize, totalsize):
     """
     Arguments
@@ -191,7 +244,7 @@ def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
             print('')
 
 
-def open_ioapi(path, earth_radius=6370000.):
+def open_ioapi(path, metapath=None, earth_radius=6370000.):
     import xarray as xr
     import numpy as np
     f = xr.open_dataset(path, engine='netcdf4')
@@ -224,6 +277,19 @@ def open_ioapi(path, earth_radius=6370000.):
             ' +lon_0={XCENT} +R={earth_radius} +x_0={x_0} +y_0={y_0}'
             ' +to_meter={XCELL} +no_defs'
         ).format(**props)
+
+    if metapath is None:
+        import os
+        if os.path.exists(path + '.txt'):
+            metapath = path + '.txt'
+
+    if metapath is False:
+        metapath = None
+
+    if metapath is not None:
+        with open(metapath, 'r') as metaf:
+            metatxt = metaf.read()
+        f.attrs['metadata'] = metatxt
 
     return f
 
@@ -305,12 +371,14 @@ class RsigApi:
         self._description = {}
         self._keys = None
         self._capabilities = None
+        self._describecoverage = None
         self.server = server
         self.key = key
         self.compress = compress
         self.workdir = workdir
         self.encoding = encoding
         self.overwrite = overwrite
+
         if bbox is None:
             self.bbox = (-126, 24, -66, 50)
         else:
@@ -329,6 +397,7 @@ class RsigApi:
         self.corners = corners
         if grid_kw is None:
             grid_kw = '12US1'
+
         if isinstance(grid_kw, str):
             if grid_kw not in _def_grid_kw:
                 raise KeyError('unknown grid, you must specify properites')
@@ -356,6 +425,10 @@ class RsigApi:
         self.purpleair_kw = purpleair_kw
 
     def describe(self, key):
+        """
+        Describe is currently unreliable becuase of malformed xml.
+        Use descriptions and query by name.
+        """
         import requests
         if key not in self._description:
             r = requests.get(
@@ -363,7 +436,77 @@ class RsigApi:
                 f'1.0.0&REQUEST=DescribeCoverage&COVERAGE={key}&compress=1'
             )
             self._description[key] = r.text
+
         return self._description[key]
+
+    def descriptions(self, as_dataframe=True):
+        """
+        Experimental and may change.
+        Currently, parses capabilities using xml.etree.ElementTree and returns
+        coverages from details available in CoverageOffering elements from
+        DescribeCoverage.
+
+        Currently cleaning up data xml elements that are bad.
+
+        Examples:
+
+            rsigapi = pyrsig.RsigApi()
+            desc = rsigapi.descriptions()
+            desc[desc['name'].str.startswith('tropomi')]
+
+        """
+        import re
+        import pandas as pd
+        import warnings
+
+        c = self.describecoverages()
+        ctext = c.text.replace('<?xml version="1.0" encoding="UTF-8" ?>', '')
+        # Currently correcting information that wasn't working.
+        ctext = ctext.replace('<=', 'less than or equal to')
+        ctext = ctext.replace('<0=', 'less than zero =')
+        ctext = ctext.replace('>0=', 'greater than zero =')
+        ctext = ctext.replace(
+            '<lonLatEnvelope srsName="WGS84(DD)"\n',
+            '<lonLatEnvelope srsName="WGS84(DD)">\n'
+        )
+        cleanre = re.compile(
+            r'\</name\>.+?\</CoverageOffering\>',
+            flags=re.MULTILINE + re.DOTALL
+        )
+        # <CoverageOffering>.+?</CoverageOffering>
+        coverre = re.compile(
+            r'\<CoverageOffering\>.+?\</CoverageOffering\>',
+            flags=re.MULTILINE + re.DOTALL
+        )
+        coverages = []
+        for rex in coverre.finditer(ctext):
+            secttxt = ctext[rex.start():rex.end()]
+            secttxt = (
+                '<CoverageDescription version="1.0.0"'
+                + ' xmlns="http://www.opengeospatial.org/standards/wcs"'
+                + ' xmlns:gml="http://www.opengis.net/gml"'
+                + ' xmlns:xlink="http://www.w3.org/1999/xlink">'
+                + secttxt + '</CoverageDescription>'
+            )
+            try:
+                coverage = coverages_from_xml(secttxt)
+                coverages.extend(coverage)
+            except Exception as e:
+                try:
+                    secttxt = cleanre.sub(
+                        '</name></CoverageOffering>', secttxt
+                    )
+                    coverage = coverages_from_xml(secttxt)
+                    coverages.extend(coverage)
+                    warnings.warn(f'Limited details for {coverage[0]["name"]}')
+                except Exception as e2:
+                    print(e)
+                    raise e2
+
+        if as_dataframe:
+            coverages = pd.DataFrame.from_records(coverages)
+
+        return coverages
 
     def capabilities(self):
         """
@@ -376,7 +519,23 @@ class RsigApi:
                 f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
                 '1.0.0&REQUEST=GetCapabilities&compress=1'
             )
+
         return self._capabilities
+
+    def describecoverages(self):
+        """
+        DescribeCoverage is a call to the server to get all key contents.
+        Right now, I do not allow specific key requests because they are
+        unreliable. They are unreliable because of malformed xml.
+        """
+        import requests
+        if self._describecoverage is None:
+            self._describecoverage = requests.get(
+                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
+                '1.0.0&REQUEST=DescribeCoverage&compress=1'
+            )
+
+        return self._describecoverage
 
     def keys(self, offline=True):
         """
@@ -414,7 +573,9 @@ class RsigApi:
         )
         if verbose > 0:
             print(url)
+
         _getfile(url, outpath, verbose=verbose, overwrite=overwrite)
+
         return outpath
 
     def _build_url(
@@ -434,6 +595,9 @@ class RsigApi:
         """
         if key is None:
             key = self.key
+
+        if key is None:
+            raise ValueError('key must be specified')
 
         if bdate is None:
             bdate = self.bdate
@@ -469,6 +633,7 @@ class RsigApi:
         viirsnoaa_kw = self.viirsnoaa_kw
         if compress is None:
             compress = self.compress
+
         wlon, slat, elon, nlat = bbox
         if grid and request == 'GetCoverage':
             gridstr = self._build_grid(grid_kw)
@@ -558,7 +723,7 @@ class RsigApi:
 
     def to_dataframe(
         self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
-        parse_dates=False, verbose=0
+        parse_dates=False, withmeta=False, verbose=0
     ):
         """
         All arguments default to those provided during initialization.
@@ -579,6 +744,9 @@ class RsigApi:
           If False, move last parenthetical part of key to attrs of Series.
         parse_dates : bool
           If True, parse Timestamp(UTC)
+        withmeta: bool
+          If True, add 'GetMetadata' results as a "metadata" attribute of the
+          dataframe.
         verbose : int
           level of verbosity
 
@@ -594,6 +762,15 @@ class RsigApi:
             compress=1
         )
         df = pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
+        if withmeta:
+            metapath = self.get_file(
+                'ascii', key=key, bdate=bdate, edate=edate, bbox=bbox,
+                grid=False, verbose=verbose, request='GetMetadata',
+                compress=1
+            )
+            metatxt = open(metapath, 'r').read()
+            df.attrs['metadata'] = metatxt
+
         if not unit_keys:
             columns = [k for k in df.columns]
             newcolumns = []
@@ -612,6 +789,7 @@ class RsigApi:
             for k in newcolumns:
                 if hasattr(df[k], 'attrs'):
                     df[k].attrs.update(dict(units=unit_dict.get(k, 'unknown')))
+
         if parse_dates:
             if 'Timestamp(UTC)' in df:
                 df['time'] = pd.to_datetime(df['Timestamp(UTC)'])
@@ -621,8 +799,8 @@ class RsigApi:
         return df
 
     def to_ioapi(
-        self, key=None, bdate=None, edate=None, bbox=None, removegz=False,
-        verbose=0
+        self, key=None, bdate=None, edate=None, bbox=None, withmeta=False,
+        removegz=False, verbose=0
     ):
         """
         All arguments default to those provided during initialization.
@@ -638,6 +816,9 @@ class RsigApi:
           ending date (inclusive) defaults to bdate + 23:59:59
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
+        withmeta : bool
+          If True, add 'GetMetadata' results at an attribute "metadata" to the
+          netcdf file.
         removegz : bool
           If True, then remove the downloaded gz file. Bad for caching.
 
@@ -677,7 +858,15 @@ class RsigApi:
 
                 tmpf.to_netcdf(outpath[:-3], format='NETCDF4_CLASSIC')
 
-        f = open_ioapi(outpath[:-3])
+        if withmeta:
+            metapath = self.get_file(
+                'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
+                grid=True, compress=1, request='GetMetadata', verbose=verbose
+            )
+        else:
+            metapath = None
+
+        f = open_ioapi(outpath[:-3], metapath=metapath)
         if removegz:
             os.remove(outpath)
 
@@ -685,7 +874,7 @@ class RsigApi:
 
     def to_netcdf(
         self, key=None, bdate=None, edate=None, bbox=None, grid=False,
-        removegz=False, verbose=0
+        withmeta=False, removegz=False, verbose=0
     ):
         """
         All arguments default to those provided during initialization.
@@ -703,6 +892,9 @@ class RsigApi:
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
         grid : bool
           Add column and row variables with grid assignments.
+        withmeta : bool
+          If True, add 'GetMetadata' results at an attribute "metadata" to the
+          netcdf file.
         removegz : bool
           If True, then remove the downloaded gz file. Bad for caching.
 
@@ -732,6 +924,16 @@ class RsigApi:
                     f_out.flush()
 
         f = xr.open_dataset(outpath[:-3])
+
+        if withmeta:
+            metapath = self.get_file(
+                'netcdf-coards', key=key, bdate=bdate, edate=edate, bbox=bbox,
+                grid=grid, compress=1, request='GetMetadata', verbose=verbose
+            )
+            with open(metapath, 'r') as metaf:
+                metatxt = metaf.read()
+            f.attrs['metadata'] = metatxt
+
         if removegz:
             os.remove(outpath)
 
