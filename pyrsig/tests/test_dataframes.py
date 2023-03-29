@@ -23,6 +23,12 @@ def test_aqs_ozone_cache():
         print(df.shape)
         df = rsigapi.to_dataframe('aqs.ozone')
         print(df.shape)
+        rsigapi = RsigApi(
+            bdate='2022-03-01T00', edate='2022-03-01T01', workdir=td,
+            overwrite=True
+        )
+        df = rsigapi.to_dataframe('aqs.ozone')
+        print(df.shape)
 
 
 def test_aqs_no2_verbose():
@@ -37,6 +43,18 @@ def test_aqs_no2_verbose():
         print(df.shape)
 
 
+def test_aqs_no2_withmeta():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2022-03-01T00', edate='2022-03-01T01', workdir=td
+        )
+        df = rsigapi.to_dataframe('aqs.no2', withmeta=True, verbose=1)
+        print(df.shape, len(df.attrs['metadata']))
+
+
 def test_aqs_no2_unittime():
     from .. import RsigApi
     import tempfile
@@ -47,5 +65,22 @@ def test_aqs_no2_unittime():
         )
         df = rsigapi.to_dataframe(
             'aqs.no2', unit_keys=False, parse_dates=True, verbose=1
+        )
+        print(df.shape)
+
+
+def test_aqs_no2_bdate():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(workdir=td, edate='2022-03-01T01')
+        df = rsigapi.to_dataframe(
+            'aqs.no2', bdate='2022-03-01T00'
+        )
+        print(df.shape)
+        rsigapi = RsigApi(workdir=td, overwrite=True)
+        df = rsigapi.to_dataframe(
+            'aqs.no2', bdate='2022-03-01T00', edate='2022-03-01T01'
         )
         print(df.shape)

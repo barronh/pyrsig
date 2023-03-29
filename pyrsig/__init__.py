@@ -442,11 +442,13 @@ class RsigApi:
     def descriptions(self, as_dataframe=True):
         """
         Experimental and may change.
+
         Currently, parses capabilities using xml.etree.ElementTree and returns
         coverages from details available in CoverageOffering elements from
         DescribeCoverage.
 
-        Currently cleaning up data xml elements that are bad.
+        Currently cleaning up data xml elements that are bad and doing a
+        per-coverage parsing to increase fault tolerance in the xml.
 
         Examples:
 
@@ -500,6 +502,8 @@ class RsigApi:
                     coverages.extend(coverage)
                     warnings.warn(f'Limited details for {coverage[0]["name"]}')
                 except Exception as e2:
+                    # If a secondary error was raised, print it... but raise
+                    # the original error
                     print(e)
                     raise e2
 

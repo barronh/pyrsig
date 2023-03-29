@@ -32,3 +32,11 @@ def test_descriptions():
         warnings.simplefilter("ignore")
         desc = rsigapi.descriptions()
     print(desc.columns, desc.shape)
+
+
+def test_describe():
+    from .. import RsigApi
+
+    rsigapi = RsigApi()
+    desc = rsigapi.describe('aqs.ozone')
+    print(len(desc))
