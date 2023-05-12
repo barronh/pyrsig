@@ -16,8 +16,8 @@ import os
 
 # Create a working directory
 gdnam = '4US1'
-bdate = '2021-01-01'
-edate = '2021-01-15'
+bdate = '2020-01-01'
+edate = '2020-01-15'
 wdir = f'{gdnam}/{bdate[:4]}'
 
 os.makedirs(gdnam, exist_ok=True)
@@ -25,7 +25,7 @@ os.makedirs(gdnam, exist_ok=True)
 rsigapi = pyrsig.RsigApi(
     bdate=bdate, bbox=(-85, 33, -75, 37),
     encoding={"zlib": True, "complevel": 1, "_FillValue": -9.999e36},
-    workdir=wdir, grid_kw='4US1'
+    workdir=wdir, grid_kw=gdnam
 )
 
 # Update to download daily averages instead of hourly
@@ -33,7 +33,7 @@ rsigapi.grid_kw['REGRID_AGGREGATE'] = 'daily'
 
 # Loop over days
 dss = []
-for bdate in pd.date_range('2020-01-01', '2020-01-15'):
+for bdate in pd.date_range(bdate, edate):
     print(bdate)
     try:
         ds = rsigapi.to_ioapi(key='tropomi.offl.no2.nitrogendioxide_tropospheric_column', bdate=bdate)
