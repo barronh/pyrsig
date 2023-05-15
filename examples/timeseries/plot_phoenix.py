@@ -25,11 +25,11 @@ tomino2df = rsigapi.to_dataframe(
 )
 
 
-# Create spatial means for TropOMI and AQS
+# Create spatial medians for TropOMI and AQS
 tomids = (
-    tomino2df.groupby('time').median()['nitrogendioxide_tropospheric_column']
+    tomino2df.groupby('time').median(numeric_only=True)['nitrogendioxide_tropospheric_column']
 )
-aqsds = aqsdf.groupby(['time']).median()['no2']
+aqsds = aqsdf.groupby(['time']).median(numeric_only=True)['no2']
 
 # Subset AQS to overpass times
 oaqsds = aqsds.loc[aqsds.index.isin(tomids.index.floor('1h'))] # just overpass t
@@ -53,4 +53,4 @@ tax.set(ylim=(0, 1.7e16), ylabel='TropOMI NO2 molecules/cm$^2$')
 
 plt.show()
 # Or save out figure
-#fig.savefig('phoenix.png')
+# fig.savefig('phoenix.png')

@@ -24,17 +24,17 @@ tomino2df = rsigapi.to_dataframe(
     unit_keys=False, parse_dates=True
 )
 
-# Get VIIRS NO2
+# Get VIIRS AOD
 viirsaoddf = rsigapi.to_dataframe(
     'viirsnoaa.jrraod.AOD550', unit_keys=False, parse_dates=True
 )
 
-# Create spatial means for TropOMI and AQS
+# Create spatial medians for TropOMI and AQS
 tomids = (
-    tomino2df.groupby('time').median()['nitrogendioxide_tropospheric_column']
+    tomino2df.groupby('time').median(numeric_only=True)['nitrogendioxide_tropospheric_column']
 )
 viirsds = (
-    viirsaoddf.groupby('time').median()['AOD550']
+    viirsaoddf.groupby('time').median(numeric_only=True)['AOD550']
 )
 
 # Create axes with shared x
