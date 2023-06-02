@@ -1027,21 +1027,24 @@ class RsigApi:
 
         """
         grid_kw.setdefault('earth_radius', 6370000)
-        if grid_kw.get('GDTYP', 2) == 2:
-            gridstr = (
-                '&REGRID=weighted'
-                '&LAMBERT={P_ALP},{P_BET},{XCENT},{YCENT}'
-                '&ELLIPSOID={earth_radius},{earth_radius}'
-                '&GRID={NCOLS},{NROWS},{XORIG},{YORIG},{XCELL},{YCELL}'
-            ).format(**grid_kw)
-            if grid_kw.get('REGRID_AGGREGATE', 'None').strip() != 'None':
-                gridstr += (
-                    "&REGRID_AGGREGATE={REGRID_AGGREGATE}".format(**grid_kw)
-                )
-
-            return gridstr
+        GDTYP = grid_kw.get('GDTYP', 2)
+        if GDTYP == 2:
+            projstr = '&LAMBERT={P_ALP},{P_BET},{XCENT},{YCENT}'
+        elif GDTYP == 6:
+            projstr = '&STEREOGRAPHIC={XCENT},{YCENT},{P_BET}'
         else:
             raise KeyError('GDTYP only implemented for ')
+
+        gridstr = (
+            '&REGRID=weighted'
+            + projstr
+            + '&ELLIPSOID={earth_radius},{earth_radius}'
+            + '&GRID={NCOLS},{NROWS},{XORIG},{YORIG},{XCELL},{YCELL}'
+        )
+        if grid_kw.get('REGRID_AGGREGATE', 'None').strip() != 'None':
+            gridstr += "&REGRID_AGGREGATE={REGRID_AGGREGATE}"
+
+        return gridstr.format(**grid_kw)
 
     def to_dataframe(
         self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
