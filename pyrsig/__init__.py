@@ -342,9 +342,15 @@ def get_proj4(attrs, earth_radius=6370000.):
         ).format(**props)
     elif props['GDTYP'] == 6:
         projstr = (
-            '+proj=stere +lat_0={P_ALP * 90} +lat_ts={P_BET} +lon_0={XCENT} '
-            + '+x_0={x_0} +y_0={y_0} +R={earth_radius} +to_meter={XCELL} '
-            + '+no_defs'
+            '+proj=stere +lat_0={lat_0} +lat_ts={P_BET} +lon_0={XCENT}'
+            + ' +x_0={x_0} +y_0={y_0} +R={earth_radius} +to_meter={XCELL}'
+            + ' +no_defs'
+        ).format(lat_0=props['P_ALP'] * 90, **props)
+    elif props['GDTYP'] == 7:
+        projstr = (
+            '+proj=merc +R={earth_radius} +lat_ts=0 +lon_0={XORIG}'
+            + ' +x_0={x_0} +y_0={y_0} +to_meter={XCELL}'
+            + ' +no_defs'
         ).format(**props)
     else:
         raise ValueError('GDTYPE {GDTYP} not implemented'.format(**props))
@@ -563,7 +569,7 @@ class RsigApi:
             self.bbox = bbox
         if bdate is None:
             bdate = (
-                pd.to_datetime('now') - pd.to_timedelta('1day')
+                pd.to_datetime('now', utc=True) - pd.to_timedelta('1day')
             ).replace(hour=0, minute=0, second=0, microsecond=0, nanosecond=0)
 
         self.bdate = pd.to_datetime(bdate)
@@ -605,6 +611,23 @@ class RsigApi:
 
         self.purpleair_kw = purpleair_kw
 
+    def resize_grid(self, clip=True):
+        """
+        Update grid_kw property so that it only covers the bbox by adjusting
+        the XORIG, YORIG, NCOLS and NROWS. If clip is True, this has the affect
+        of reducing the number of rows and columns. This is useful when the
+        area of interest is much smaller than the grid defined in grid_kw.
+
+        Arguments
+        ---------
+        clip : bool
+
+        Returns
+        -------
+        None
+        """
+        self.grid_kw = customize_grid(self.grid_kw, self.bbox, clip=clip)
+
     def describe(self, key, as_dataframe=True, raw=False):
         """
         describe returns details about the coverage specified by key. Details
@@ -640,6 +663,7 @@ class RsigApi:
         """
         import requests
         import warnings
+
         if key not in self._description:
             r = requests.get(
                 f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
