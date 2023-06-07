@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi']
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 
 import pandas as pd
 
@@ -49,6 +49,11 @@ _def_grid_kw = {
         GDNAM='36NHEMI2', GDTYP=6, NCOLS=187 * 3, NROWS=187 * 3,
         XORIG=-10098000.0, YORIG=-10098000.0, XCELL=36000., YCELL=36000.,
         P_ALP=1., P_BET=45., P_GAM=-98., XCENT=-98., YCENT=90.
+    ),
+    'NORTHSOUTHAM': dict(
+        GDNAM='NORTHSOUTHAM', GDTYP=7, NCOLS=179, NROWS=154,
+        XORIG=251759.25, YORIG=-1578187., XCELL=27000., YCELL=27000.,
+        P_ALP=0., P_BET=0., P_GAM=-98., XCENT=-98., YCENT=0.
     ),
 }
 
@@ -113,7 +118,9 @@ _keys = (
     'viirsnoaa.jrraod.AOD550', 'viirsnoaa.vaooo.AerosolOpticalDepth_at_550nm',
 )
 
-_point_prefixes = ('airnow', 'aqs', 'purpleair', 'pandora')
+_nocorner_prefixes = ('airnow', 'aqs', 'purpleair', 'pandora', 'cmaq')
+_nolonlats_prefixes = ('cmaq',)
+_noregrid_prefixes = ('cmaq',)
 
 
 def _actionf(msg, action, ErrorTyp=None):
@@ -348,7 +355,7 @@ def get_proj4(attrs, earth_radius=6370000.):
         ).format(lat_0=props['P_ALP'] * 90, **props)
     elif props['GDTYP'] == 7:
         projstr = (
-            '+proj=merc +R={earth_radius} +lat_ts=0 +lon_0={XORIG}'
+            '+proj=merc +R={earth_radius} +lat_ts=0 +lon_0={XCENT}'
             + ' +x_0={x_0} +y_0={y_0} +to_meter={XCELL}'
             + ' +no_defs'
         ).format(**props)
@@ -610,6 +617,14 @@ class RsigApi:
             }
 
         self.purpleair_kw = purpleair_kw
+
+    def set_grid_kw(self, grid_kw):
+        if isinstance(grid_kw, str):
+            if grid_kw not in _def_grid_kw:
+                raise KeyError('unknown grid, you must specify properites')
+            grid_kw = _def_grid_kw[grid_kw].copy()
+
+        self.grid_kw = grid_kw
 
     def resize_grid(self, clip=True):
         """
@@ -957,6 +972,7 @@ class RsigApi:
             compress = self.compress
 
         wlon, slat, elon, nlat = bbox
+
         if grid and request == 'GetCoverage':
             gridstr = self._build_grid(grid_kw)
         else:
@@ -987,10 +1003,15 @@ class RsigApi:
         else:
             purpleairstr = ''
 
-        if any([key.startswith(pre) for pre in _point_prefixes]):
+        if any([key.startswith(pre) for pre in _nocorner_prefixes]):
             cornerstr = ''
         else:
             cornerstr = f'&CORNERS={corners}'
+
+        if any([key.startswith(pre) for pre in _nolonlats_prefixes]):
+            nolonlatsstr = '&NOLONLATS=1'
+        else:
+            nolonlatsstr = ''
 
         url = (
             f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION=1.0.0'
@@ -999,7 +1020,10 @@ class RsigApi:
             f'&BBOX={wlon},{slat},{elon},{nlat}'
             f'&COVERAGE={key}'
             f'&COMPRESS={compress}'
-        ) + purpleairstr + viirsnoaastr + tropomistr + gridstr + cornerstr
+        ) + (
+            purpleairstr + viirsnoaastr + tropomistr + gridstr + cornerstr
+            + nolonlatsstr
+        )
 
         outpath = (
             f'{self.workdir}/{key}_{bdate:%Y-%m-%dT%H%M%SZ}'
@@ -1032,6 +1056,8 @@ class RsigApi:
             projstr = '&LAMBERT={P_ALP},{P_BET},{XCENT},{YCENT}'
         elif GDTYP == 6:
             projstr = '&STEREOGRAPHIC={XCENT},{YCENT},{P_BET}'
+        elif GDTYP == 7:
+            projstr = '&MERCATOR={P_GAM}'
         else:
             raise KeyError('GDTYP only implemented for ')
 
@@ -1159,10 +1185,14 @@ class RsigApi:
         import shutil
         import os
 
+        # If already gridded, do not use grid keywords
+        nogridkw = any([key.startswith(pre) for pre in _noregrid_prefixes])
+        grid = nogridkw is False
+
         # always use compression for network speed.
         outpath = self.get_file(
             'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=True, compress=1, verbose=verbose
+            grid=grid, compress=1, verbose=verbose
         )
         # Uncompress the netcdf file. If encoding is available, apply it
         if not self.overwrite and os.path.exists(outpath[:-3]):
@@ -1188,7 +1218,7 @@ class RsigApi:
         if withmeta:
             metapath = self.get_file(
                 'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
-                grid=True, compress=1, request='GetMetadata', verbose=verbose
+                grid=grid, compress=1, request='GetMetadata', verbose=verbose
             )
         else:
             metapath = None

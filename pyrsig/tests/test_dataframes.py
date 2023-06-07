@@ -1,5 +1,4 @@
 def test_viirsnoaa():
-    """currently not operational. I don't yet know why"""
     from .. import RsigApi
     import tempfile
 
@@ -84,3 +83,16 @@ def test_aqs_no2_bdate():
             'aqs.no2', bdate='2022-03-01T00', edate='2022-03-01T01'
         )
         print(df.shape)
+
+
+def test_cmaqequates():
+    """currently not operational. I don't yet know why"""
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2016-03-01', bbox=(-85, 30, -70, 45), workdir=td
+        )
+        ds = rsigapi.to_dataframe('cmaq.equates.conus.aconc.O3')
+        print(ds.shape)
