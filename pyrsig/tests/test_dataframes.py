@@ -1,3 +1,17 @@
+def test_pandora():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2023-03-01', bbox=(-80, 30, -60, 50), workdir=td
+        )
+        ds = rsigapi.to_dataframe(
+            'pandora.L2_rnvh3p1_8.tropospheric_nitrogen_dioxide'
+        )
+        print(ds.shape)
+
+
 def test_viirsnoaa():
     from .. import RsigApi
     import tempfile

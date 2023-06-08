@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi']
-__version__ = '0.4.3'
+__version__ = '0.4.4'
 
 import pandas as pd
 
@@ -66,6 +66,8 @@ for key in _def_grid_kw:
     for pk, pv in _shared_grid_kw.items():
         _def_grid_kw[key].setdefault(pk, pv)
 
+# Used to shorten pandora names for 80 character PEP
+_trvca = 'tropospheric_vertical_column_amount'
 
 _keys = (
     'airnow.pm25', 'airnow.pm10', 'airnow.ozone', 'airnow.no', 'airnow.no2',
@@ -88,7 +90,30 @@ _keys = (
     'metar.precip24Hour', 'metar.pressChange3Hour', 'metar.snowCover'
     'nesdis.pm25', 'nesdis.co', 'nesdis.co2', 'nesdis.ch4', 'nesdis.n2o',
     'nesdis.nh3', 'nesdis.nox', 'nesdis.so2', 'nesdis.tnmhc',
-    'pandora.ozone', 'purpleair.pm25_corrected',
+    'pandora.ozone'
+    f'pandora.L2_rfuh5p1_8.formaldehyde_{_trvca}',
+    f'pandora.L2_rfuh5p1_8.formaldehyde_{_trvca}_uncertainty',
+    'pandora.L2_rfus5p1_8.direct_formaldehyde_air_mass_factor',
+    'pandora.L2_rfus5p1_8.direct_formaldehyde_air_mass_factor_uncertainty',
+    'pandora.L2_rfus5p1_8.formaldehyde_total_vertical_column_amount',
+    'pandora.L2_rfus5p1_8.formaldehyde_vertical_column_amount_uncertainty'
+    f'pandora.L2_rnvh3p1_8.water_vapor_{_trvca}',
+    f'pandora.L2_rnvh3p1_8.water_vapor_{_trvca}_uncertainty',
+    'pandora.L2_rnvs3p1_8.nitrogen_dioxide_vertical_column_amount',
+    'pandora.L2_rnvh3p1_8.tropospheric_nitrogen_dioxide',
+    'pandora.L2_rnvh3p1_8.tropospheric_nitrogen_dioxide_uncertainty',
+    'pandora.L2_rnvs3p1_8.direct_nitrogen_dioxide_air_mass_factor',
+    'pandora.L2_rnvs3p1_8.direct_nitrogen_dioxide_air_mass_factor_uncertainty',
+    'pandora.L2_rout2p1_8.ozone_vertical_column_amount',
+    'pandora.L2_rout2p1_8.direct_ozone_air_mass_factor',
+    'pandora.L2_rout2p1_8.ozone_air_mass_factor_uncertainty',
+    'pandora.L2_rsus1p1_8.sulfur_dioxide_vertical_column_amount',
+    'pandora.L2_rsus1p1_8.direct_sulfur_dioxide_air_mass_factor',
+    'pandora.L2_rsus1p1_8.sulfur_dioxide_air_mass_factor_uncertainty',
+    'pandora.L2_rnvssp1_8.nitrogen_dioxide_vertical_column_amount',
+    'pandora.L2_rnvssp1_8.direct_nitrogen_dioxide_air_mass_factor',
+    'pandora.L2_rnvssp1_8.direct_nitrogen_dioxide_air_mass_factor_uncertainty',
+    'purpleair.pm25_corrected',
     'purpleair.pm25_corrected_hourly', 'purpleair.pm25_corrected_daily',
     'purpleair.pm25_corrected_monthly', 'purpleair.pm25_corrected_yearly',
     'tempo.proxy_l2.no2.vertical_column_total',
@@ -879,8 +904,8 @@ class RsigApi:
         Arguments
         ---------
         offline : bool
-            If True, uses small cached set of coverages.
-            If False, finds all coverages from capabilities.
+            If True, uses small cached set of tested coverages.
+            If False, finds all coverages from capabilities service.
 
         """
         if offline:
@@ -973,7 +998,10 @@ class RsigApi:
 
         wlon, slat, elon, nlat = bbox
 
-        if grid and request == 'GetCoverage':
+        # If already gridded, do not use grid keywords
+        nogridkw = any([key.startswith(pre) for pre in _noregrid_prefixes])
+
+        if (grid and not nogridkw) and request == 'GetCoverage':
             gridstr = self._build_grid(grid_kw)
         else:
             gridstr = ''
@@ -1185,14 +1213,10 @@ class RsigApi:
         import shutil
         import os
 
-        # If already gridded, do not use grid keywords
-        nogridkw = any([key.startswith(pre) for pre in _noregrid_prefixes])
-        grid = nogridkw is False
-
         # always use compression for network speed.
         outpath = self.get_file(
             'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=grid, compress=1, verbose=verbose
+            grid=True, compress=1, verbose=verbose
         )
         # Uncompress the netcdf file. If encoding is available, apply it
         if not self.overwrite and os.path.exists(outpath[:-3]):
@@ -1218,7 +1242,7 @@ class RsigApi:
         if withmeta:
             metapath = self.get_file(
                 'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
-                grid=grid, compress=1, request='GetMetadata', verbose=verbose
+                grid=True, compress=1, request='GetMetadata', verbose=verbose
             )
         else:
             metapath = None
