@@ -8,16 +8,16 @@ Some examples require some features of pyrsig that are not required
 for minimal functionality. To install all the necessary libaries
 for any example, run the command below (use --user if not an admin):
 
-```bash
-python -m pip install --user pyrsig pycno pyproj netcdf4
-```
+.. code-block:: bash
+
+   python -m pip install --user pyrsig pycno pyproj netcdf4
 
 In notebooks (e.g., on Google Colab), this can be done live with
 the command below (may require kernel restart):
 
-```python
-%pip install --user pyrsig pycno pyproj netcdf4
-```
+.. code-block:: python
+
+   %pip install --user pyrsig pycno pyproj netcdf4
 
 To run an example in a notebook:
 
