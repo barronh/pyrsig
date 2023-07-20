@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi']
-__version__ = '0.4.4'
+__version__ = '0.4.5'
 
 import pandas as pd
 
@@ -116,24 +116,24 @@ _keys = (
     'purpleair.pm25_corrected',
     'purpleair.pm25_corrected_hourly', 'purpleair.pm25_corrected_daily',
     'purpleair.pm25_corrected_monthly', 'purpleair.pm25_corrected_yearly',
-    'tempo.proxy_l2.no2.vertical_column_total',
-    'tempo.proxy_l2.no2.vertical_column_total_uncertainty',
-    'tempo.proxy_l2.no2.vertical_column_troposphere',
-    'tempo.proxy_l2.no2.vertical_column_stratosphere',
-    'tempo.proxy_l2.no2.amf_total',
-    'tempo.proxy_l2.no2.amf_total_uncertainty',
-    'tempo.proxy_l2.no2.amf_troposphere',
-    'tempo.proxy_l2.no2.amf_stratosphere',
-    'tempo.proxy_l2.no2.ground_pixel_quality_flag'
-    'tempo.proxy_l2.hcho.vertical_column',
-    'tempo.proxy_l2.hcho.vertical_column_uncertainty',
-    'tempo.proxy_l2.hcho.amf',
-    'tempo.proxy_l2.hcho.amf_uncertainty',
-    'tempo.proxy_l2.o3p.total_ozone_column',
-    'tempo.proxy_l2.o3p.troposphere_ozone_column',
-    'tempo.proxy_l2.o3p.stratosphere_ozone_column',
-    'tempo.proxy_l2.o3p.ozone_information_content',
-    'tempo.proxy_l2.o3p.ground_pixel_quality_flag',
+    'tempo2.proxy_l2.no2.vertical_column_total',
+    'tempo2.proxy_l2.no2.vertical_column_total_uncertainty',
+    'tempo2.proxy_l2.no2.vertical_column_troposphere',
+    'tempo2.proxy_l2.no2.vertical_column_stratosphere',
+    'tempo2.proxy_l2.no2.amf_total',
+    'tempo2.proxy_l2.no2.amf_total_uncertainty',
+    'tempo2.proxy_l2.no2.amf_troposphere',
+    'tempo2.proxy_l2.no2.amf_stratosphere',
+    'tempo2.proxy_l2.no2.ground_pixel_quality_flag'
+    'tempo2.proxy_l2.hcho.vertical_column',
+    'tempo2.proxy_l2.hcho.vertical_column_uncertainty',
+    'tempo2.proxy_l2.hcho.amf',
+    'tempo2.proxy_l2.hcho.amf_uncertainty',
+    'tempo2.proxy_l2.o3p.total_ozone_column',
+    'tempo2.proxy_l2.o3p.troposphere_ozone_column',
+    'tempo2.proxy_l2.o3p.stratosphere_ozone_column',
+    'tempo2.proxy_l2.o3p.ozone_information_content',
+    'tempo2.proxy_l2.o3p.ground_pixel_quality_flag',
     'tropomi.offl.no2.nitrogendioxide_tropospheric_column',
     'tropomi.offl.no2.air_mass_factor_troposphere',
     'tropomi.offl.hcho.formaldehyde_tropospheric_vertical_column',

@@ -22,7 +22,7 @@ copyright = '2023, Barron H. Henderson'
 author = 'Barron H. Henderson'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.4.5'
 
 
 # -- General configuration ---------------------------------------------------
@@ -49,8 +49,14 @@ extensions = [
 ]
 
 sphinx_gallery_conf = {
-    'examples_dirs': '../../examples',
-    'gallery_dirs': 'auto_examples',
+    'examples_dirs': [
+        '../../examples/getdata', '../../examples/oversample',
+        '../../examples/timeseries'
+    ],
+    'gallery_dirs': [
+        'auto_examples/getdata', 'auto_examples/oversample',
+        'auto_examples/timeseries'
+    ],
 }
 
 # Generate the API documentation when building

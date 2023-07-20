@@ -22,5 +22,6 @@ the command below (may require kernel restart):
 To run an example in a notebook:
 
 1. Copy the command above into a new cell and run it.
-2. Copy the code from the example into a new cell and run it.
+2. Click on example below to see code.
+3. Copy the code from the example into a new cell and run it.
 
