@@ -269,6 +269,18 @@ def _progress(blocknum, readsize, totalsize):
             print('.', end='', flush=True)
 
 
+def _create_unverified_tls_context(*args, **kwds):
+    """
+    Thin wrapper around ssl._create_unverified_context that adds the option to
+    use TLS negotiation, which is currently used by RSIG servers.
+    """
+    import ssl
+    # Set up SSL context to allow legacy TLS versions
+    ctx = ssl._create_unverified_context(*args, **kwds)
+    ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
+    return ctx
+
+
 def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
     """
     Download file from RSIG using fault tolerance and optional caching
@@ -297,8 +309,6 @@ def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
     import ssl
     import os
 
-    ssl._create_default_https_context = ssl._create_unverified_context
-
     # If the file exists, get the current size
     if not overwrite and os.path.exists(outpath):
         stat = os.stat(outpath)
@@ -310,6 +320,9 @@ def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
     if dlsize > 0:
         print('Using cached:', outpath)
         return
+
+    _def_https_context = ssl._create_default_https_context
+    ssl._create_default_https_context = _create_unverified_tls_context
 
     # Try to download the file maxtries times
     tries = 0
@@ -342,6 +355,8 @@ def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
 
         if verbose > 0:
             print('')
+
+    ssl._create_default_https_context = _def_https_context
 
 
 def get_proj4(attrs, earth_radius=6370000.):
