@@ -1,8 +1,8 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi']
-__version__ = '0.4.5'
+__version__ = '0.4.6'
 
 import pandas as pd
-
+import requests
 
 _def_grid_kw = {
     '12US1': dict(
@@ -269,6 +269,41 @@ def _progress(blocknum, readsize, totalsize):
             print('.', end='', flush=True)
 
 
+def _create_unverified_tls_context(*args, **kwds):
+    """
+    Thin wrapper around ssl._create_unverified_context that adds the option to
+    use TLS negotiation, which is currently used by RSIG servers.
+    """
+    import ssl
+    # Set up SSL context to allow legacy TLS versions
+    ctx = ssl._create_unverified_context(*args, **kwds)
+    ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
+    return ctx
+
+
+class LegacyAdapter(requests.adapters.HTTPAdapter):
+    # "Transport adapter" that allows us to use custom ssl_context.
+
+    def __init__(self, **kwargs):
+        import ssl
+        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
+        self.ssl_context = ctx
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, connections, maxsize, block=False):
+        import urllib3
+        self.poolmanager = urllib3.poolmanager.PoolManager(
+            num_pools=connections, maxsize=maxsize,
+            block=block, ssl_context=self.ssl_context)
+
+
+def legacy_get(*args, **kwds):
+    session = requests.session()
+    session.mount('https://', LegacyAdapter())
+    return session.get(*args, **kwds)
+
+
 def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
     """
     Download file from RSIG using fault tolerance and optional caching
@@ -297,8 +332,6 @@ def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
     import ssl
     import os
 
-    ssl._create_default_https_context = ssl._create_unverified_context
-
     # If the file exists, get the current size
     if not overwrite and os.path.exists(outpath):
         stat = os.stat(outpath)
@@ -310,6 +343,9 @@ def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
     if dlsize > 0:
         print('Using cached:', outpath)
         return
+
+    _def_https_context = ssl._create_default_https_context
+    ssl._create_default_https_context = _create_unverified_tls_context
 
     # Try to download the file maxtries times
     tries = 0
@@ -342,6 +378,8 @@ def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
 
         if verbose > 0:
             print('')
+
+    ssl._create_default_https_context = _def_https_context
 
 
 def get_proj4(attrs, earth_radius=6370000.):
@@ -701,11 +739,10 @@ class RsigApi:
             # 0,no2,no2(ppb),UTC hourly mean surface measured nitrogen ...,
             # ... -157 21 -51 64,2003-01-02T00:00:00Z,PT1H
         """
-        import requests
         import warnings
 
         if key not in self._description:
-            r = requests.get(
+            r = legacy_get(
                 f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
                 f'1.0.0&REQUEST=DescribeCoverage&COVERAGE={key}&compress=1'
             )
@@ -770,7 +807,6 @@ class RsigApi:
         import re
         import pandas as pd
         import warnings
-        import requests
 
         if as_dataframe and self._coveragesdf is not None:
             return self._coveragesdf
@@ -778,7 +814,7 @@ class RsigApi:
         if self._describecoverages is None:
             if verbose > 1:
                 print('Requesting...', flush=True)
-            self._describecoverages = requests.get(
+            self._describecoverages = legacy_get(
                 f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
                 '1.0.0&REQUEST=DescribeCoverage&compress=1'
             ).text
@@ -890,9 +926,8 @@ class RsigApi:
         At this time, the capabilities does not list cmaq.*
 
         """
-        import requests
         if self._capabilities is None:
-            self._capabilities = requests.get(
+            self._capabilities = legacy_get(
                 f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
                 '1.0.0&REQUEST=GetCapabilities&compress=1'
             )

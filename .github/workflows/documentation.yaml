@@ -17,8 +17,6 @@ jobs:
       - name: Sphinx build
         run: |
           cd docs
-          printf "openssl_conf = openssl_init\n\n[openssl_init]\nssl_conf = ssl_sect\n\n[ssl_sect]\nsystem_default = system_default_sect\n\n[system_default_sect]\nOptions = UnsafeLegacyRenegotiation\n" > openssl.cnf
-          export OPENSSL_CONF=${PWD}/openssl.cnf
           make html
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
