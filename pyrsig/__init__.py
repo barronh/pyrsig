@@ -1,5 +1,5 @@
-__all__ = ['RsigApi', 'RsigGui', 'open_ioapi']
-__version__ = '0.4.6'
+__all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi']
+__version__ = '0.5.1'
 
 import pandas as pd
 import requests
@@ -116,24 +116,34 @@ _keys = (
     'purpleair.pm25_corrected',
     'purpleair.pm25_corrected_hourly', 'purpleair.pm25_corrected_daily',
     'purpleair.pm25_corrected_monthly', 'purpleair.pm25_corrected_yearly',
-    'tempo2.proxy_l2.no2.vertical_column_total',
-    'tempo2.proxy_l2.no2.vertical_column_total_uncertainty',
-    'tempo2.proxy_l2.no2.vertical_column_troposphere',
-    'tempo2.proxy_l2.no2.vertical_column_stratosphere',
-    'tempo2.proxy_l2.no2.amf_total',
-    'tempo2.proxy_l2.no2.amf_total_uncertainty',
-    'tempo2.proxy_l2.no2.amf_troposphere',
-    'tempo2.proxy_l2.no2.amf_stratosphere',
-    'tempo2.proxy_l2.no2.ground_pixel_quality_flag'
-    'tempo2.proxy_l2.hcho.vertical_column',
-    'tempo2.proxy_l2.hcho.vertical_column_uncertainty',
-    'tempo2.proxy_l2.hcho.amf',
-    'tempo2.proxy_l2.hcho.amf_uncertainty',
-    'tempo2.proxy_l2.o3p.total_ozone_column',
-    'tempo2.proxy_l2.o3p.troposphere_ozone_column',
-    'tempo2.proxy_l2.o3p.stratosphere_ozone_column',
-    'tempo2.proxy_l2.o3p.ozone_information_content',
-    'tempo2.proxy_l2.o3p.ground_pixel_quality_flag',
+    'regridded.conus.monthly.tropomi.offl.no2',
+    'regridded.conus.monthly.tropomi.offl.hcho',
+    'regridded.conus.monthly.tropomi.offl.ch4',
+    'regridded.conus.monthly.tropomi.offl.co',
+    'regridded.conus.monthly.tropomi.rpro.no2',
+    'regridded.conus.seasonal.tropomi.offl.no2',
+    'regridded.conus.seasonal.tropomi.offl.hcho',
+    'regridded.conus.seasonal.tropomi.offl.ch4',
+    'regridded.conus.seasonal.tropomi.offl.co',
+    'regridded.conus.seasonal.tropomi.rpro.no2',
+    'tempo.proxy_l2.no2.vertical_column_total',
+    'tempo.proxy_l2.no2.vertical_column_total_uncertainty',
+    'tempo.proxy_l2.no2.vertical_column_troposphere',
+    'tempo.proxy_l2.no2.vertical_column_stratosphere',
+    'tempo.proxy_l2.no2.amf_total',
+    'tempo.proxy_l2.no2.amf_total_uncertainty',
+    'tempo.proxy_l2.no2.amf_troposphere',
+    'tempo.proxy_l2.no2.amf_stratosphere',
+    'tempo.proxy_l2.no2.ground_pixel_quality_flag'
+    'tempo.proxy_l2.hcho.vertical_column',
+    'tempo.proxy_l2.hcho.vertical_column_uncertainty',
+    'tempo.proxy_l2.hcho.amf',
+    'tempo.proxy_l2.hcho.amf_uncertainty',
+    'tempo.proxy_l2.o3p.total_ozone_column',
+    'tempo.proxy_l2.o3p.troposphere_ozone_column',
+    'tempo.proxy_l2.o3p.stratosphere_ozone_column',
+    'tempo.proxy_l2.o3p.ozone_information_content',
+    'tempo.proxy_l2.o3p.ground_pixel_quality_flag',
     'tropomi.offl.no2.nitrogendioxide_tropospheric_column',
     'tropomi.offl.no2.air_mass_factor_troposphere',
     'tropomi.offl.hcho.formaldehyde_tropospheric_vertical_column',
@@ -143,9 +153,11 @@ _keys = (
     'viirsnoaa.jrraod.AOD550', 'viirsnoaa.vaooo.AerosolOpticalDepth_at_550nm',
 )
 
-_nocorner_prefixes = ('airnow', 'aqs', 'purpleair', 'pandora', 'cmaq')
-_nolonlats_prefixes = ('cmaq',)
-_noregrid_prefixes = ('cmaq',)
+_nocorner_prefixes = (
+    'airnow', 'aqs', 'purpleair', 'pandora', 'cmaq', 'regridded'
+)
+_nolonlats_prefixes = ('cmaq', 'regridded')
+_noregrid_prefixes = ('cmaq', 'regridded')
 
 
 def _actionf(msg, action, ErrorTyp=None):
@@ -480,6 +492,105 @@ def customize_grid(grid_kw, bbox, clip=True):
     return ogrid_kw
 
 
+def save_ioapi(ds, path, format='NETCDF3_CLASSIC', **kwds):
+    """
+    Providing a function to clean-up meta-data for IOAPI.
+
+    Arguments
+    ---------
+    ds : xr.Dataset
+        Dataset that should be saved as IOAPI. Dimensions and coordinates
+        must support the conversion.
+    path : str
+        Path to save ioapi file
+    format : str
+        'NETCDF3_CLASSIC' or 'NETCDF4_CLASSIC'
+    kwds :
+        Passed to xr.Dataset.to_netcdf
+
+    Returns
+    -------
+    ds.to_netcdf
+        Saved file
+    """
+    import pandas as pd
+    import xarray as xr
+    import numpy as np
+
+    ods = ds[[]].copy(deep=True)
+    props = ods.attrs
+    props.update(ds.attrs)
+    outkeys = [
+        vk for vk, vv in ds.data_vars.items()
+        if 'PERIM' in vv.dims or 'ROW' in vv.dims
+    ]
+    nv = len(outkeys)
+    if 'ROW' in ds[outkeys[0]].dims:
+        ods.attrs['FTYPE'] = 1
+    elif 'PERIM' in ds[outkeys[0]].dims:
+        ods.attrs['FTYPE'] = 2
+
+    assert len(set([k[:16] for k in outkeys])) == nv
+    varlist = ''.join([k[:16].ljust(16) for k in outkeys])
+    dates = pd.to_datetime(ds.TSTEP.values)
+    dt = np.diff(dates).astype('d').max() / 1e9
+
+    dth = dt // 3600
+    dtm = (dt % 3600) // 60
+    dts = (dt % 60) // 1
+    timec = pd.to_datetime(
+        ds.TSTEP.min().values
+        + np.arange(len(dates)) * pd.to_timedelta(dt, unit='s')
+    )
+    jdays = timec.strftime('%Y%j').astype('i')
+    hms = timec.strftime('%H%M%S').astype('i')
+    ods['TFLAG'] = xr.DataArray(
+        np.array([jdays, hms]).T, name='TFLAG', dims=('TSTEP', 'DATE-TIME'),
+        attrs=dict(
+            long_name='TFLAG'.ljust(16), units='<YYYYJJJ,HHMMSS>',
+            var_desc='Time flag'.ljust(80)
+        )
+    ).expand_dims(VAR=nv).transpose('TSTEP', 'VAR', 'DATE-TIME')
+    ods.attrs['SDATE'] = int(ods['TFLAG'][0, 0, 0])
+    ods.attrs['STIME'] = int(ods['TFLAG'][0, 0, 1])
+    ods.attrs['TSTEP'] = int(f'{dth:.0f}{dtm:02.0f}{dts:02.0f}')
+
+    for dk in outkeys:
+        ok = dk[:16]
+        ods[ok] = ds[dk].copy()
+        vprops = ods[ok].attrs
+        vprops['long_name'] = vprops.get('long_name', ok)[:16].ljust(16)
+        vprops['var_desc'] = vprops.get('var_desc', ok)[:80].ljust(80)
+        vprops['units'] = vprops.get('units', 'unknown')[:16].ljust(16)
+
+    now = pd.to_datetime('now', utc=True)
+    props['CDATE'] = props['WDATE'] = int(now.strftime('%Y%j'))
+    props['CTIME'] = props['WTIME'] = int(now.strftime('%H%M%S'))
+    props['NCOLS'], props['NROWS'] = ds.dims['COL'], ds.dims['ROW']
+    props['NLAYS'], props['NVARS'] = ds.dims['LAY'], ods.dims['VAR']
+    props['XORIG'] = float(props['XORIG'] + ds.COL.min() - 0.5)
+    props['YORIG'] = float(props['YORIG'] + ds.COL.min() - 0.5)
+    s = [1]
+    for i, sm in enumerate(ods.LAY):
+        s.append(2 * sm - s[-1])
+
+    props['VAR-LIST'] = varlist
+    props['VGLVLS'] = np.array(s, dtype='f')
+    props['UPNAM'] = f'pyrsig {__version__}'.ljust(16)
+    defprops = {
+        'IOAPI_VERSION': 'not applicable'.ljust(16), 'EXEC_ID': '?'.ljust(80),
+        'FTYPE': 1, 'NTHIK': 1, 'GDTYP': 2, 'P_ALP': 33.0, 'P_BET': 45.0,
+        'P_GAM': -97.0, 'XCENT': -97.0, 'YCENT': 40.0,
+        'VGTYP': -9999, 'VGTOP': np.float32(5000.0),
+        'GDNAM': f'{"UNKNOWN":16s}'.ljust(16), 'metadata': ''
+    }
+
+    for pk, pdef in defprops.items():
+        ods.attrs.setdefault(pk, pdef)
+
+    return ods.to_netcdf(path, format=format, **kwds)
+
+
 def open_ioapi(path, metapath=None, earth_radius=6370000.):
     """
     Open an IOAPI file, add coordinate data, and optionally add RSIG metadata.
@@ -500,12 +611,38 @@ def open_ioapi(path, metapath=None, earth_radius=6370000.):
         Dataset with IOAPI metadata
     """
     import xarray as xr
-    import numpy as np
-    import warnings
 
     f = xr.open_dataset(path, engine='netcdf4')
+    f = add_ioapi_meta(
+        f, path=path, metapath=metapath, earth_radius=earth_radius
+    )
+    return f
+
+
+def add_ioapi_meta(ds, metapath=None, earth_radius=6370000., path=''):
+    """
+    Open an IOAPI file, add coordinate data, and optionally add RSIG metadata.
+
+    Arguments
+    ---------
+    ds : xr.Dataset
+        IOAPI dataset Path to IOAPI formatted files.
+    metapath : str
+        Path to metadata associated with the RSIG query. The metadata will be
+        added as metadata global property.
+    earth_radius : float
+        Assumed radius of the earth. 6370000 is the WRF default.
+
+    Returns
+    -------
+    outds : xarray.Dataset
+        Dataset with IOAPI metadata
+    """
+    import numpy as np
+    import warnings
+    f = ds
     lvls = f.attrs['VGLVLS']
-    tflag = f['TFLAG'][:, 0, :].astype('i').values
+    tflag = f['TFLAG'].astype('i').values[:, 0, :]
     yyyyjjj = tflag[:, 0]
     yyyyjjj = np.where(yyyyjjj < 1, 1970001, yyyyjjj)
     HHMMSS = tflag[:, 1]
@@ -542,6 +679,51 @@ def open_ioapi(path, metapath=None, earth_radius=6370000.):
         f.attrs['metadata'] = metatxt
 
     return f
+
+
+def open_mfioapi(
+    paths, metapaths=None, earth_radius=6370000., **kwargs
+):
+    """
+    Minimal version of open_mfdataset that is compatible with open_ioapi.
+    preprocess :  keyword defaults to add_ioapi_meta
+    concat_dim :  keyword defaults to 'TSTEP'
+
+    Arguments
+    ---------
+    paths : iterable
+        Paths to ioapi files to be opened.
+    metapaths : iterable
+        Paths to be added as a string metadata
+    earth_radius : float
+        Radius of the earth for projection.
+    kwargs :
+        See xr.open_mfdataset
+
+    Returns
+    -------
+
+    """
+    import xarray as xr
+    import functools
+
+    addio = functools.partial(add_ioapi_meta, earth_radius=earth_radius)
+    kwargs.setdefault('concat_dim', 'TSTEP')
+    kwargs.setdefault('preprocess', addio)
+    outf = xr.open_mfdataset(paths, **kwargs)
+    if metapaths is None:
+        metapaths = []
+    elif isinstance(metapaths, str):
+        metapaths = [metapaths]
+
+    metastr = ''
+    for metapath in metapaths:
+        with open(metapath, 'r') as mf:
+            metastr += metapath + ':\n' + mf.read()
+
+    outf.attrs['metadata'] = metastr
+
+    return outf
 
 
 class RsigApi:
