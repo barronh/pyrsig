@@ -1,7 +1,9 @@
 """
 Get DataFrame for AQS ozone
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================
 
+Shows how to get AQS observations as a Pandas DataFrame. Replace aqs.ozone
+with airnow.ozone to get near-real-time data.
 """
 
 import pyrsig

@@ -1,6 +1,6 @@
 """
 Oversample CONUS at 4k
-^^^^^^^^^^^^^^^^^^^^^^
+======================
 
 Create a 4km gridded product on a Continental US grid, but only download
 data over NC.

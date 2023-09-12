@@ -1,8 +1,12 @@
 """
 Get DataFrame for TropOMI NO2
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=============================
 
+Shows how to get TropOMI NO2 tropospheric column densities as a pandas
+DataFrame.
 """
+
+# sphinx_gallery_thumbnail_path = '_static/tropomidf.png'
 
 import pyrsig
 

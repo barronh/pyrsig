@@ -1,8 +1,12 @@
 """
 Get COARDS formatted NetCDF TropOMI NO2
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================================
 
+Shows how to get TropOMI as an xarray Dataset. This example downloads a NetCDF
+file with COARDS compliant metadata, which is opened and returned.
 """
+
+# sphinx_gallery_thumbnail_path = '_static/tropomicoards.png'
 
 import pyrsig
 

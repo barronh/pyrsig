@@ -1,6 +1,6 @@
 """
 NYC VIIRS AOD vs TropOMI NO2
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+============================
 
 Timeseries comparison of VIIRS AOD and TropOMI in NYC.
 """

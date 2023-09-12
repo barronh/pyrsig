@@ -1,6 +1,6 @@
 """
 Phoenix AQS vs TropOMI
-^^^^^^^^^^^^^^^^^^^^^^
+======================
 
 Timeseries comparison of NO2 from AQS and TropOMI in Phoenix.
 """
