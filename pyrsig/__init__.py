@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi']
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 
 import pandas as pd
 import requests
@@ -134,7 +134,7 @@ _keys = (
     'tempo.proxy_l2.no2.amf_total_uncertainty',
     'tempo.proxy_l2.no2.amf_troposphere',
     'tempo.proxy_l2.no2.amf_stratosphere',
-    'tempo.proxy_l2.no2.ground_pixel_quality_flag'
+    'tempo.proxy_l2.no2.ground_pixel_quality_flag',
     'tempo.proxy_l2.hcho.vertical_column',
     'tempo.proxy_l2.hcho.vertical_column_uncertainty',
     'tempo.proxy_l2.hcho.amf',
