@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi']
-__version__ = '0.5.2'
+__version__ = '0.6.0'
 
 import pandas as pd
 import requests
@@ -54,6 +54,16 @@ _def_grid_kw = {
         GDNAM='NORTHSOUTHAM', GDTYP=7, NCOLS=179, NROWS=154,
         XORIG=251759.25, YORIG=-1578187., XCELL=27000., YCELL=27000.,
         P_ALP=0., P_BET=0., P_GAM=-98., XCENT=-98., YCENT=0.
+    ),
+    'global_1pt0': dict(
+        GDNAM='GLOBAL', GDTYP=1, NCOLS=360, NROWS=180,
+        XORIG=-180, YORIG=-90, XCELL=1., YCELL=1.,
+        P_ALP=0., P_BET=0., P_GAM=0., XCENT=0., YCENT=0.
+    ),
+    'global_0pt1': dict(
+        GDNAM='GLOBAL', GDTYP=1, NCOLS=3600, NROWS=1800,
+        XORIG=-180, YORIG=-90, XCELL=0.1, YCELL=0.1,
+        P_ALP=0., P_BET=0., P_GAM=0., XCENT=0., YCENT=0.
     ),
 }
 
@@ -416,7 +426,9 @@ def get_proj4(attrs, earth_radius=6370000.):
     props['y_0'] = -props['YORIG']
     props.setdefault('earth_radius', earth_radius)
 
-    if props['GDTYP'] == 2:
+    if props['GDTYP'] == 1:
+        projstr = '+proj=lonlat +R{earth_radius}'.format(**props)
+    elif props['GDTYP'] == 2:
         projstr = (
             '+proj=lcc +lat_1={P_ALP} +lat_2={P_BET} +lat_0={YCENT}'
             ' +lon_0={XCENT} +R={earth_radius} +x_0={x_0} +y_0={y_0}'
@@ -1297,7 +1309,9 @@ class RsigApi:
         """
         grid_kw.setdefault('earth_radius', 6370000)
         GDTYP = grid_kw.get('GDTYP', 2)
-        if GDTYP == 2:
+        if GDTYP == 1:
+            projstr = '&LONLAT=1'
+        elif GDTYP == 2:
             projstr = '&LAMBERT={P_ALP},{P_BET},{XCENT},{YCENT}'
         elif GDTYP == 6:
             projstr = '&STEREOGRAPHIC={XCENT},{YCENT},{P_BET}'
