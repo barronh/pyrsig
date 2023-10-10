@@ -427,7 +427,7 @@ def get_proj4(attrs, earth_radius=6370000.):
     props.setdefault('earth_radius', earth_radius)
 
     if props['GDTYP'] == 1:
-        projstr = '+proj=lonlat +R{earth_radius}'.format(**props)
+        projstr = '+proj=lonlat +R={earth_radius}'.format(**props)
     elif props['GDTYP'] == 2:
         projstr = (
             '+proj=lcc +lat_1={P_ALP} +lat_2={P_BET} +lat_0={YCENT}'
@@ -481,6 +481,20 @@ def customize_grid(grid_kw, bbox, clip=True):
         grid_kw = _def_grid_kw[grid_kw]
 
     ogrid_kw = {k: v for k, v in grid_kw.items()}
+    # Lonlat box must be treated separately
+    if ogrid_kw['GDTYP'] == 1:
+        llx, lly = bbox[:2]
+        urx, ury = bbox[2:]
+        ncols = int(np.ceil((urx - llx) / ogrid_kw['XCELL']) + 4)
+        nrows = int(np.ceil((ury - lly) / ogrid_kw['YCELL']) + 4)
+        xorig = (int(llx / ogrid_kw['XCELL']) - 1) * ogrid_kw['XCELL']
+        yorig = (int(lly / ogrid_kw['YCELL']) - 1) * ogrid_kw['YCELL']
+        ogrid_kw['NCOLS'] = ncols
+        ogrid_kw['NROWS'] = nrows
+        ogrid_kw['XORIG'] = xorig
+        ogrid_kw['YORIG'] = yorig
+        return ogrid_kw
+
     proj4str = get_proj4(grid_kw)
     proj = pyproj.Proj(proj4str)
     llx, lly = proj(*bbox[:2])

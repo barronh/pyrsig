@@ -43,6 +43,21 @@ def test_tropomi_merc():
         print(ds.dims)
 
 
+def test_tropomi_lonlat():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2022-03-01', workdir=td,
+            bbox=(-97, 20, -65, 50), grid_kw='global_1pt0'
+        )
+        ds = rsigapi.to_ioapi(
+            'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
+        )
+        print(ds.dims)
+
+
 def test_tropomi_cache():
     from .. import RsigApi
     import tempfile
