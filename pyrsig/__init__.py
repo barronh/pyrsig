@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi']
-__version__ = '0.6.0'
+__version__ = '0.7.0'
 
 import pandas as pd
 import requests
@@ -248,7 +248,7 @@ def coverages_from_xml(txt):
                 envtxt = ''
                 for p in e['children']:
                     envtxt += ' ' + p['text']
-                record['bbox_str'] = envtxt
+                record['bbox_str'] = envtxt.strip()
 
             if e['tag'] == 'domainSet':
                 for s in e['children']:
@@ -755,7 +755,7 @@ def open_mfioapi(
 class RsigApi:
     def __init__(
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
-        tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None,
+        tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None, tempo_kw=None,
         server='ofmpub.epa.gov', compress=1, corners=1, encoding=None,
         overwrite=False, workdir='.', gridfit=False
     ):
@@ -792,6 +792,9 @@ class RsigApi:
             'maximum_ratio': 0.70, # float
             'agg_pct': 75, # 0-100
             'api_key': '<your key here>'
+        tempo_kw : dict
+          Dictionary of TEMPO filter parameters default
+            'api_key': '<your password>' # 'password'
         server : str
           'ofmpub.epa.gov' for external  users
           'maple.hesc.epa.gov' for on EPA VPN users
@@ -820,6 +823,9 @@ class RsigApi:
           Dictionary of filter properties
 
         tropomi_kw : dict
+          Dictionary of filter properties
+
+        tempo_kw : dict
           Dictionary of filter properties
 
         purpleair_kw : dict
@@ -875,6 +881,14 @@ class RsigApi:
 
         self.tropomi_kw = tropomi_kw
 
+        if tempo_kw is None:
+            tempo_kw = {}
+            tempo_kw['minimum_quality'] = 'normal'
+            tempo_kw['maximum_cloud_fraction'] = 1.0
+            tempo_kw['api_key'] = '<your password>'
+
+        self.tempo_kw = tempo_kw
+
         if viirsnoaa_kw is None:
             viirsnoaa_kw = {'minimum_quality': 'high'}
 
@@ -921,10 +935,10 @@ class RsigApi:
         label, and a short description.
 
         DescribeCoverage with a COVERAGE should be faster than descriptions
-        because it only returns a smalll xml chunk. Currently, DescribeCoverage
+        because it only returns a small xml chunk. Currently, DescribeCoverage
         with a COVERAGE specified is unreliable because of malformed xml. If
-        this fails, describe will instead request all coverages and query it
-        for the specific coverage. This is much slower and is being addressed.
+        this fails, describe will instead request all coverages and query the
+        specific coverage.
 
         Arguments
         ---------
@@ -974,7 +988,7 @@ class RsigApi:
 
         return coverages
 
-    def descriptions(self, as_dataframe=True, verbose=0):
+    def descriptions(self, as_dataframe=True, refresh=False, verbose=0):
         """
         Experimental and may change.
 
@@ -994,6 +1008,9 @@ class RsigApi:
         as_dataframe : bool
             Defaults to True and descriptions are returned as a dataframe.
             If False, returns a list of elements.
+        refresh : bool
+            If True, get new copy and save to ~/.pyrsig/descriptons.xml
+            If False (default), reload from saved if available.
         verbose : int
             If verbose is greater than 0, show warnings from parsing.
 
@@ -1015,20 +1032,17 @@ class RsigApi:
         import re
         import pandas as pd
         import warnings
+        import os
 
-        if as_dataframe and self._coveragesdf is not None:
-            return self._coveragesdf
+        descpath = os.path.expanduser('~/.pyrsig/DescribeCoverage.csv')
+        if not refresh and as_dataframe:
+            if self._coveragesdf is not None:
+                return self._coveragesdf
+            elif os.path.exists(descpath):
+                self._coveragesdf = pd.read_csv(descpath)
+                return self._coveragesdf
 
-        if self._describecoverages is None:
-            if verbose > 1:
-                print('Requesting...', flush=True)
-            self._describecoverages = legacy_get(
-                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
-                '1.0.0&REQUEST=DescribeCoverage&compress=1'
-            ).text
-
-        ctext = self._describecoverages
-
+        print('Refreshing descriptions...')
         # Start Cleaning Section
         # BHH 2023-05-10
         # This section provides "cleaning" to the xml content provided by
@@ -1047,7 +1061,7 @@ class RsigApi:
 
         # Regex, replacement
         resubsdesc = [
-            (descmidre, ''),
+            (descmidre, ''),  # concated coverages have extra open/close tags
             (re.compile('<='), '&lt;='),  # associated with <= 32 in Modis
             (
                 mismatchtempre,
@@ -1068,10 +1082,24 @@ class RsigApi:
                 '<rangeSet><RangeSet></RangeSet></rangeSet><supportedCRSs>'
             ),  # Ceiliometers have missing rangeset content and closing tags
         ]
-        for reg, sub in resubsdesc:
-            ctext = reg.sub(sub, ctext)
 
-        # End Cleaning Section
+        if self._describecoverages is None or refresh:
+            if verbose > 1:
+                print('Requesting...', flush=True)
+            self._describecoverages = legacy_get(
+                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
+                '1.0.0&REQUEST=DescribeCoverage'
+            ).text
+
+            ctext = self._describecoverages
+
+            for reg, sub in resubsdesc:
+                ctext = reg.sub(sub, ctext)
+
+            # End Cleaning Section
+            self._describecoverages = ctext
+
+        ctext = self._describecoverages
 
         # Selecting coverages and removing garbage when necessary.
         cleanre = re.compile(
@@ -1121,11 +1149,19 @@ class RsigApi:
 
         if as_dataframe:
             coverages = pd.DataFrame.from_records(coverages)
+            coverages['bbox_str'] = coverages['bbox_str'].fillna(
+                '-180 -90 180 90'
+            )
+            coverages['endPosition'] = coverages['endPosition'].fillna('now')
             coverages['prefix'] = coverages['name'].apply(
                 lambda x: x.split('.')[0]
             )
             coverages = coverages.drop('tag', axis=1)
             self._coveragesdf = coverages
+            # If you have arrived here, it means the file did not exist
+            # or was intended to be refreshed. So, make it.
+            os.makedirs(os.path.dirname(descpath), exist_ok=True)
+            self._coveragesdf.to_csv(descpath, index=False)
 
         return coverages
 
@@ -1235,6 +1271,7 @@ class RsigApi:
         grid_kw = self.grid_kw
         purpleair_kw = self.purpleair_kw
         tropomi_kw = self.tropomi_kw
+        tempo_kw = self.tempo_kw
         viirsnoaa_kw = self.viirsnoaa_kw
         if compress is None:
             compress = self.compress
@@ -1264,6 +1301,14 @@ class RsigApi:
         else:
             tropomistr = ''
 
+        if key.startswith('tempo.l2'):
+            tempostr = (
+                '&MAXIMUM_CLOUD_FRACTION={maximum_cloud_fraction}'
+                '&MINIMUM_QUALITY={minimum_quality}&KEY={api_key}'
+            ).format(**tempo_kw)
+        else:
+            tempostr = ''
+
         if key.startswith('purpleair'):
             purpleairstr = (
                 '&OUT_IN_FLAG={out_in_flag}&MAXIMUM_DIFFERENCE='
@@ -1292,8 +1337,8 @@ class RsigApi:
             f'&COVERAGE={key}'
             f'&COMPRESS={compress}'
         ) + (
-            purpleairstr + viirsnoaastr + tropomistr + gridstr + cornerstr
-            + nolonlatsstr
+            purpleairstr + viirsnoaastr + tropomistr + tempostr + gridstr
+            + cornerstr + nolonlatsstr
         )
 
         outpath = (
@@ -1570,16 +1615,20 @@ class RsigGui:
     @classmethod
     def from_api(cls, api):
         gui = cls()
-        (
-            gui._bbw.value,
-            gui._bbs.value,
-            gui._bbe.value,
-            gui._bbn.value,
-        ) = api.bbox
+        gui._bbwe.value = api.bbox[::2]
+        gui._bbsn.value = api.bbox[1::2]
         if api.bdate is not None:
-            gui._dates.value = api.bdate
+            bdate = pd.to_datetime(api.bdate)
+            gui._dates.value = bdate.floor('1D')
+            gui._hours.value = (
+                bdate - bdate.floor('1D')
+            ).total_seconds() // 3600
         if api.edate is not None:
-            gui._datee.value = api.edate
+            edate = pd.to_datetime(api.edate)
+            gui._datee.value = edate.floor('1D')
+            gui._houre.value = (
+                edate - edate.floor('1D')
+            ).total_seconds() // 3600
         if api.key is not None:
             gui._prodd.value = api.key
         if api.grid_kw is not None:
@@ -1602,53 +1651,81 @@ class RsigGui:
         # proceed with normal RsigApi usage
         """
         from datetime import date
-        from ipywidgets import Layout, Box, Dropdown, Label, FloatSlider
-        from ipywidgets import DatePicker, Textarea
-        form_item_layout = Layout(
-            display='flex', flex_flow='row', justify_content='space-between'
-        )
+        from ipywidgets import Layout, Box, Dropdown, Label, FloatRangeSlider
+        from ipywidgets import DatePicker, Textarea, BoundedIntText, Output
 
-        prodopts = RsigApi().keys()
-        self._prodd = prodd = Dropdown(options=prodopts)
+        api = RsigApi()
+        descdf = api.descriptions().copy()
+        descdf['begin'] = descdf['beginPosition']
+        descdf['end'] = descdf['endPosition']
+        descdf['bbox'] = descdf['bbox_str']
+        descdf['opt_txt'] = descdf.apply(
+            lambda x: '{name}\t({begin}-{end})\t({bbox})'.format(**x), axis=1
+        )
+        descdf['sort'] = ~descdf.name.isin(api.keys())
+        prodopts = descdf.sort_values(by=['sort', 'name'], ascending=True)[
+            ['opt_txt', 'name']
+        ].values.tolist()
+        l100 = Layout(width='95%')
+        l50 = Layout(width='30em')
+        self._prodd = prodd = Dropdown(
+            options=prodopts, description='Product', layout=l100,
+            value='tropomi.offl.no2.nitrogendioxide_tropospheric_column'
+        )
         self._gridd = gridd = Dropdown(
-            options=list(_def_grid_kw), value='12US1'
+            options=list(_def_grid_kw), value='12US1', description='grid',
+            layout=l50
         )
         self._dates = datesa = DatePicker(
-            description='Start Date', disabled=False,
+            description='Start Date', disabled=False, layout=l50,
             value=(
                 date.today()
                 - pd.to_timedelta('7d')
             )
         )
         self._datee = dateea = DatePicker(
-            description='End Date', disabled=False, value=datesa.value
+            description='End Date', disabled=False, value=datesa.value,
+            layout=l50
         )
-        self._bbw = bbw = FloatSlider(min=-180, max=180, value=-126)
-        self._bbe = bbe = FloatSlider(min=-180, max=180, value=-66)
-        self._bbs = bbs = FloatSlider(min=-90, max=90, value=24)
-        self._bbn = bbn = FloatSlider(min=-90, max=90, value=50)
-        self._workd = workd = Textarea(value='.')
+        self._hours = hours = BoundedIntText(
+            min=0, max=23, value=0, description='Start HR', layout=l50
+        )
+        self._houre = houre = BoundedIntText(
+            min=0, max=23, value=23, description='End HR', layout=l50
+        )
+        self._bbsn = FloatRangeSlider(
+            min=-90, max=90, value=(24, 50), description='South-North',
+            layout=l100
+        )
+        self._bbwe = FloatRangeSlider(
+            min=-180, max=180, value=(-126, -66), description='West-East',
+            layout=l100
+        )
+        self._workd = workd = Textarea(
+            value='.', description='Work Dir', layout=l100
+        )
+        self._out = Output(layout=l100)
         form_items = [
-            Box([Label(value='RSIG Options')], layout=form_item_layout),
-            Box([
-                Label(value='Data Product'), prodd
-            ], layout=form_item_layout),
-            Box([Label(value='Southest'), bbs, Label(value='Northest'), bbn]),
-            Box([Label(value='Westest'), bbw, Label(value='Eastest'), bbe]),
-            Box([
-                Label(value='Date Start'), datesa,
-                Label(value='End'), dateea
-            ], layout=form_item_layout),
-            Box([Label(value='Grid Option'), gridd], layout=form_item_layout),
-            Box([
-                Label(value='Working Directory'), workd
-            ], layout=form_item_layout),
+            Label(value='RSIG Options'),
+            prodd, self._bbsn, self._bbwe,
+            Box([datesa, hours]), Box([dateea, houre]),
+            gridd, workd, self._out
         ]
-
+        [
+            fi.observe(self._update_out, names='value')
+            for fi in form_items + [datesa, hours, dateea, houre]
+        ]
         self._form = Box(form_items, layout=Layout(
             display='flex', flex_flow='column', border='solid 2px',
-            align_items='stretch', width='50%'
+            align_items='stretch', width='100%'
         ))
+
+    def _update_out(self, *args):
+        from IPython.display import clear_output, display
+        fig = self.plotopts()
+        with self._out:
+            clear_output(wait=True)
+            display(fig)
 
     def date_range(self):
         import pandas as pd
@@ -1664,11 +1741,19 @@ class RsigGui:
 
     @property
     def bdate(self):
-        return self._dates.value
+        import pandas as pd
+        return (
+            pd.to_datetime(self._dates.value)
+            + pd.to_timedelta(self._hours.value, unit='H')
+        )
 
     @property
     def edate(self):
-        return self._datee.value
+        import pandas as pd
+        hms = self._houre.value * 3600 + 3599
+        return pd.to_datetime(
+            self._datee.value
+        ) + pd.to_timedelta(hms, unit='s')
 
     @property
     def grid_kw(self):
@@ -1676,10 +1761,9 @@ class RsigGui:
 
     @property
     def bbox(self):
-        return tuple([
-            v.value
-            for v in [self._bbw, self._bbs, self._bbe, self._bbn]
-        ])
+        w, e = self._bbwe.value
+        s, n = self._bbsn.value
+        return (w, s, e, n)
 
     @property
     def workdir(self):
@@ -1691,11 +1775,18 @@ class RsigGui:
 
         fig, ax = plt.subplots()
         bbw, bbs, bbe, bbn = self.bbox
+        c = {True: 'g', False: 'r'}.get(self.check(), 'r')
         ax.plot(
             [bbw, bbe, bbe, bbw, bbw],
             [bbs, bbs, bbn, bbn, bbs],
-            color='r'
+            color=c
         )
+        if c == 'r':
+            ax.text(
+                .5, .5, 'Invalid Options', horizontalalignment='center',
+                transform=ax.transAxes, color='r', fontsize=30,
+                bbox={'edgecolor': c, 'facecolor': 'white'}
+            )
         fig.suptitle(f'Query Options: {self.key}, {self.grid_kw}')
         ax.set(title=f'{self.bdate:%FT%H:%M:%S} {self.edate:%FT%H:%M:%S}')
         pycno.cno().drawstates(ax=ax)
