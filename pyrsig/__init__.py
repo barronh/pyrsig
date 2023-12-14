@@ -308,9 +308,12 @@ class LegacyAdapter(requests.adapters.HTTPAdapter):
 
     def __init__(self, **kwargs):
         import ssl
+        def_ctx = ssl._create_default_https_context
+        ssl._create_default_https_context = _create_unverified_tls_context
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
         self.ssl_context = ctx
+        ssl._create_default_https_context = def_ctx
         super().__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
@@ -320,10 +323,21 @@ class LegacyAdapter(requests.adapters.HTTPAdapter):
             block=block, ssl_context=self.ssl_context)
 
 
-def legacy_get(*args, **kwds):
+def legacy_get(url, *args, **kwds):
+    import copy
     session = requests.session()
-    session.mount('https://', LegacyAdapter())
-    return session.get(*args, **kwds)
+    la = LegacyAdapter()
+
+    # Maple has a bad certificate, so here if you are using maple
+    # I disable the certificate, but no the warning
+    if 'maple' in url:
+        la.ssl_context.check_hostname = False
+        kwds = copy.copy(kwds)
+        kwds.setdefault('verify', False)
+
+    session.mount('https://', la)
+
+    return session.get(url, *args, **kwds)
 
 
 def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
@@ -787,10 +801,11 @@ class RsigApi:
         purpleair_kw : dict
           Dictionary of purpleair filter parameters and api_key.
             'out_in_flag': 0, # options 0, 2, ''
-            'freq': 'hourly', # options hourly, daily, monthly, yearly
+            'freq': 'hourly', # options hourly, daily, monthly, yearly, none
             'maximum_difference': 5, # integer
             'maximum_ratio': 0.70, # float
             'agg_pct': 75, # 0-100
+            'default_humidity': 50,
             'api_key': '<your key here>'
         tempo_kw : dict
           Dictionary of TEMPO filter parameters default
@@ -840,6 +855,7 @@ class RsigApi:
         self._capabilities = None
         self._describecoverages = None
         self._coveragesdf = None
+        self._capabilitiesdf = None
         self.server = server
         self.key = key
         self.compress = compress
@@ -877,29 +893,40 @@ class RsigApi:
         self.grid_kw = grid_kw
 
         if tropomi_kw is None:
-            tropomi_kw = {'minimum_quality': 75, 'maximum_cloud_fraction': 1.0}
+            tropomi_kw = {}
+
+        tropomi_kw.setdefault('minimum_quality', 75)
+        tropomi_kw.setdefault('maximum_cloud_fraction', 1.0)
 
         self.tropomi_kw = tropomi_kw
 
         if tempo_kw is None:
             tempo_kw = {}
-            tempo_kw['minimum_quality'] = 'normal'
-            tempo_kw['maximum_cloud_fraction'] = 1.0
-            tempo_kw['api_key'] = '<your password>'
+
+        tempo_kw.setdefault('minimum_quality', 'normal')
+        tempo_kw.setdefault('maximum_cloud_fraction', 1.0)
+        tempo_kw.setdefault('api_key', '<your password>')
 
         self.tempo_kw = tempo_kw
 
         if viirsnoaa_kw is None:
-            viirsnoaa_kw = {'minimum_quality': 'high'}
+            viirsnoaa_kw = {}
+
+        viirsnoaa_kw.setdefault('minimum_quality', 'high')
 
         self.viirsnoaa_kw = viirsnoaa_kw
 
         if purpleair_kw is None:
-            purpleair_kw = {
-                'out_in_flag': 0, 'freq': 'hourly',
-                'maximum_difference': 5, 'maximum_ratio': 0.70,
-                'agg_pct': 75, 'api_key': '<your key here>'
-            }
+            purpleair_kw = {}
+
+        defpurp_kw = {
+            'out_in_flag': 0, 'freq': 'hourly',
+            'maximum_difference': 5, 'maximum_ratio': 0.70,
+            'agg_pct': 75, 'api_key': '<your key here>',
+            'default_humidity': 50.000000
+        }
+        for k, v in defpurp_kw.items():
+            purpleair_kw.setdefault(k, v)
 
         self.purpleair_kw = purpleair_kw
 
@@ -1165,16 +1192,75 @@ class RsigApi:
 
         return coverages
 
-    def capabilities(self):
+    def capabilities(self, as_dataframe=True, refresh=False, verbose=0):
         """
         At this time, the capabilities does not list cmaq.*
-
         """
-        if self._capabilities is None:
+        import re
+        import pandas as pd
+        import os
+        import io
+
+        cappath = os.path.expanduser('~/.pyrsig/GetCapabilities.csv')
+        if not refresh and as_dataframe:
+            if self._capabilitiesdf is not None:
+                return self._capabilitiesdf
+            elif os.path.exists(cappath):
+                self._capabilitiesdf = pd.read_csv(cappath)
+                return self._capabilitiesdf
+
+        if refresh or self._capabilities is None:
             self._capabilities = legacy_get(
                 f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
                 '1.0.0&REQUEST=GetCapabilities&compress=1'
             )
+
+        if as_dataframe:
+            os.makedirs(os.path.dirname(cappath), exist_ok=True)
+            cre = re.compile(
+                '<CoverageOfferingBrief>.+?</CoverageOfferingBrief>',
+                re.DOTALL + re.M
+            )
+            gre = re.compile(
+                r'<lonLatEnvelope srsName="WGS84\(DD\)">\s*<gml:pos>(.+?)'
+                + r'</gml:pos>\s*<gml:pos>(.+?)</gml:pos>\s*</lonLatEnvelope>',
+                re.M
+            )
+            tre = re.compile(r'>\s+<', re.M)
+            ctext = self._capabilities.text
+            ctext = '\n'.join(cre.findall(ctext))
+            ctext = gre.sub(r'<bbox_str>\1 \2</bbox_str>', ctext)
+            ctext = tre.sub(r'><', ctext)
+            # Cleanup... for known issues
+            ctext = ctext.replace('>yyy', '>')
+            ctext = ctext.replace('<=', 'less than or equal to ')
+            ctext = ctext.replace('>0=', 'greater than 0 =')
+            ctext = ctext.replace('<0=', 'less than 0 = ')
+            # version 1.5
+            if hasattr(pd, 'read_xml'):
+                ctext = f"""<?xml version="1.0" encoding="UTF-8" ?>
+                <WCS_Capabilities>
+                {ctext}
+                </WCS_Capabilities>"""
+                capabilitiesdf = pd.read_xml(io.StringIO(ctext))
+            else:
+                ccsv = ctext.replace('"', '\'')
+                ccsv = ccsv.replace('</name><label>', '","')
+                ccsv = ccsv.replace('</label><description>', '","')
+                ccsv = ccsv.replace('</description><bbox_str>', '","')
+                ccsv = ccsv.replace(
+                    '</bbox_str></CoverageOfferingBrief>', '"\n'
+                )
+                ccsv = ccsv.replace('<CoverageOfferingBrief><name>', '"')
+                ccsv = 'name,label,description,bbox_str\n' + ccsv
+                capabilitiesdf = pd.read_csv(io.StringIO(ccsv))
+
+            capabilitiesdf['prefix'] = capabilitiesdf['name'].apply(
+                lambda x: x.split('.')[0]
+            )
+            capabilitiesdf.to_csv(cappath, index=False)
+            self._capabilitiesdf = capabilitiesdf
+            return self._capabilitiesdf
 
         return self._capabilities
 
@@ -1314,7 +1400,7 @@ class RsigApi:
                 '&OUT_IN_FLAG={out_in_flag}&MAXIMUM_DIFFERENCE='
                 '{maximum_difference}&MAXIMUM_RATIO={maximum_ratio}'
                 '&AGGREGATE={freq}&MINIMUM_AGGREGATION_COUNT_PERCENTAGE='
-                '{agg_pct}&KEY={api_key}'
+                '{agg_pct}&DEFAULT_HUMIDITY={default_humidity}&KEY={api_key}'
             ).format(**purpleair_kw)
         else:
             purpleairstr = ''
@@ -1392,7 +1478,7 @@ class RsigApi:
 
     def to_dataframe(
         self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
-        parse_dates=False, withmeta=False, verbose=0
+        parse_dates=False, withmeta=False, verbose=0, backend='ascii'
     ):
         """
         All arguments default to those provided during initialization.
@@ -1426,12 +1512,18 @@ class RsigApi:
             Results from download
 
         """
+        from . import xdr
+        assert backend in {'ascii', 'xdr'}
         outpath = self.get_file(
-            'ascii', key=key, bdate=bdate, edate=edate, bbox=bbox,
+            backend, key=key, bdate=bdate, edate=edate, bbox=bbox,
             grid=False, verbose=verbose,
             compress=1
         )
-        df = pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
+        if backend == 'ascii':
+            df = pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
+        else:
+            df = xdr.from_xdrfile(outpath, na_values=[-9999., -999])
+
         if withmeta:
             metapath = self.get_file(
                 'ascii', key=key, bdate=bdate, edate=edate, bbox=bbox,
