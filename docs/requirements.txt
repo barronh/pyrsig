@@ -8,7 +8,7 @@ xarray
 netcdf4
 pycno
 pyproj
-sphinx
+sphinx==7.0.1
 sphinx-rtd-theme
 sphinx-gallery<=0.13
 sphinx_design
