@@ -806,10 +806,10 @@ class RsigApi:
             'maximum_ratio': 0.70, # float
             'agg_pct': 75, # 0-100
             'default_humidity': 50,
-            'api_key': '<your key here>'
+            'api_key': 'your_key_here'
         tempo_kw : dict
           Dictionary of TEMPO filter parameters default
-            'api_key': '<your password>' # 'password'
+            'api_key': 'your_key_here' # 'password'
         server : str
           'ofmpub.epa.gov' for external  users
           'maple.hesc.epa.gov' for on EPA VPN users
@@ -905,7 +905,7 @@ class RsigApi:
 
         tempo_kw.setdefault('minimum_quality', 'normal')
         tempo_kw.setdefault('maximum_cloud_fraction', 1.0)
-        tempo_kw.setdefault('api_key', '<your password>')
+        tempo_kw.setdefault('api_key', 'your_key_here')
 
         self.tempo_kw = tempo_kw
 
@@ -922,7 +922,7 @@ class RsigApi:
         defpurp_kw = {
             'out_in_flag': 0, 'freq': 'hourly',
             'maximum_difference': 5, 'maximum_ratio': 0.70,
-            'agg_pct': 75, 'api_key': '<your key here>',
+            'agg_pct': 75, 'api_key': 'your_key_here',
             'default_humidity': 50.000000
         }
         for k, v in defpurp_kw.items():
@@ -1276,10 +1276,7 @@ class RsigApi:
         if offline:
             keys = tuple(_keys)
         else:
-            keys = []
-            for line in self.capabilities().text.split('\n'):
-                if line.startswith('            <name>'):
-                    keys.append(line.split('name')[1][1:-2])
+            keys = sorted(self.capabilities(refresh=True).name.unique())
 
         return keys
 
@@ -1388,6 +1385,9 @@ class RsigApi:
             tropomistr = ''
 
         if key.startswith('tempo.l2'):
+            if tempo_kw['api_key'] == 'your_key_here':
+                raise ValueError('''You must set the tempo_kw api_key
+(e.g., api.tempo_kw["api_key"] = "...") before submitting a query.''')
             tempostr = (
                 '&MAXIMUM_CLOUD_FRACTION={maximum_cloud_fraction}'
                 '&MINIMUM_QUALITY={minimum_quality}&KEY={api_key}'
@@ -1396,6 +1396,9 @@ class RsigApi:
             tempostr = ''
 
         if key.startswith('purpleair'):
+            if purpleair_kw['api_key'] == 'your_key_here':
+                raise ValueError('''You must set the purpleair_kw api_key
+(e.g., api.purpleair_kw["api_key"] = "9...") before submitting a query.''')
             purpleairstr = (
                 '&OUT_IN_FLAG={out_in_flag}&MAXIMUM_DIFFERENCE='
                 '{maximum_difference}&MAXIMUM_RATIO={maximum_ratio}'
