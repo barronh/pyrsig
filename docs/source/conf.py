@@ -12,8 +12,19 @@
 #
 import os
 import sys
+from sphinx_gallery.sorting import ExplicitOrder
+# from sphinx_gallery.sorting import ExampleTitleSortKey 
+from sphinx_gallery.sorting import FileNameSortKey
 sys.path.insert(0, os.path.abspath('..'))
 
+
+with open('../../pyrsig/__init__.py', 'r') as initf:
+    for _l in initf.readlines():
+        if _l.startswith('__version__ = '):
+            release = _l.split(' = ')[-1]
+            break
+    else:
+        release = '0.0.0'
 
 # -- Project information -----------------------------------------------------
 
@@ -51,6 +62,12 @@ extensions = [
 sphinx_gallery_conf = {
     'examples_dirs': '../../examples',
     'gallery_dirs': 'auto_examples',
+    'subsection_order': ExplicitOrder([
+        '../../examples/getdata',
+        '../../examples/timeseries',
+        '../../examples/oversample',
+    ]),
+    'within_subsection_order': FileNameSortKey,
 }
 
 # Generate the API documentation when building
