@@ -1,80 +1,11 @@
-__all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi']
-__version__ = '0.7.0'
+__all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq']
+__version__ = '0.8.0'
 
+from . import cmaq
+from .cmaq import open_ioapi, open_mfioapi
 import pandas as pd
 import requests
-
-_def_grid_kw = {
-    '12US1': dict(
-        GDNAM='12US1', GDTYP=2, NCOLS=459, NROWS=299,
-        XORIG=-2556000.0, YORIG=-1728000.0, XCELL=12000., YCELL=12000.,
-        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
-    ),
-    '4US1': dict(
-        GDNAM='4US1', GDTYP=2, NCOLS=459 * 3, NROWS=299 * 3,
-        XORIG=-2556000.0, YORIG=-1728000.0, XCELL=4000., YCELL=4000.,
-        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
-    ),
-    '1US1': dict(
-        GDNAM='1US1', GDTYP=2, NCOLS=459 * 12, NROWS=299 * 12,
-        XORIG=-2556000.0, YORIG=-1728000.0, XCELL=1000., YCELL=1000.,
-        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
-    ),
-    '12US2': dict(
-        GDNAM='12US2', GDTYP=2, NCOLS=396, NROWS=246,
-        XORIG=-2412000.0, YORIG=-1620000.0, XCELL=12000., YCELL=12000.,
-        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
-    ),
-    '4US2': dict(
-        GDNAM='4US2', GDTYP=2, NCOLS=396 * 3, NROWS=246 * 3,
-        XORIG=-2412000.0, YORIG=-1620000.0, XCELL=4000., YCELL=4000.,
-        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
-    ),
-    '1US2': dict(
-        GDNAM='1US2', GDTYP=2, NCOLS=396 * 12, NROWS=246 * 12,
-        XORIG=-2412000.0, YORIG=-1620000.0, XCELL=1000., YCELL=1000.,
-        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
-    ),
-    '36US3': dict(
-        GDNAM='36US3', GDTYP=2, NCOLS=172, NROWS=148,
-        XORIG=-2952000.0, YORIG=-2772000.0, XCELL=36000., YCELL=36000.,
-        P_ALP=33., P_BET=45., P_GAM=-97., XCENT=-97., YCENT=40.
-    ),
-    '108NHEMI2': dict(
-        GDNAM='108NHEMI2', GDTYP=6, NCOLS=187, NROWS=187,
-        XORIG=-10098000.0, YORIG=-10098000.0, XCELL=108000., YCELL=108000.,
-        P_ALP=1., P_BET=45., P_GAM=-98., XCENT=-98., YCENT=90.
-    ),
-    '36NHEMI2': dict(
-        GDNAM='36NHEMI2', GDTYP=6, NCOLS=187 * 3, NROWS=187 * 3,
-        XORIG=-10098000.0, YORIG=-10098000.0, XCELL=36000., YCELL=36000.,
-        P_ALP=1., P_BET=45., P_GAM=-98., XCENT=-98., YCENT=90.
-    ),
-    'NORTHSOUTHAM': dict(
-        GDNAM='NORTHSOUTHAM', GDTYP=7, NCOLS=179, NROWS=154,
-        XORIG=251759.25, YORIG=-1578187., XCELL=27000., YCELL=27000.,
-        P_ALP=0., P_BET=0., P_GAM=-98., XCENT=-98., YCENT=0.
-    ),
-    'global_1pt0': dict(
-        GDNAM='GLOBAL', GDTYP=1, NCOLS=360, NROWS=180,
-        XORIG=-180, YORIG=-90, XCELL=1., YCELL=1.,
-        P_ALP=0., P_BET=0., P_GAM=0., XCENT=0., YCENT=0.
-    ),
-    'global_0pt1': dict(
-        GDNAM='GLOBAL', GDTYP=1, NCOLS=3600, NROWS=1800,
-        XORIG=-180, YORIG=-90, XCELL=0.1, YCELL=0.1,
-        P_ALP=0., P_BET=0., P_GAM=0., XCENT=0., YCENT=0.
-    ),
-}
-
-_shared_grid_kw = dict(
-    VGTYP=7, VGTOP=5000., NLAYS=35, earth_radius=6370000., g=9.81, R=287.04,
-    A=50., T0=290, P0=1000e2, REGRID_AGGREGATE='None'
-)
-
-for key in _def_grid_kw:
-    for pk, pv in _shared_grid_kw.items():
-        _def_grid_kw[key].setdefault(pk, pv)
+from .utils import customize_grid, def_grid_kw as _def_grid_kw
 
 # Used to shorten pandora names for 80 character PEP
 _trvca = 'tropospheric_vertical_column_amount'
@@ -106,7 +37,7 @@ _keys = (
     'pandora.L2_rfus5p1_8.direct_formaldehyde_air_mass_factor',
     'pandora.L2_rfus5p1_8.direct_formaldehyde_air_mass_factor_uncertainty',
     'pandora.L2_rfus5p1_8.formaldehyde_total_vertical_column_amount',
-    'pandora.L2_rfus5p1_8.formaldehyde_vertical_column_amount_uncertainty'
+    'pandora.L2_rfus5p1_8.formaldehyde_vertical_column_amount_uncertainty',
     f'pandora.L2_rnvh3p1_8.water_vapor_{_trvca}',
     f'pandora.L2_rnvh3p1_8.water_vapor_{_trvca}_uncertainty',
     'pandora.L2_rnvs3p1_8.nitrogen_dioxide_vertical_column_amount',
@@ -418,358 +349,11 @@ def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
     ssl._create_default_https_context = _def_https_context
 
 
-def get_proj4(attrs, earth_radius=6370000.):
-    """
-    Create a proj4 formatted grid definition using IOAPI attrs and earth_radius
-
-    Arguments
-    ---------
-    attrs : dict-like
-        Mappable of IOAPI properties that supports the items method
-    earth_radius : float
-        Assumed radius of the earth. 6370000 is the WRF default.
-
-    Returns
-    -------
-    projstr : str
-        proj4 formatted string such that the domain southwest corner starts at
-        (0, 0) and ends at (NCOLS, NROWS)
-    """
-    props = {k: v for k, v in attrs.items()}
-    props['x_0'] = -props['XORIG']
-    props['y_0'] = -props['YORIG']
-    props.setdefault('earth_radius', earth_radius)
-
-    if props['GDTYP'] == 1:
-        projstr = '+proj=lonlat +R={earth_radius}'.format(**props)
-    elif props['GDTYP'] == 2:
-        projstr = (
-            '+proj=lcc +lat_1={P_ALP} +lat_2={P_BET} +lat_0={YCENT}'
-            ' +lon_0={XCENT} +R={earth_radius} +x_0={x_0} +y_0={y_0}'
-            ' +to_meter={XCELL} +no_defs'
-        ).format(**props)
-    elif props['GDTYP'] == 6:
-        projstr = (
-            '+proj=stere +lat_0={lat_0} +lat_ts={P_BET} +lon_0={XCENT}'
-            + ' +x_0={x_0} +y_0={y_0} +R={earth_radius} +to_meter={XCELL}'
-            + ' +no_defs'
-        ).format(lat_0=props['P_ALP'] * 90, **props)
-    elif props['GDTYP'] == 7:
-        projstr = (
-            '+proj=merc +R={earth_radius} +lat_ts=0 +lon_0={XCENT}'
-            + ' +x_0={x_0} +y_0={y_0} +to_meter={XCELL}'
-            + ' +no_defs'
-        ).format(**props)
-    else:
-        raise ValueError('GDTYPE {GDTYP} not implemented'.format(**props))
-
-    return projstr
-
-
-def customize_grid(grid_kw, bbox, clip=True):
-    """
-    Redefine grid_kw to cover bbox by removing extra rows and columns and
-    redefining XORIG, YORIG, NCOLS and NROWS.
-
-    Arguments
-    ---------
-    grid_kw : dict or str
-        If str, must be a known grid in default grids.
-        If dict, must include all IOAPI grid metadata properties
-    bbox : tuple
-        wlon, slat, elon, nlat in decimal degrees (-180 to 180)
-    clip : bool
-        If True, limit grid to original grid bounds
-
-    Returns
-    -------
-    ogrid_kw : dict
-        IOAPI grid metadata properties with XORIG/YORIG and NCOLS/NROWS
-        adjusted such that it only covers bbox or (if clip) only covers
-        the portion of bbox covered by the original grid_kw.
-    """
-    import pyproj
-    import numpy as np
-
-    if isinstance(grid_kw, str):
-        grid_kw = _def_grid_kw[grid_kw]
-
-    ogrid_kw = {k: v for k, v in grid_kw.items()}
-    # Lonlat box must be treated separately
-    if ogrid_kw['GDTYP'] == 1:
-        llx, lly = bbox[:2]
-        urx, ury = bbox[2:]
-        ncols = int(np.ceil((urx - llx) / ogrid_kw['XCELL']) + 4)
-        nrows = int(np.ceil((ury - lly) / ogrid_kw['YCELL']) + 4)
-        xorig = (int(llx / ogrid_kw['XCELL']) - 1) * ogrid_kw['XCELL']
-        yorig = (int(lly / ogrid_kw['YCELL']) - 1) * ogrid_kw['YCELL']
-        ogrid_kw['NCOLS'] = ncols
-        ogrid_kw['NROWS'] = nrows
-        ogrid_kw['XORIG'] = xorig
-        ogrid_kw['YORIG'] = yorig
-        return ogrid_kw
-
-    proj4str = get_proj4(grid_kw)
-    proj = pyproj.Proj(proj4str)
-    llx, lly = proj(*bbox[:2])
-    urx, ury = proj(*bbox[2:])
-    midx, midy = proj((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2)
-    maxy = np.max([lly, ury, midy])
-    miny = np.min([lly, ury, midy])
-    maxx = np.max([llx, urx, midx])
-    minx = np.min([llx, urx, midx])
-
-    lli, llj = np.floor([minx, miny]).astype('i')
-    uri, urj = np.ceil([maxx, maxy]).astype('i')
-    if clip:
-        lli, llj = np.maximum(0, [lli, llj])
-        uri = np.minimum(grid_kw['NCOLS'], uri)
-        urj = np.minimum(grid_kw['NROWS'], urj)
-    ogrid_kw['XORIG'] = grid_kw['XORIG'] + lli * grid_kw['XCELL']
-    ogrid_kw['YORIG'] = grid_kw['YORIG'] + llj * grid_kw['YCELL']
-    ogrid_kw['NCOLS'] = uri - lli
-    ogrid_kw['NROWS'] = urj - llj
-    return ogrid_kw
-
-
-def save_ioapi(ds, path, format='NETCDF3_CLASSIC', **kwds):
-    """
-    Providing a function to clean-up meta-data for IOAPI.
-
-    Arguments
-    ---------
-    ds : xr.Dataset
-        Dataset that should be saved as IOAPI. Dimensions and coordinates
-        must support the conversion.
-    path : str
-        Path to save ioapi file
-    format : str
-        'NETCDF3_CLASSIC' or 'NETCDF4_CLASSIC'
-    kwds :
-        Passed to xr.Dataset.to_netcdf
-
-    Returns
-    -------
-    ds.to_netcdf
-        Saved file
-    """
-    import pandas as pd
-    import xarray as xr
-    import numpy as np
-
-    ods = ds[[]].copy(deep=True)
-    props = ods.attrs
-    props.update(ds.attrs)
-    outkeys = [
-        vk for vk, vv in ds.data_vars.items()
-        if 'PERIM' in vv.dims or 'ROW' in vv.dims
-    ]
-    nv = len(outkeys)
-    if 'ROW' in ds[outkeys[0]].dims:
-        ods.attrs['FTYPE'] = 1
-    elif 'PERIM' in ds[outkeys[0]].dims:
-        ods.attrs['FTYPE'] = 2
-
-    assert len(set([k[:16] for k in outkeys])) == nv
-    varlist = ''.join([k[:16].ljust(16) for k in outkeys])
-    dates = pd.to_datetime(ds.TSTEP.values)
-    dt = np.diff(dates).astype('d').max() / 1e9
-
-    dth = dt // 3600
-    dtm = (dt % 3600) // 60
-    dts = (dt % 60) // 1
-    timec = pd.to_datetime(
-        ds.TSTEP.min().values
-        + np.arange(len(dates)) * pd.to_timedelta(dt, unit='s')
-    )
-    jdays = timec.strftime('%Y%j').astype('i')
-    hms = timec.strftime('%H%M%S').astype('i')
-    ods['TFLAG'] = xr.DataArray(
-        np.array([jdays, hms]).T, name='TFLAG', dims=('TSTEP', 'DATE-TIME'),
-        attrs=dict(
-            long_name='TFLAG'.ljust(16), units='<YYYYJJJ,HHMMSS>',
-            var_desc='Time flag'.ljust(80)
-        )
-    ).expand_dims(VAR=nv).transpose('TSTEP', 'VAR', 'DATE-TIME')
-    ods.attrs['SDATE'] = int(ods['TFLAG'][0, 0, 0])
-    ods.attrs['STIME'] = int(ods['TFLAG'][0, 0, 1])
-    ods.attrs['TSTEP'] = int(f'{dth:.0f}{dtm:02.0f}{dts:02.0f}')
-
-    for dk in outkeys:
-        ok = dk[:16]
-        ods[ok] = ds[dk].copy()
-        vprops = ods[ok].attrs
-        vprops['long_name'] = vprops.get('long_name', ok)[:16].ljust(16)
-        vprops['var_desc'] = vprops.get('var_desc', ok)[:80].ljust(80)
-        vprops['units'] = vprops.get('units', 'unknown')[:16].ljust(16)
-
-    now = pd.to_datetime('now', utc=True)
-    props['CDATE'] = props['WDATE'] = int(now.strftime('%Y%j'))
-    props['CTIME'] = props['WTIME'] = int(now.strftime('%H%M%S'))
-    props['NCOLS'], props['NROWS'] = ds.dims['COL'], ds.dims['ROW']
-    props['NLAYS'], props['NVARS'] = ds.dims['LAY'], ods.dims['VAR']
-    props['XORIG'] = float(props['XORIG'] + ds.COL.min() - 0.5)
-    props['YORIG'] = float(props['YORIG'] + ds.COL.min() - 0.5)
-    s = [1]
-    for i, sm in enumerate(ods.LAY):
-        s.append(2 * sm - s[-1])
-
-    props['VAR-LIST'] = varlist
-    props['VGLVLS'] = np.array(s, dtype='f')
-    props['UPNAM'] = f'pyrsig {__version__}'.ljust(16)
-    defprops = {
-        'IOAPI_VERSION': 'not applicable'.ljust(16), 'EXEC_ID': '?'.ljust(80),
-        'FTYPE': 1, 'NTHIK': 1, 'GDTYP': 2, 'P_ALP': 33.0, 'P_BET': 45.0,
-        'P_GAM': -97.0, 'XCENT': -97.0, 'YCENT': 40.0,
-        'VGTYP': -9999, 'VGTOP': np.float32(5000.0),
-        'GDNAM': f'{"UNKNOWN":16s}'.ljust(16), 'metadata': ''
-    }
-
-    for pk, pdef in defprops.items():
-        ods.attrs.setdefault(pk, pdef)
-
-    return ods.to_netcdf(path, format=format, **kwds)
-
-
-def open_ioapi(path, metapath=None, earth_radius=6370000.):
-    """
-    Open an IOAPI file, add coordinate data, and optionally add RSIG metadata.
-
-    Arguments
-    ---------
-    path : str
-        Path to IOAPI formatted files.
-    metapath : str
-        Path to metadata associated with the RSIG query. The metadata will be
-        added as metadata global property.
-    earth_radius : float
-        Assumed radius of the earth. 6370000 is the WRF default.
-
-    Returns
-    -------
-    ds : xarray.Dataset
-        Dataset with IOAPI metadata
-    """
-    import xarray as xr
-
-    f = xr.open_dataset(path, engine='netcdf4')
-    f = add_ioapi_meta(
-        f, path=path, metapath=metapath, earth_radius=earth_radius
-    )
-    return f
-
-
-def add_ioapi_meta(ds, metapath=None, earth_radius=6370000., path=''):
-    """
-    Open an IOAPI file, add coordinate data, and optionally add RSIG metadata.
-
-    Arguments
-    ---------
-    ds : xr.Dataset
-        IOAPI dataset Path to IOAPI formatted files.
-    metapath : str
-        Path to metadata associated with the RSIG query. The metadata will be
-        added as metadata global property.
-    earth_radius : float
-        Assumed radius of the earth. 6370000 is the WRF default.
-
-    Returns
-    -------
-    outds : xarray.Dataset
-        Dataset with IOAPI metadata
-    """
-    import numpy as np
-    import warnings
-    f = ds
-    lvls = f.attrs['VGLVLS']
-    tflag = f['TFLAG'].astype('i').values[:, 0, :]
-    yyyyjjj = tflag[:, 0]
-    yyyyjjj = np.where(yyyyjjj < 1, 1970001, yyyyjjj)
-    HHMMSS = tflag[:, 1]
-    tstrs = []
-    for j, t in zip(yyyyjjj, HHMMSS):
-        tstrs.append(f'{j:07d}T{t:06d}')
-
-    try:
-        time = pd.to_datetime(tstrs, format='%Y%jT%H%M%S')
-        f.coords['TSTEP'] = time
-    except Exception:
-        pass
-
-    f.coords['LAY'] = (lvls[:-1] + lvls[1:]) / 2.
-    f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
-    f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
-    try:
-        proj4str = get_proj4(f.attrs, earth_radius=earth_radius)
-        f.attrs['crs_proj4'] = proj4str
-    except ValueError as e:
-        warnings.warn(str(e))
-
-    if metapath is None:
-        import os
-        if os.path.exists(path + '.txt'):
-            metapath = path + '.txt'
-
-    if metapath is False:
-        metapath = None
-
-    if metapath is not None:
-        with open(metapath, 'r') as metaf:
-            metatxt = metaf.read()
-        f.attrs['metadata'] = metatxt
-
-    return f
-
-
-def open_mfioapi(
-    paths, metapaths=None, earth_radius=6370000., **kwargs
-):
-    """
-    Minimal version of open_mfdataset that is compatible with open_ioapi.
-    preprocess :  keyword defaults to add_ioapi_meta
-    concat_dim :  keyword defaults to 'TSTEP'
-
-    Arguments
-    ---------
-    paths : iterable
-        Paths to ioapi files to be opened.
-    metapaths : iterable
-        Paths to be added as a string metadata
-    earth_radius : float
-        Radius of the earth for projection.
-    kwargs :
-        See xr.open_mfdataset
-
-    Returns
-    -------
-
-    """
-    import xarray as xr
-    import functools
-
-    addio = functools.partial(add_ioapi_meta, earth_radius=earth_radius)
-    kwargs.setdefault('concat_dim', 'TSTEP')
-    kwargs.setdefault('preprocess', addio)
-    outf = xr.open_mfdataset(paths, **kwargs)
-    if metapaths is None:
-        metapaths = []
-    elif isinstance(metapaths, str):
-        metapaths = [metapaths]
-
-    metastr = ''
-    for metapath in metapaths:
-        with open(metapath, 'r') as mf:
-            metastr += metapath + ':\n' + mf.read()
-
-    outf.attrs['metadata'] = metastr
-
-    return outf
-
-
 class RsigApi:
     def __init__(
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
         tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None, tempo_kw=None,
+        pandora_kw=None,
         server='ofmpub.epa.gov', compress=1, corners=1, encoding=None,
         overwrite=False, workdir='.', gridfit=False
     ):
@@ -793,7 +377,7 @@ class RsigApi:
           IOAPI mapping parameters see default for details.
         viirsnoaa_kw : dict
           Dictionary of VIIRS NOAA filter parameters default
-          {'minimum_quality': 'high'} options include 'high' or 'medium')
+          {'minimum_quality': 'high'} other options 'medium' or 'low'
         tropomi_kw : dict
           Dictionary of TropOMI filter parameters default
           {'minimum_quality': 75, 'maximum_cloud_fraction': 1.0} options
@@ -810,6 +394,9 @@ class RsigApi:
         tempo_kw : dict
           Dictionary of TEMPO filter parameters default
             'api_key': 'your_key_here' # 'password'
+        pandora_kw : dict
+          Dictionary of Pandora filter parameters default
+          {'minimum_quality': 'high'} other options 'medium' or 'low'
         server : str
           'ofmpub.epa.gov' for external  users
           'maple.hesc.epa.gov' for on EPA VPN users
@@ -915,6 +502,13 @@ class RsigApi:
         viirsnoaa_kw.setdefault('minimum_quality', 'high')
 
         self.viirsnoaa_kw = viirsnoaa_kw
+
+        if pandora_kw is None:
+            pandora_kw = {}
+
+        pandora_kw.setdefault('minimum_quality', 'high')
+
+        self.pandora_kw = pandora_kw
 
         if purpleair_kw is None:
             purpleair_kw = {}
@@ -1356,6 +950,7 @@ class RsigApi:
         tropomi_kw = self.tropomi_kw
         tempo_kw = self.tempo_kw
         viirsnoaa_kw = self.viirsnoaa_kw
+        pandora_kw = self.pandora_kw
         if compress is None:
             compress = self.compress
 
@@ -1375,6 +970,13 @@ class RsigApi:
             )
         else:
             viirsnoaastr = ''
+
+        if key.startswith('pandora'):
+            pandorastr = '&MINIMUM_QUALITY={minimum_quality}'.format(
+                **pandora_kw
+            )
+        else:
+            pandorastr = ''
 
         if key.startswith('tropomi'):
             tropomistr = (
@@ -1426,8 +1028,8 @@ class RsigApi:
             f'&COVERAGE={key}'
             f'&COMPRESS={compress}'
         ) + (
-            purpleairstr + viirsnoaastr + tropomistr + tempostr + gridstr
-            + cornerstr + nolonlatsstr
+            purpleairstr + viirsnoaastr + tropomistr + tempostr + pandorastr
+            + gridstr + cornerstr + nolonlatsstr
         )
 
         outpath = (

@@ -26,18 +26,18 @@ tomino2df = rsigapi.to_dataframe(
 
 
 # Create spatial medians for TropOMI and AQS
-tomids = (
-    tomino2df.groupby('time').median(numeric_only=True)['nitrogendioxide_tropospheric_column']
-)
+tomids = tomino2df.groupby('time').median(numeric_only=True)[
+    'nitrogendioxide_tropospheric_column'
+]
 aqsds = aqsdf.groupby(['time']).median(numeric_only=True)['no2']
 
 # Subset AQS to overpass times
-oaqsds = aqsds.loc[aqsds.index.isin(tomids.index.floor('1h'))] # just overpass t
+oaqsds = aqsds.loc[aqsds.index.isin(tomids.index.floor('1h'))]  # just overpass t
 
 # Create axes with shared x
 fig, ax = plt.subplots(figsize=(12, 4),
                        gridspec_kw=dict(bottom=0.25, left=0.05, right=0.95))
-ax.tick_params(axis='x', labelrotation = 90)
+ax.tick_params(axis='x', labelrotation=90)
 tax = ax.twinx()
 
 # Add AQS with markers at overpasses
