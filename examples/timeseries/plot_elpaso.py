@@ -9,6 +9,7 @@ during unvalidated release 2023-12-17 to 2023-12-30.
 import matplotlib.pyplot as plt
 import pyrsig
 import pandas as pd
+import os
 
 # Create an RSIG api isntance
 # Define a Time and Space Scope during unvalidated release around El Paso TX
@@ -17,9 +18,12 @@ rsigapi = pyrsig.RsigApi(
     bbox=(-106.70, 31.39, -105.95, 32.00), workdir='elpaso'
 )
 
-# For the unvalidated data release, you do not need a key
-tkey = open('/home/bhenders/.tempokey', 'r').read().strip()
+# For the unvalidated data release, you do not need a key. To expand,
+# outside the release, use a key.
+# tkey = open(os.path.expandusrer('~/.tempokey'), 'r').read().strip()
+tkey = 'none'
 rsigapi.tempo_kw['api_key'] = tkey
+
 # Get AirNow NO2 with dates parsed and units removed from column names
 andf = rsigapi.to_dataframe(
     'airnow.no2', parse_dates=True, unit_keys=False, verbose=9
