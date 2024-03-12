@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyrsig.tests package &mdash; pyrsig 0.4.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+        <script src="_static/design-tabs.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="pyrsig.cmaq package" href="pyrsig.cmaq.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pyrsig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="pyrsig.html">pyrsig package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="pyrsig.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="pyrsig.cmaq.html">pyrsig.cmaq package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">pyrsig.tests package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-pyrsig.tests.test_api">pyrsig.tests.test_api module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-pyrsig.tests.test_coards">pyrsig.tests.test_coards module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-pyrsig.tests.test_dataframes">pyrsig.tests.test_dataframes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-pyrsig.tests.test_gui">pyrsig.tests.test_gui module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-pyrsig.tests.test_ioapi">pyrsig.tests.test_ioapi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-pyrsig.tests.test_misc">pyrsig.tests.test_misc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-pyrsig.tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyrsig.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrsig.html#module-pyrsig.utils">pyrsig.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrsig.html#module-pyrsig.xdr">pyrsig.xdr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrsig.html#module-pyrsig">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pyrsig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="pyrsig.html">pyrsig package</a></li>
+      <li class="breadcrumb-item active">pyrsig.tests package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/pyrsig.tests.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pyrsig-tests-package">
+<h1>pyrsig.tests package<a class="headerlink" href="#pyrsig-tests-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-pyrsig.tests.test_api">
+<span id="pyrsig-tests-test-api-module"></span><h2>pyrsig.tests.test_api module<a class="headerlink" href="#module-pyrsig.tests.test_api" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_api.test_capabilities">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_api.</span></span><span class="sig-name descname"><span class="pre">test_capabilities</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_api.html#test_capabilities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_api.test_capabilities" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_api.test_customize_grid">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_api.</span></span><span class="sig-name descname"><span class="pre">test_customize_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_api.html#test_customize_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_api.test_customize_grid" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_api.test_describe">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_api.</span></span><span class="sig-name descname"><span class="pre">test_describe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_api.html#test_describe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_api.test_describe" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_api.test_descriptions">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_api.</span></span><span class="sig-name descname"><span class="pre">test_descriptions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_api.html#test_descriptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_api.test_descriptions" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_api.test_init">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_api.</span></span><span class="sig-name descname"><span class="pre">test_init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_api.html#test_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_api.test_init" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_api.test_initdef">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_api.</span></span><span class="sig-name descname"><span class="pre">test_initdef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_api.html#test_initdef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_api.test_initdef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-pyrsig.tests.test_coards">
+<span id="pyrsig-tests-test-coards-module"></span><h2>pyrsig.tests.test_coards module<a class="headerlink" href="#module-pyrsig.tests.test_coards" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_coards.test_tropomi_coards">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_coards.</span></span><span class="sig-name descname"><span class="pre">test_tropomi_coards</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_coards.html#test_tropomi_coards"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_coards.test_tropomi_coards" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_coards.test_tropomi_coards_withmeta">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_coards.</span></span><span class="sig-name descname"><span class="pre">test_tropomi_coards_withmeta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_coards.html#test_tropomi_coards_withmeta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_coards.test_tropomi_coards_withmeta" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-pyrsig.tests.test_dataframes">
+<span id="pyrsig-tests-test-dataframes-module"></span><h2>pyrsig.tests.test_dataframes module<a class="headerlink" href="#module-pyrsig.tests.test_dataframes" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_dataframes.test_aqs_no2_bdate">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_dataframes.</span></span><span class="sig-name descname"><span class="pre">test_aqs_no2_bdate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_dataframes.html#test_aqs_no2_bdate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_dataframes.test_aqs_no2_bdate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_dataframes.test_aqs_no2_unittime">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_dataframes.</span></span><span class="sig-name descname"><span class="pre">test_aqs_no2_unittime</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_dataframes.html#test_aqs_no2_unittime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_dataframes.test_aqs_no2_unittime" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_dataframes.test_aqs_no2_verbose">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_dataframes.</span></span><span class="sig-name descname"><span class="pre">test_aqs_no2_verbose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_dataframes.html#test_aqs_no2_verbose"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_dataframes.test_aqs_no2_verbose" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_dataframes.test_aqs_no2_withmeta">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_dataframes.</span></span><span class="sig-name descname"><span class="pre">test_aqs_no2_withmeta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_dataframes.html#test_aqs_no2_withmeta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_dataframes.test_aqs_no2_withmeta" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_dataframes.test_aqs_ozone_cache">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_dataframes.</span></span><span class="sig-name descname"><span class="pre">test_aqs_ozone_cache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_dataframes.html#test_aqs_ozone_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_dataframes.test_aqs_ozone_cache" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_dataframes.test_cmaqequates">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_dataframes.</span></span><span class="sig-name descname"><span class="pre">test_cmaqequates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_dataframes.html#test_cmaqequates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_dataframes.test_cmaqequates" title="Permalink to this definition"></a></dt>
+<dd><p>currently not operational. I don’t yet know why</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_dataframes.test_pandora">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_dataframes.</span></span><span class="sig-name descname"><span class="pre">test_pandora</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_dataframes.html#test_pandora"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_dataframes.test_pandora" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_dataframes.test_viirsnoaa">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_dataframes.</span></span><span class="sig-name descname"><span class="pre">test_viirsnoaa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_dataframes.html#test_viirsnoaa"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_dataframes.test_viirsnoaa" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-pyrsig.tests.test_gui">
+<span id="pyrsig-tests-test-gui-module"></span><h2>pyrsig.tests.test_gui module<a class="headerlink" href="#module-pyrsig.tests.test_gui" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_gui.test_initdef">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_gui.</span></span><span class="sig-name descname"><span class="pre">test_initdef</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_gui.html#test_initdef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_gui.test_initdef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_gui.test_roundtrip">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_gui.</span></span><span class="sig-name descname"><span class="pre">test_roundtrip</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_gui.html#test_roundtrip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_gui.test_roundtrip" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-pyrsig.tests.test_ioapi">
+<span id="pyrsig-tests-test-ioapi-module"></span><h2>pyrsig.tests.test_ioapi module<a class="headerlink" href="#module-pyrsig.tests.test_ioapi" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_ioapi.test_equates">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_ioapi.</span></span><span class="sig-name descname"><span class="pre">test_equates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_ioapi.html#test_equates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_ioapi.test_equates" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_ioapi.test_tropomi">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_ioapi.</span></span><span class="sig-name descname"><span class="pre">test_tropomi</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_ioapi.html#test_tropomi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_ioapi.test_tropomi" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_ioapi.test_tropomi_cache">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_ioapi.</span></span><span class="sig-name descname"><span class="pre">test_tropomi_cache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_ioapi.html#test_tropomi_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_ioapi.test_tropomi_cache" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_ioapi.test_tropomi_encoding_remove">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_ioapi.</span></span><span class="sig-name descname"><span class="pre">test_tropomi_encoding_remove</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_ioapi.html#test_tropomi_encoding_remove"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_ioapi.test_tropomi_encoding_remove" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_ioapi.test_tropomi_lonlat">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_ioapi.</span></span><span class="sig-name descname"><span class="pre">test_tropomi_lonlat</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_ioapi.html#test_tropomi_lonlat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_ioapi.test_tropomi_lonlat" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_ioapi.test_tropomi_merc">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_ioapi.</span></span><span class="sig-name descname"><span class="pre">test_tropomi_merc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_ioapi.html#test_tropomi_merc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_ioapi.test_tropomi_merc" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_ioapi.test_tropomi_stereo">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_ioapi.</span></span><span class="sig-name descname"><span class="pre">test_tropomi_stereo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_ioapi.html#test_tropomi_stereo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_ioapi.test_tropomi_stereo" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_ioapi.test_tropomi_withmeta">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_ioapi.</span></span><span class="sig-name descname"><span class="pre">test_tropomi_withmeta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_ioapi.html#test_tropomi_withmeta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_ioapi.test_tropomi_withmeta" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-pyrsig.tests.test_misc">
+<span id="pyrsig-tests-test-misc-module"></span><h2>pyrsig.tests.test_misc module<a class="headerlink" href="#module-pyrsig.tests.test_misc" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.tests.test_misc.test_progress">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.tests.test_misc.</span></span><span class="sig-name descname"><span class="pre">test_progress</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyrsig/tests/test_misc.html#test_progress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.tests.test_misc.test_progress" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-pyrsig.tests">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyrsig.tests" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pyrsig.cmaq.html" class="btn btn-neutral float-left" title="pyrsig.cmaq package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Barron H. Henderson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

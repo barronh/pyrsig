@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyrsig.xdr &mdash; pyrsig 0.4.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+        <script src="../../_static/design-tabs.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            pyrsig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pyrsig.html">pyrsig package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">pyrsig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../pyrsig.html">pyrsig</a></li>
+      <li class="breadcrumb-item active">pyrsig.xdr</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pyrsig.xdr</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;from_xdrfile&#39;</span><span class="p">,</span> <span class="s1">&#39;from_xdr&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="from_xdrfile"><a class="viewcode-back" href="../../pyrsig.html#pyrsig.xdr.from_xdrfile">[docs]</a><span class="k">def</span> <span class="nf">from_xdrfile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Currently supports profile, site and swath (v2.0). Each is in XDR format</span>
+<span class="sd">    with a custom set of header rows in text format. The text header rows also</span>
+<span class="sd">    describe the binary portion of the file.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to file in XDR format with RSIG headers</span>
+<span class="sd">    decompress : bool</span>
+<span class="sd">        If None, use decompress if path ends in .gz</span>
+<span class="sd">        If True, decompress buffer.</span>
+<span class="sd">        If False, buffer is already decompressed (or was never compressed)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Dataframe with XDR content</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">decompress</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">decompress</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.gz&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">inf</span><span class="p">:</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="n">inf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">from_xdr</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="n">decompress</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="n">na_values</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="from_xdr"><a class="viewcode-back" href="../../pyrsig.html#pyrsig.xdr.from_xdr">[docs]</a><span class="k">def</span> <span class="nf">from_xdr</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">na_values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Currently supports profile, site and swath (v2.0). Each is in XDR format</span>
+<span class="sd">    with a custom set of header rows in text format. The text header rows also</span>
+<span class="sd">    describe the binary portion of the file.</span>
+
+<span class="sd">    Infers RSIG format using first 40 characters.</span>
+
+<span class="sd">    * Site 2.0: from_site</span>
+<span class="sd">    * Profile 2.0: from_profile</span>
+<span class="sd">    * Swath 2.0: from_swath</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    buffer : bytes</span>
+<span class="sd">        Data buffer in XDR format with RSIG headers</span>
+<span class="sd">    decompress : bool</span>
+<span class="sd">        If True, decompress buffer.</span>
+<span class="sd">        If False, buffer is already decompressed (or was never compressed)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Dataframe with XDR content</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">gzip</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="k">if</span> <span class="n">decompress</span><span class="p">:</span>
+        <span class="n">buffer</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+
+    <span class="n">defspec</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">[:</span><span class="mi">40</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">defspec</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;profile&#39;</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">from_profile</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">defspec</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;site&#39;</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">from_site</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">defspec</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;swath&#39;</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">from_swath</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{defspec}</span><span class="s1"> not in profile, site, swath&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">na_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">na_values</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<span class="k">def</span> <span class="nf">from_profile</span><span class="p">(</span><span class="n">buffer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Currently supports Profile (v2.0) which has 14 header rows in text format.</span>
+<span class="sd">    The text header rows also describe the binary portion of the file.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    buffer : bytes</span>
+<span class="sd">        Data buffer in XDR format with RSIG headers</span>
+<span class="sd">    decompress : bool</span>
+<span class="sd">        If True, decompress buffer.</span>
+<span class="sd">        If False, buffer is already decompressed (or was never compressed)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Dataframe with XDR content</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    # Line 1: definition spec</span>
+<span class="sd">    # Line 2: Info</span>
+<span class="sd">    # Line 3: Start/End date</span>
+<span class="sd">    # Line 4-5: bbox</span>
+<span class="sd">    # Line 6-7: Dimensions</span>
+<span class="sd">    # Line 8-9: Variable names</span>
+<span class="sd">    # Line 10-11: Units</span>
+<span class="sd">    # Line 12-14: definition of data chunks lines</span>
+<span class="sd">    #   Next nprof * 80 characters are notes for each profile</span>
+<span class="sd">    #   Next nprof * 8 are N_p number of points for each profile as long int</span>
+<span class="sd">    #   Next N * sum(N_p for p in nprof) * 8 are data as 64-bit reals</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="kn">import</span> <span class="nn">xdrlib</span>
+    <span class="kn">import</span> <span class="nn">io</span>
+
+    <span class="n">bf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">14</span><span class="p">):</span>
+        <span class="n">_l</span> <span class="o">=</span> <span class="n">bf</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;profile 2.0&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="n">nvar</span><span class="p">,</span> <span class="n">nprof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="n">varkeys</span> <span class="o">=</span> <span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="n">units</span> <span class="o">=</span> <span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">bf</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+    <span class="n">up</span> <span class="o">=</span> <span class="n">xdrlib</span><span class="o">.</span><span class="n">Unpacker</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="n">up</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+    <span class="n">notes</span> <span class="o">=</span> <span class="p">[</span><span class="n">up</span><span class="o">.</span><span class="n">unpack_fstring</span><span class="p">(</span><span class="mi">80</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nprof</span><span class="p">)]</span>
+    <span class="n">longnpb</span> <span class="o">=</span> <span class="n">up</span><span class="o">.</span><span class="n">unpack_fstring</span><span class="p">(</span><span class="n">nprof</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>
+    <span class="n">longnp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">longnpb</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;l&#39;</span><span class="p">)</span>
+    <span class="n">sdn</span> <span class="o">=</span> <span class="n">up</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+    <span class="c1"># Read all values at once</span>
+    <span class="c1"># vals = np.frombuffer(buffer[sdn:], dtype=&#39;&gt;d&#39;)</span>
+    <span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">up</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">sdn</span><span class="p">)</span>
+    <span class="n">varwunits</span> <span class="o">=</span> <span class="p">[</span><span class="n">varkey</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">units</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">)&#39;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">varkey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">varkeys</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">npoints</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">longnp</span><span class="p">):</span>
+        <span class="n">nfloats</span> <span class="o">=</span> <span class="n">npoints</span> <span class="o">*</span> <span class="n">nvar</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">up</span><span class="o">.</span><span class="n">unpack_farray</span><span class="p">(</span><span class="n">nfloats</span><span class="p">,</span> <span class="n">up</span><span class="o">.</span><span class="n">unpack_double</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="n">nvar</span><span class="p">,</span> <span class="n">npoints</span>
+        <span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">varwunits</span><span class="p">,</span> <span class="n">vals</span><span class="p">)))</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;NOTE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">notes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">)</span>
+    <span class="n">infmt</span> <span class="o">=</span> <span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">%H%M%S&#39;</span>
+    <span class="n">outfmt</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S%z&#39;</span>
+    <span class="n">ntimestamps</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;timestamp(yyyymmddhhmmss)&#39;</span><span class="p">]</span>
+    <span class="n">timestamps</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span>
+        <span class="n">ntimestamps</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">infmt</span><span class="p">,</span> <span class="n">utc</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">outfmt</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;timestamp(yyyymmddhhmmss)&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Timestamp(UTC)&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timestamps</span>
+    <span class="n">renames</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;id(-)&#39;</span><span class="p">:</span> <span class="s1">&#39;STATION(-)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;longitude(deg)&#39;</span><span class="p">:</span> <span class="s1">&#39;LONGITUDE(deg)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;latitude(deg)&#39;</span><span class="p">:</span> <span class="s1">&#39;LATITUDE(deg)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;elevation(m)&#39;</span><span class="p">:</span> <span class="s1">&#39;ELEVATION(m)&#39;</span>
+    <span class="p">}</span>
+    <span class="n">renames</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">renames</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">renames</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">frontkeys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;Timestamp(UTC)&#39;</span><span class="p">,</span> <span class="s1">&#39;LONGITUDE(deg)&#39;</span><span class="p">,</span> <span class="s1">&#39;LATITUDE(deg)&#39;</span><span class="p">,</span> <span class="s1">&#39;ELEVATION(m)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;STATION(-)&#39;</span>
+    <span class="p">]</span>
+    <span class="n">lastkeys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;NOTE&#39;</span><span class="p">]</span>
+    <span class="n">outkeys</span> <span class="o">=</span> <span class="n">frontkeys</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">frontkeys</span> <span class="o">+</span> <span class="n">lastkeys</span><span class="p">)</span>
+    <span class="p">]</span> <span class="o">+</span> <span class="n">lastkeys</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">outkeys</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">from_swath</span><span class="p">(</span><span class="n">buffer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Currently supports Swath (v2.0) which has 14 header rows in text format.</span>
+<span class="sd">    The text header rows also describe the binary portion of the file.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    buffer : bytes</span>
+<span class="sd">        Data buffer in XDR format with RSIG headers</span>
+<span class="sd">    decompress : bool</span>
+<span class="sd">        If True, decompress buffer.</span>
+<span class="sd">        If False, buffer is already decompressed (or was never compressed)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Dataframe with XDR content</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    # 14 header rows to be read using \n</span>
+<span class="sd">    # Line 1: definition spec</span>
+<span class="sd">    # Line 2: Info</span>
+<span class="sd">    # Line 3: Start/End date</span>
+<span class="sd">    # Line 4-5: Dimensions</span>
+<span class="sd">    # Line 6-7: Variable names</span>
+<span class="sd">    # Line 8-9: Units</span>
+<span class="sd">    # Line 10-11: bbox</span>
+<span class="sd">    # Line 12-14: definition of data chunks lines</span>
+<span class="sd">    #   Next nsite * 4 are number of times for each site (N_s) as 32-bit int</span>
+<span class="sd">    #   Next nvar * sum(2 for s in nsite) * 4 are data as 64-bit reals</span>
+<span class="sd">    #   Next nvar * sum(N_s for s in nsite) * 4 are data as 64-bit reals</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="kn">import</span> <span class="nn">xdrlib</span>
+    <span class="kn">import</span> <span class="nn">io</span>
+
+    <span class="n">bf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">14</span><span class="p">):</span>
+        <span class="n">_l</span> <span class="o">=</span> <span class="n">bf</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">defspec</span> <span class="o">=</span> <span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c1"># stime = _l.decode().strip()</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">nvar</span><span class="p">,</span> <span class="n">nt</span><span class="p">,</span> <span class="n">nscan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="n">varkeys</span> <span class="o">=</span> <span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="n">units</span> <span class="o">=</span> <span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="k">assert</span> <span class="p">(</span><span class="n">defspec</span> <span class="o">==</span> <span class="n">defspec</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">bf</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+    <span class="n">up</span> <span class="o">=</span> <span class="n">xdrlib</span><span class="o">.</span><span class="n">Unpacker</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="n">up</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+    <span class="c1"># MSB 64-bit integers (yyyydddhhmm) timestamps[scans]</span>
+    <span class="n">nts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">up</span><span class="o">.</span><span class="n">unpack_fstring</span><span class="p">(</span><span class="n">nscan</span> <span class="o">*</span> <span class="mi">8</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;l&#39;</span><span class="p">)</span>
+    <span class="c1"># MSB 64-bit integers points[scans]</span>
+    <span class="n">nps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">up</span><span class="o">.</span><span class="n">unpack_fstring</span><span class="p">(</span><span class="n">nscan</span> <span class="o">*</span> <span class="mi">8</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;l&#39;</span><span class="p">)</span>
+
+    <span class="n">infmt</span> <span class="o">=</span> <span class="s1">&#39;%Y%j%H%M&#39;</span>
+    <span class="n">outfmt</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S%z&#39;</span>
+    <span class="n">timestamps</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">nts</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">infmt</span><span class="p">,</span> <span class="n">utc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">outfmt</span><span class="p">)</span>
+
+    <span class="n">sdn</span> <span class="o">=</span> <span class="n">up</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+    <span class="c1"># Read all values at once</span>
+    <span class="c1"># IEEE-754 64-bit reals data_1[variables][points_1] ...</span>
+    <span class="c1">#           data_S[variables][points_S]</span>
+    <span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">up</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">sdn</span><span class="p">)</span>
+    <span class="n">varwunits</span> <span class="o">=</span> <span class="p">[</span><span class="n">varkey</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">units</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">)&#39;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">varkey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">varkeys</span><span class="p">)]</span>
+    <span class="c1"># To-do</span>
+    <span class="c1"># Switch from iterative unpacking to numpy.frombuffer, which is much faster</span>
+    <span class="c1"># this requires some fancy indexing and complex repeats.</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">npoints</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nps</span><span class="p">):</span>
+        <span class="n">nfloats</span> <span class="o">=</span> <span class="n">npoints</span> <span class="o">*</span> <span class="n">nvar</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">up</span><span class="o">.</span><span class="n">unpack_farray</span><span class="p">(</span><span class="n">nfloats</span><span class="p">,</span> <span class="n">up</span><span class="o">.</span><span class="n">unpack_double</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="n">nvar</span><span class="p">,</span> <span class="n">npoints</span>
+        <span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">varwunits</span><span class="p">,</span> <span class="n">vals</span><span class="p">)))</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Timestamp(UTC)&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timestamps</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">)</span>
+    <span class="n">renames</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;Longitude(deg)&#39;</span><span class="p">:</span> <span class="s1">&#39;LONGITUDE(deg)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Latitude(deg)&#39;</span><span class="p">:</span> <span class="s1">&#39;LATITUDE(deg)&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">renames</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">renames</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">renames</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">outkeys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Timestamp(UTC)&#39;</span><span class="p">,</span> <span class="s1">&#39;LONGITUDE(deg)&#39;</span><span class="p">,</span> <span class="s1">&#39;LATITUDE(deg)&#39;</span><span class="p">]</span>
+    <span class="n">outkeys</span> <span class="o">=</span> <span class="n">outkeys</span> <span class="o">+</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">df</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outkeys</span><span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">outkeys</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">from_site</span><span class="p">(</span><span class="n">buffer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Currently supports Site (v2.0) which has 14 header rows in text format.</span>
+<span class="sd">    The text header rows also describe the binary portion of the file.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    buffer : bytes</span>
+<span class="sd">        Data buffer in XDR format with RSIG headers</span>
+<span class="sd">    decompress : bool</span>
+<span class="sd">        If True, decompress buffer.</span>
+<span class="sd">        If False, buffer is already decompressed (or was never compressed)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Dataframe with XDR content</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    # 13 header rows to be read using \n</span>
+<span class="sd">    # Line 1: definition spec</span>
+<span class="sd">    # Line 2: Info</span>
+<span class="sd">    # Line 3: Start/End date</span>
+<span class="sd">    # Line 4-5: Dimensions</span>
+<span class="sd">    # Line 6-7: Variable names</span>
+<span class="sd">    # Line 8-9: Units</span>
+<span class="sd">    # Line 10-13: definition of data chunks lines</span>
+<span class="sd">    #   Next nsite * 80 characters are notes for each profile</span>
+<span class="sd">    #   Next nsite * 4 are IDs number of times for each site as 32-bit integers</span>
+<span class="sd">    #   Next sum(2 for s in nsite) * 4 are data as 64-bit reals</span>
+<span class="sd">    #   Next sum(N_s for s in nsite) * 4 are data as 64-bit reals</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="kn">import</span> <span class="nn">xdrlib</span>
+    <span class="kn">import</span> <span class="nn">io</span>
+
+    <span class="n">bf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">13</span><span class="p">):</span>
+        <span class="n">_l</span> <span class="o">=</span> <span class="n">bf</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;site 2.0&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">stime</span> <span class="o">=</span> <span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">nt</span><span class="p">,</span> <span class="n">nsite</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="n">varkeys</span> <span class="o">=</span> <span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="n">units</span> <span class="o">=</span> <span class="n">_l</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="n">time</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">stime</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="n">nt</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;H&#39;</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">bf</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+    <span class="n">up</span> <span class="o">=</span> <span class="n">xdrlib</span><span class="o">.</span><span class="n">Unpacker</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="n">up</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+    <span class="n">notes</span> <span class="o">=</span> <span class="p">[</span><span class="n">up</span><span class="o">.</span><span class="n">unpack_fstring</span><span class="p">(</span><span class="mi">80</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsite</span><span class="p">)]</span>
+
+    <span class="n">nis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">up</span><span class="o">.</span><span class="n">unpack_fstring</span><span class="p">(</span><span class="n">nsite</span> <span class="o">*</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i&#39;</span><span class="p">)</span>
+    <span class="n">xys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">up</span><span class="o">.</span><span class="n">unpack_fstring</span><span class="p">(</span><span class="n">nsite</span> <span class="o">*</span> <span class="mi">8</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;f&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+        <span class="n">nsite</span><span class="p">,</span> <span class="mi">2</span>
+    <span class="p">)</span>
+
+    <span class="n">sdn</span> <span class="o">=</span> <span class="n">up</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+    <span class="c1"># Read all values at once</span>
+    <span class="c1"># vals = np.fromstring(buffer[sdn:], dtype=&#39;&gt;d&#39;)</span>
+    <span class="n">up</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">sdn</span><span class="p">)</span>
+    <span class="n">varwunits</span> <span class="o">=</span> <span class="p">[</span><span class="n">varkey</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">units</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">)&#39;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">varkey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">varkeys</span><span class="p">)]</span>
+
+    <span class="c1"># Unpacking data using from buffer, which is much faster than iteratively</span>
+    <span class="c1"># calling xdr.unpack_farray</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">[</span><span class="n">sdn</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;f&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nsite</span><span class="p">,</span> <span class="n">nt</span><span class="p">)</span>
+    <span class="n">atimes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">ndmin</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">nsite</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">anotes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">notes</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">nt</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">astation</span> <span class="o">=</span> <span class="n">nis</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">nt</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">axs</span> <span class="o">=</span> <span class="n">xys</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">nt</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">ays</span> <span class="o">=</span> <span class="n">xys</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">nt</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;Timestamp(UTC)&#39;</span><span class="p">:</span> <span class="n">atimes</span><span class="p">,</span>
+        <span class="s1">&#39;SITE_NAME&#39;</span><span class="p">:</span> <span class="n">anotes</span><span class="p">,</span>
+        <span class="s1">&#39;STATION(-)&#39;</span><span class="p">:</span> <span class="n">astation</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;=</span><span class="si">{</span><span class="n">astation</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;LONGITUDE(deg)&#39;</span><span class="p">:</span> <span class="n">axs</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;=</span><span class="si">{</span><span class="n">axs</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;LATITUDE(deg)&#39;</span><span class="p">:</span> <span class="n">ays</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;=</span><span class="si">{</span><span class="n">ays</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">vi</span><span class="p">,</span> <span class="n">varwunit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">varwunits</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">varwunit</span><span class="p">]</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">vi</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;=</span><span class="si">{</span><span class="n">vals</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="c1"># Serves as a comment on how this was done iteratively.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    dfs = []</span>
+<span class="sd">    for i, id in enumerate(nis):</span>
+<span class="sd">        lon, lat = xys[i]</span>
+<span class="sd">        vals = np.array(up.unpack_farray(nt, up.unpack_float)).reshape(1, nt)</span>
+<span class="sd">        #assert np.allclose(valchk[0, i], vals)</span>
+<span class="sd">        df = pd.DataFrame(dict(zip(varwunits, vals)))</span>
+<span class="sd">        df[&#39;Timestamp(UTC)&#39;] = time</span>
+<span class="sd">        df[&#39;SITE_NAME&#39;] = notes[i]</span>
+<span class="sd">        df[&#39;STATION(-)&#39;] = id</span>
+<span class="sd">        df[&#39;LONGITUDE(deg)&#39;] = lon</span>
+<span class="sd">        df[&#39;LATITUDE(deg)&#39;] = lat</span>
+<span class="sd">        dfs.append(df)</span>
+
+<span class="sd">    df = pd.concat(dfs)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">frontkeys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;Timestamp(UTC)&#39;</span><span class="p">,</span> <span class="s1">&#39;LONGITUDE(deg)&#39;</span><span class="p">,</span> <span class="s1">&#39;LATITUDE(deg)&#39;</span><span class="p">,</span> <span class="s1">&#39;STATION(-)&#39;</span>
+    <span class="p">]</span>
+    <span class="n">lastkeys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;SITE_NAME&#39;</span><span class="p">]</span>
+    <span class="n">outkeys</span> <span class="o">=</span> <span class="n">frontkeys</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">frontkeys</span> <span class="o">+</span> <span class="n">lastkeys</span><span class="p">)</span>
+    <span class="p">]</span> <span class="o">+</span> <span class="n">lastkeys</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">outkeys</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pyrsig</span>
+
+    <span class="n">baseurl</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;https://ofmpub.epa.gov/rsig/rsigserver?SERVICE=wcs&amp;VERSION=1.0.0&#39;</span>
+        <span class="o">+</span> <span class="s1">&#39;&amp;REQUEST=GetCoverage&amp;FORMAT=xdr&#39;</span>
+    <span class="p">)</span>
+    <span class="n">baseurl</span> <span class="o">+=</span> <span class="s1">&#39;&amp;BBOX=-130.0,20.,-65.,60&amp;COMPRESS=1&#39;</span>
+    <span class="n">ckey</span> <span class="o">=</span> <span class="s1">&#39;pandora.L2_rnvs3p1_8.nitrogen_dioxide_vertical_column_amount&#39;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">baseurl</span><span class="si">}</span><span class="s1">&amp;TIME=2023-10-17T13:00:00Z/2023-10-17T13:59:59Z&#39;</span>
+        <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;&amp;COVERAGE=</span><span class="si">{</span><span class="n">ckey</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">legacy_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Profile test&#39;</span><span class="p">)</span>
+    <span class="n">dfprof</span> <span class="o">=</span> <span class="n">from_xdr</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">baseurl</span><span class="si">}</span><span class="s1">&amp;TIME=2023-10-17T13:00:00Z/2023-10-17T14:59:59Z&#39;</span>
+        <span class="o">+</span> <span class="s1">&#39;&amp;COVERAGE=airnow.ozone&#39;</span>
+    <span class="p">)</span>
+    <span class="c1"># Get it and decompress it</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">legacy_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Site test&#39;</span><span class="p">)</span>
+    <span class="n">dfsite</span> <span class="o">=</span> <span class="n">from_xdr</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">tempokey</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/home/bhenders/.tempokey&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">ckey</span> <span class="o">=</span> <span class="s1">&#39;tempo.l2.no2.vertical_column_troposphere&#39;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">baseurl</span><span class="si">}</span><span class="s1">&amp;TIME=2023-11-17T13:00:00Z/2023-11-17T13:59:59Z&#39;</span>
+        <span class="o">+</span> <span class="s1">&#39;&amp;COVERAGE=</span><span class="si">{ckey}</span><span class="s1">&amp;KEY=</span><span class="si">{tempokey}</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="c1"># Get it and decompress it</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">legacy_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Swath test&#39;</span><span class="p">)</span>
+    <span class="n">dfswath</span> <span class="o">=</span> <span class="n">from_xdr</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Barron H. Henderson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

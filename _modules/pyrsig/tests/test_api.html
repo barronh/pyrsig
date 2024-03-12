@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyrsig.tests.test_api &mdash; pyrsig 0.4.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-binder.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-dataframe.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+        <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pyrsig
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pyrsig.html">pyrsig package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pyrsig</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../pyrsig.html">pyrsig</a></li>
+      <li class="breadcrumb-item active">pyrsig.tests.test_api</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pyrsig.tests.test_api</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="test_initdef"><a class="viewcode-back" href="../../../pyrsig.tests.html#pyrsig.tests.test_api.test_initdef">[docs]</a><span></span><span class="k">def</span> <span class="nf">test_initdef</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">RsigApi</span>
+
+    <span class="n">RsigApi</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="test_init"><a class="viewcode-back" href="../../../pyrsig.tests.html#pyrsig.tests.test_api.test_init">[docs]</a><span class="k">def</span> <span class="nf">test_init</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">RsigApi</span>
+
+    <span class="n">RsigApi</span><span class="p">(</span>
+        <span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2022-03-01T00:00:00&#39;</span><span class="p">,</span> <span class="n">edate</span><span class="o">=</span><span class="s1">&#39;2022-03-01T23:59:59&#39;</span><span class="p">,</span>
+        <span class="n">bbox</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">126</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mi">110</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="test_capabilities"><a class="viewcode-back" href="../../../pyrsig.tests.html#pyrsig.tests.test_api.test_capabilities">[docs]</a><span class="k">def</span> <span class="nf">test_capabilities</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">RsigApi</span>
+
+    <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">()</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">keys</span><span class="p">(</span><span class="n">offline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="test_descriptions"><a class="viewcode-back" href="../../../pyrsig.tests.html#pyrsig.tests.test_api.test_descriptions">[docs]</a><span class="k">def</span> <span class="nf">test_descriptions</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span> <span class="nn">warnings</span>
+
+    <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+        <span class="n">desc</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">descriptions</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">desc</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">desc</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="test_describe"><a class="viewcode-back" href="../../../pyrsig.tests.html#pyrsig.tests.test_api.test_describe">[docs]</a><span class="k">def</span> <span class="nf">test_describe</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">RsigApi</span>
+
+    <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">()</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s1">&#39;aqs.ozone&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">desc</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="test_customize_grid"><a class="viewcode-back" href="../../../pyrsig.tests.html#pyrsig.tests.test_api.test_customize_grid">[docs]</a><span class="k">def</span> <span class="nf">test_customize_grid</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">customize_grid</span><span class="p">,</span> <span class="n">RsigApi</span>
+    <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+    <span class="n">nofit</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">grid_kw</span><span class="o">=</span><span class="s1">&#39;12US1&#39;</span><span class="p">,</span> <span class="n">gridfit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">fit</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">grid_kw</span><span class="o">=</span><span class="s1">&#39;12US1&#39;</span><span class="p">,</span> <span class="n">gridfit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fitnoclip</span> <span class="o">=</span> <span class="n">customize_grid</span><span class="p">(</span><span class="n">nofit</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">propkeys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nofit</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">pk</span> <span class="ow">in</span> <span class="n">propkeys</span><span class="p">:</span>
+        <span class="n">pref</span> <span class="o">=</span> <span class="n">nofit</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span>
+        <span class="n">pclip</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span>
+        <span class="n">pnoclip</span> <span class="o">=</span> <span class="n">fitnoclip</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">pk</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;XORIG&#39;</span><span class="p">,</span> <span class="s1">&#39;YORIG&#39;</span><span class="p">,</span> <span class="s1">&#39;NCOLS&#39;</span><span class="p">,</span> <span class="s1">&#39;NROWS&#39;</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="n">pref</span> <span class="o">==</span> <span class="n">pclip</span>
+            <span class="k">assert</span> <span class="n">pref</span> <span class="o">==</span> <span class="n">pnoclip</span>
+    <span class="n">cx0</span><span class="p">,</span> <span class="n">cy0</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">[</span><span class="s1">&#39;XORIG&#39;</span><span class="p">],</span> <span class="n">fit</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">[</span><span class="s1">&#39;YORIG&#39;</span><span class="p">]</span>
+    <span class="n">cnc</span><span class="p">,</span> <span class="n">cnr</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">[</span><span class="s1">&#39;NCOLS&#39;</span><span class="p">],</span> <span class="n">fit</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">[</span><span class="s1">&#39;NROWS&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">cx0</span><span class="p">,</span> <span class="n">cy0</span><span class="p">,</span> <span class="n">cnc</span><span class="p">,</span> <span class="n">cnr</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="mf">804000.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1728000.0</span><span class="p">,</span> <span class="mi">179</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+    <span class="n">ncx0</span><span class="p">,</span> <span class="n">ncy0</span> <span class="o">=</span> <span class="n">fitnoclip</span><span class="p">[</span><span class="s1">&#39;XORIG&#39;</span><span class="p">],</span> <span class="n">fitnoclip</span><span class="p">[</span><span class="s1">&#39;YORIG&#39;</span><span class="p">]</span>
+    <span class="n">ncnc</span><span class="p">,</span> <span class="n">ncnr</span> <span class="o">=</span> <span class="n">fitnoclip</span><span class="p">[</span><span class="s1">&#39;NCOLS&#39;</span><span class="p">],</span> <span class="n">fitnoclip</span><span class="p">[</span><span class="s1">&#39;NROWS&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">ncx0</span><span class="p">,</span> <span class="n">ncy0</span><span class="p">,</span> <span class="n">ncnc</span><span class="p">,</span> <span class="n">ncnr</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="mf">804000.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2820000.0</span><span class="p">,</span> <span class="mi">262</span><span class="p">,</span> <span class="mi">116</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Barron H. Henderson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
