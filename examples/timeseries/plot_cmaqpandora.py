@@ -1,3 +1,11 @@
+"""
+CMAQ vs Pandora
+===============
+
+Timeseries comparison of NO2 columns from CMAQ and Pandora over a small window
+over New York/New Jersey for 2018-07-01.
+"""
+
 import pyrsig
 
 
