@@ -63,6 +63,8 @@ def from_xdr(buffer, na_values=None, decompress=False):
         df = from_profile(buffer)
     elif defspec.startswith('site'):
         df = from_site(buffer)
+    elif defspec.startswith('point'):
+        df = from_point(buffer)
     elif defspec.startswith('swath'):
         df = from_swath(buffer)
     else:
@@ -320,7 +322,6 @@ def from_site(buffer):
             assert (_l.decode().strip().lower() == 'site 2.0')
         elif i == 2:
             stime = _l.decode().strip()
-
         elif i == 4:
             nt, nsite = np.array(_l.decode().strip().split(), dtype='i')
         elif i == 6:
@@ -390,6 +391,97 @@ def from_site(buffer):
         k for k in df.columns if k not in (frontkeys + lastkeys)
     ] + lastkeys
     df = df[outkeys]
+    return df
+
+
+def from_point(buffer):
+    """
+    Currently supports Point (v1.0) which has 12 header rows in text format.
+    The text header rows also describe the binary portion of the file.
+
+    Arguments
+    ---------
+    buffer : bytes
+        Data buffer in XDR format with RSIG headers
+    decompress : bool
+        If True, decompress buffer.
+        If False, buffer is already decompressed (or was never compressed)
+
+    Returns
+    -------
+    df : pd.DataFrame
+        Dataframe with XDR content
+
+    Notes
+    -----
+    # 12 header rows to be read using \n
+    # Line 1: definition spec
+    # Line 2: Info
+    # Line 3: Start/End date
+    # Line 4-5: Dimensions
+    # Line 6-7: Variable names
+    # Line 8-9: Units
+    # Line 10-12: definition of data chunks lines
+    #   Next npoint * 80 characters are notes for each point
+    #   Next nvariable * npoint * 8 bytes are data[variables][]
+    """
+    import numpy as np
+    import pandas as pd
+    import xdrlib
+    import io
+
+    bf = io.BytesIO(buffer)
+    for i in range(11):
+        _l = bf.readline()
+        if i == 0:
+            assert (_l.decode().strip().lower() == 'point 1.0')
+        elif i == 2:
+            # stime = _l.decode().strip()
+            pass  # not loading time because it is duplicative
+        elif i == 4:
+            nvar, npoint = np.array(_l.decode().strip().split(), dtype='i')
+        elif i == 6:
+            varkeys = _l.decode().strip().split()
+        elif i == 8:
+            units = _l.decode().strip().split()
+
+    n = bf.tell()
+    up = xdrlib.Unpacker(buffer)
+    up.set_position(n)
+
+    notes = [up.unpack_fstring(80).decode().strip() for i in range(npoint)]
+
+    sdn = up.get_position()
+    # Use numpy to unpack from buffer becuase it is faster than unpack
+    vals = np.frombuffer(buffer[sdn:], dtype='>d').reshape(nvar, npoint)
+    varkeys = [
+        {'id': 'STATION'}.get(varkey, varkey).upper()
+        for varkey in varkeys
+    ]
+    varwunits = [varkey + f'({units[i]})' for i, varkey in enumerate(varkeys)]
+    data = {
+        'NOTE': notes,
+    }
+    for vi, varwunit in enumerate(varwunits):
+        data[varwunit] = vals[vi].ravel().astype(f'={vals.dtype.char}')
+
+    df = pd.DataFrame(data)
+    infmt = '%Y%m%d%H%M%S'
+    outfmt = '%Y-%m-%dT%H:%M:%S%z'
+    ntimestamps = df['TIMESTAMP(yyyymmddhhmmss)']
+    timestamps = pd.to_datetime(
+        ntimestamps, format=infmt, utc=True
+    ).dt.strftime(outfmt)
+    df.drop('TIMESTAMP(yyyymmddhhmmss)', axis=1, inplace=True)
+    ti = varwunits.index('TIMESTAMP(yyyymmddhhmmss)')
+    varwunits[ti] = 'Timestamp(UTC)'
+    
+
+    df['Timestamp(UTC)'] = timestamps
+    outkeys = varwunits + ['NOTE']
+    df = df[outkeys].rename(
+        columns={'PM25_ATM_HOURLY(ug/m3)': 'pm25_atm_hourly(ug/m3)'}
+    )
     return df
 
 
