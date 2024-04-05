@@ -95,7 +95,8 @@ _keys = (
 )
 
 _nocorner_prefixes = (
-    'airnow', 'aqs', 'purpleair', 'pandora', 'cmaq', 'regridded'
+    'airnow', 'aqs', 'purpleair', 'pandora', 'cmaq', 'regridded',
+    'calipso'
 )
 _nolonlats_prefixes = ('cmaq', 'regridded')
 _noregrid_prefixes = ('cmaq', 'regridded')
@@ -353,7 +354,7 @@ class RsigApi:
     def __init__(
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
         tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None, tempo_kw=None,
-        pandora_kw=None,
+        pandora_kw=None, calipso_kw=None,
         server='ofmpub.epa.gov', compress=1, corners=1, encoding=None,
         overwrite=False, workdir='.', gridfit=False
     ):
@@ -397,6 +398,9 @@ class RsigApi:
         pandora_kw : dict
           Dictionary of Pandora filter parameters default
           {'minimum_quality': 'high'} other options 'medium' or 'low'
+        calipso_kw : dict
+          Dictionary of Calipso filter parameters default
+          {'MINIMUM_CAD': 20, 'MAXIMUM_UNCERTAINTY': 99}
         server : str
           'ofmpub.epa.gov' for external  users
           'maple.hesc.epa.gov' for on EPA VPN users
@@ -509,6 +513,14 @@ class RsigApi:
         pandora_kw.setdefault('minimum_quality', 'high')
 
         self.pandora_kw = pandora_kw
+
+        if calipso_kw is None:
+            calipso_kw = {}
+
+        calipso_kw.setdefault('MINIMUM_CAD', 20)
+        calipso_kw.setdefault('MAXIMUM_UNCERTAINTY', 99)
+
+        self.calipso_kw = calipso_kw
 
         if purpleair_kw is None:
             purpleair_kw = {}
@@ -951,6 +963,7 @@ class RsigApi:
         tempo_kw = self.tempo_kw
         viirsnoaa_kw = self.viirsnoaa_kw
         pandora_kw = self.pandora_kw
+        calipso_kw = self.calipso_kw
         if compress is None:
             compress = self.compress
 
@@ -977,6 +990,14 @@ class RsigApi:
             )
         else:
             pandorastr = ''
+
+        if key.startswith('calipso'):
+            calipsostr = (
+                '&MINIMUM_CAD={MINIMUM_CAD}'
+                + '&MAXIMUM_UNCERTAINTY={MAXIMUM_UNCERTAINTY}'
+            ).format(**calipso_kw)
+        else:
+            calipsostr = ''
 
         if key.startswith('tropomi'):
             tropomistr = (
@@ -1029,7 +1050,7 @@ class RsigApi:
             f'&COMPRESS={compress}'
         ) + (
             purpleairstr + viirsnoaastr + tropomistr + tempostr + pandorastr
-            + gridstr + cornerstr + nolonlatsstr
+            + calipsostr + gridstr + cornerstr + nolonlatsstr
         )
 
         outpath = (
