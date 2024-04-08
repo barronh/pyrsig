@@ -67,6 +67,8 @@ def from_xdr(buffer, na_values=None, decompress=False):
         df = from_point(buffer)
     elif defspec.startswith('swath'):
         df = from_swath(buffer)
+    elif defspec.startswith('calipso'):
+        df = from_calipso(buffer)
     else:
         raise IOError('{defspec} not in profile, site, swath')
 
@@ -475,13 +477,140 @@ def from_point(buffer):
     df.drop('TIMESTAMP(yyyymmddhhmmss)', axis=1, inplace=True)
     ti = varwunits.index('TIMESTAMP(yyyymmddhhmmss)')
     varwunits[ti] = 'Timestamp(UTC)'
-    
 
     df['Timestamp(UTC)'] = timestamps
     outkeys = varwunits + ['NOTE']
     df = df[outkeys].rename(
         columns={'PM25_ATM_HOURLY(ug/m3)': 'pm25_atm_hourly(ug/m3)'}
     )
+    return df
+
+
+def from_calipso(buffer):
+    """
+    Currently supports Calipso (v1.0) which has 15 header rows in text format.
+    The text header rows also describe the binary portion of the file.
+
+    Arguments
+    ---------
+    buffer : bytes
+        Data buffer in XDR format with RSIG headers
+    decompress : bool
+        If True, decompress buffer.
+        If False, buffer is already decompressed (or was never compressed)
+
+    Returns
+    -------
+    df : pd.DataFrame
+        Dataframe with XDR content
+
+    Notes
+    -----
+    CALIPSO 1.0
+    https://eosweb.larc.nasa.gov/project/calipso/calipso_table,CALIPSOSubset
+    2016-05-04T00:00:00-0000
+    # Dimensions: variables timesteps profiles:
+    5 24 8
+    # Variable names: VariableName is Total_Backscatter_Coefficient_532
+    Profile_UTC_Time Longitude Latitude Elevation VariableName
+    # Variable units:
+    yyyymmdd.f deg deg m per_kilometer_per_steradian
+    # Domain: <min_lon> <min_lat> <max_lon> <max_lat>
+    -126 24 -66 50
+    # MSB 64-bit integers (yyyydddhhmm) profile_timestamps[profiles] and
+    # IEEE-754 64-bit reals profile_bounds[profiles][2=<lon,lat>][2=<min,max>]
+    # MSB 64-bit integers profile_dimensions[profiles][2=<points,levels>] and
+    # IEEE-754 64-bit reals profile_data_1[variables][points_1][levels]
+    #                       ... profile_data_S[variables][points_S][levels]:
+    """
+    import numpy as np
+    import pandas as pd
+    import xdrlib
+    import io
+    import xarray as xr
+
+    bf = io.BytesIO(buffer)
+    headerlines = []
+    for i in range(15):
+        _l = bf.readline().decode()
+        headerlines.append(_l)
+        if i == 0:
+            assert (_l.strip().lower() == 'calipso 1.0')
+        elif i == 2:
+            # stime = _l.strip()
+            pass  # not loading time because it is duplicative
+        elif i == 4:
+            nvar, ntime, nprof = np.array(_l.strip().split(), dtype='i')
+        elif i == 6:
+            varkeys = _l.strip().split()
+        elif i == 8:
+            units = _l.strip().split()
+        elif i == 10:
+            # bbox = [float(d) for d in _l.strip().split()]
+            pass  # not loading time because it is duplicative
+
+    n = bf.tell()
+    up = xdrlib.Unpacker(buffer)
+    up.set_position(n)
+    sdn = up.get_position()
+    stime = sdn
+    etime = stime + nprof * 8
+    sbnd = etime
+    ebnd = sbnd + (nprof * 4) * 8
+    sdims = ebnd
+    edims = sdims + (nprof * 2) * 8
+    sdata = edims
+    # time = np.frombuffer(buffer[stime:etime], dtype='>l')
+    # bounds = np.frombuffer(
+    #     buffer[sbnd:ebnd], dtype='>d'
+    # ).reshape(nprof, 2, 2)
+    dims = np.frombuffer(buffer[sdims:edims], dtype='>l').reshape(nprof, 2)
+    if (
+        not (dims[:, 1] == dims[0, 1]).all()
+    ):
+        raise IOError(
+            'CALIPSO 1.0 xdr reader needs to be updated; levels vary. Use'
+            + ' ASCII backend instead of xdr until resolved. Please report to'
+            + ' https://github.com/barronh/pyrsig/issues'
+        )
+    times = []
+    lons = []
+    lats = []
+    elev = []
+    data = []
+    for iprof, (npoint, nlev) in enumerate(dims):
+        edata = sdata + (3 * npoint + 2 * npoint * nlev) * 8
+        vals = np.frombuffer(buffer[sdata:edata], dtype='>d')
+        sd = 0
+        ed = sd + npoint * 3
+        ptimes, plons, plats = vals[sd:ed].reshape(3, npoint)
+        sd = ed
+        ed = sd + npoint * nlev * 2
+        pelev, pdata = vals[sd:ed].reshape(2, npoint, nlev)
+        times.append(ptimes)
+        lons.append(plons)
+        lats.append(plats)
+        elev.append(pelev)
+        data.append(pdata)
+        sdata = edata
+    ds = xr.Dataset()
+    alldata = [times, lons, lats, elev, data]
+    for key, vals, unit in zip(varkeys, alldata, units):
+        attrs = dict(long_name=key, units=unit)
+        dims = {1: ('points',), 2: ('points', 'levels')}[vals[0].ndim]
+        ds[key] = (dims, np.concatenate(vals, axis=0), attrs)
+    ds.attrs['description'] = '\n'.join(headerlines)
+    df = ds.to_dataframe().reset_index(drop=True)
+    renamer = {key: f'{key}({unit})' for key, unit in zip(varkeys, units)}
+    renamer['Latitude'] = 'LATITUDE(deg)'
+    renamer['Longitude'] = 'LONGITUDE(deg)'
+    renamer['Elevation'] = 'ELEVATION(m)'
+    df['Timestamp(UTC)'] = (
+        pd.to_datetime(df['Profile_UTC_Time'] // 1, utc=True)
+        + pd.to_timedelta(df['Profile_UTC_Time'] % 1, unit='d')
+    ).dt.round('1s')
+    df = df[['Timestamp(UTC)'] + varkeys[1:-1] + varkeys[:1] + varkeys[-1:]]
+    df.rename(columns=renamer, inplace=True)
     return df
 
 
