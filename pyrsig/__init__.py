@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq']
-__version__ = '0.8.1'
+__version__ = '0.8.2'
 
 from . import cmaq
 from .cmaq import open_ioapi, open_mfioapi

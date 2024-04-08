@@ -94,6 +94,7 @@ print(len(keys))
 
 Not all changes are listed, but notable changes are itemized for ease of review.
 
+* v0.8.2: Added xdr CALIPSO 1.0 format capability.
 * v0.8.1: Added xdr Point 1.0 format capability.
 * v0.8.0: Restructuring module code and adding CMAQ pairing.
 * v0.7.0: Added offline descriptions for review of space/time coverage.
