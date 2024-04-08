@@ -696,6 +696,7 @@ class RsigApi:
         resubsdesc = [
             (descmidre, ''),  # concated coverages have extra open/close tags
             (re.compile('<='), '&lt;='),  # associated with <= 32 in Modis
+            (re.compile('qa_value <'), 'qa_value &lt;'),  # w/ tropomi.ntri
             (
                 mismatchtempre,
                 '</lonLatEnvelope><domainSet><spatialDomain></spatialDomain>',
@@ -840,6 +841,7 @@ class RsigApi:
             # Cleanup... for known issues
             ctext = ctext.replace('>yyy', '>')
             ctext = ctext.replace('<=', 'less than or equal to ')
+            ctext = ctext.replace('qa_value < 0', 'qa_value less than 0')
             ctext = ctext.replace('>0=', 'greater than 0 =')
             ctext = ctext.replace('<0=', 'less than 0 = ')
             # version 1.5
