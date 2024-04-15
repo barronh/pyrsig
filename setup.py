@@ -31,4 +31,6 @@ setuptools.setup(
     install_requires=[
         "pandas", "xarray", "requests"
     ],
+    include_package_data=True,
+    zip_safe=False
 )

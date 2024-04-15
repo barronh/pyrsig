@@ -32,8 +32,11 @@ def get_descriptions(server='ofmpub.epa.gov', refresh=False, verbose=0):
 
     if exists(_userdescpath):
         descpath = _userdescpath
-    else:
+    elif exists(_pkgdescpath):
         descpath = _pkgdescpath
+    elif not refresh:
+        # None found, force refresh
+        return get_descriptions(server=server, refresh=True, verbose=verbose)
     df = pd.read_csv(descpath)
     return df
 
