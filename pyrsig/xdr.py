@@ -69,13 +69,55 @@ def from_xdr(buffer, na_values=None, decompress=False):
         df = from_swath(buffer)
     elif defspec.startswith('calipso'):
         df = from_calipso(buffer)
+    elif defspec.startswith('polygon'):
+        df = from_polygon(buffer)
     else:
-        raise IOError('{defspec} not in profile, site, swath')
+        raise IOError(f'{defspec} not in profile, site, swath')
 
     if na_values is not None:
         df = df.replace(na_values, np.nan)
 
     return df
+
+
+def from_polygon(buffer):
+    """
+    10 header lines
+    shx, shp and dpf as binary content
+    """
+    import io
+    import tempfile
+    import geopandas as gpd
+
+    bf = io.BytesIO(buffer)
+    for i in range(10):
+        _l = bf.readline().decode().strip()
+        if i == 0:
+            assert (_l.lower() == 'polygon 1.0')
+        if i == 2:
+            dates, datee = _l.replace(':', '').replace('-0000', 'Z').split()
+        elif i == 9:
+            prefix, shxn, shpn, dbfn = _l.split()
+            shxn = int(shxn)
+            shpn = int(shpn)
+            dbfn = int(dbfn)
+    shxs = bf.tell()
+    shxe = shxs + shxn
+    shps = shxe
+    shpe = shps + shpn
+    dbfs = shpe
+    dbfe = dbfs + dbfn
+    with tempfile.TemporaryDirectory() as td:
+        filestem = f'{td}/{prefix}_{dates}_{datee}'
+        with open(filestem + '.shx', 'wb') as shxf:
+            shxf.write(buffer[shxs:shxe])
+        with open(filestem + '.shp', 'wb') as shpf:
+            shpf.write(buffer[shps:shpe])
+        with open(filestem + '.dbf', 'wb') as dbff:
+            dbff.write(buffer[dbfs:dbfe])
+        outdf = gpd.read_file(filestem + '.shp')
+
+    return outdf
 
 
 def from_profile(buffer):

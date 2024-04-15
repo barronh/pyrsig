@@ -1,4 +1,8 @@
-__all__ = ['get_proj4', 'customize_grid', 'def_grid_kw', 'shared_grid_kw']
+__all__ = [
+    'get_proj4', 'customize_grid', 'def_grid_kw', 'shared_grid_kw',
+    'coverages_from_xml', 'legacy_get', 'get_file'
+]
+import requests
 
 def_grid_kw = {
     '12US1': dict(
@@ -227,3 +231,224 @@ def quickstats(df, refkey='obs'):
         1 - sqerr.sum() / (apdev.add(apdev[refkey], axis=0)**2).sum()
     )
     return statsdf
+
+
+def parsexml(root):
+    """Recursive xml parsing:
+    Given a root, return dictionaries for each element and its children.
+    Each element has children, attributes (attr), tag, and text.
+    If any of these has no elements, it will be removed.
+    """
+    out = {}
+    out['tag'] = root.tag.split('}')[-1]
+    out['attr'] = root.attrib
+    out['text'] = root.text
+    out['children'] = []
+
+    for child in root:
+        childd = parsexml(child)
+        out['children'].append(childd)
+
+    if len(out['children']) == 0:
+        del out['children']
+    if out['text'] is None:
+        out['text'] = ''
+
+    out['text'] = out['text'].strip()
+    if len(out['text']) == 0:
+        del out['text']
+    if len(out['attr']) == 0:
+        del out['attr']
+
+    return out
+
+
+def coverages_from_xml(txt):
+    """Based on xml text, create coverage data"""
+    import xml.etree.ElementTree as ET
+
+    root = ET.fromstring(txt)
+
+    xmlout = parsexml(root)
+    out = []
+    for c in xmlout['children']:
+        record = {k: v for k, v in c.items() if k != 'children'}
+        kids = c['children']
+        for e in kids:
+            if 'attr' not in e and len(e.get('children', [])) == 0:
+                record[e['tag']] = e.get('text', '')
+
+            if e['tag'] == 'lonLatEnvelope':
+                envtxt = ''
+                for p in e['children']:
+                    envtxt += ' ' + p['text']
+                record['bbox_str'] = envtxt.strip()
+
+            if e['tag'] == 'domainSet':
+                for s in e['children']:
+                    if s['tag'] == 'temporalDomain':
+                        for tp in s['children']:
+                            for te in tp['children']:
+                                record[te['tag']] = te['text']
+
+        out.append(record)
+
+    return out
+
+
+def legacy_get(url, *args, **kwds):
+
+    import copy
+    session = requests.session()
+    la = LegacyAdapter()
+
+    # Maple has a bad certificate, so here if you are using maple
+    # I disable the certificate, but no the warning
+    if 'maple' in url:
+        la.ssl_context.check_hostname = False
+        kwds = copy.copy(kwds)
+        kwds.setdefault('verify', False)
+
+    session.mount('https://', la)
+
+    return session.get(url, *args, **kwds)
+
+
+def _create_unverified_tls_context(*args, **kwds):
+    """
+    Thin wrapper around ssl._create_unverified_context that adds the option to
+    use TLS negotiation, which is currently used by RSIG servers.
+    """
+    import ssl
+    # Set up SSL context to allow legacy TLS versions
+    ctx = ssl._create_unverified_context(*args, **kwds)
+    ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
+    return ctx
+
+
+class LegacyAdapter(requests.adapters.HTTPAdapter):
+    # "Transport adapter" that allows us to use custom ssl_context.
+
+    def __init__(self, **kwargs):
+        import ssl
+        def_ctx = ssl._create_default_https_context
+        ssl._create_default_https_context = _create_unverified_tls_context
+        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
+        self.ssl_context = ctx
+        ssl._create_default_https_context = def_ctx
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, connections, maxsize, block=False):
+        import urllib3
+        self.poolmanager = urllib3.poolmanager.PoolManager(
+            num_pools=connections, maxsize=maxsize,
+            block=block, ssl_context=self.ssl_context)
+
+
+def _progress(blocknum, readsize, totalsize):
+    """
+    Display progress using dots or % indicator.
+
+    Arguments
+    ---------
+    blocknum : int
+        block number of blocks to be read
+    readsize : int
+        chunksize read
+    totalsize : int
+        -1 unknown or size of file
+    """
+    totalblocks = (totalsize // readsize) + 1
+    pblocks = totalblocks // 10
+    if pblocks <= 0:
+        pblocks = 100
+    if totalsize > 0:
+        print(
+            '\r' + 'Retrieving {:.0f}'.format(readsize/totalsize*100), end='',
+            flush=True
+        )
+    else:
+        if blocknum == 0:
+            print('Retrieving .', end='', flush=True)
+        if (blocknum % pblocks) == 0:
+            print('.', end='', flush=True)
+
+
+def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
+    """
+    Download file from RSIG using fault tolerance and optional caching
+    when overwrite is False.
+
+    Arguments
+    ---------
+    url : str
+        path to retrieve
+    outpath : str
+        path to save file to
+    maxtries : int
+        try this many times before quitting
+    verbose : int
+        Level of verbosity
+    overwrite : bool
+        If True, overwrite existing files.
+        If False, reuse existing files.
+
+    Returns
+    -------
+    None
+    """
+    import time
+    from urllib.request import urlretrieve
+    import ssl
+    import os
+    from .utils import _create_unverified_tls_context
+
+    # If the file exists, get the current size
+    if not overwrite and os.path.exists(outpath):
+        stat = os.stat(outpath)
+        dlsize = stat.st_size
+    else:
+        dlsize = 0
+
+    # if the size is non-zero, assume it is good
+    if dlsize > 0:
+        print('Using cached:', outpath)
+        return
+
+    _def_https_context = ssl._create_default_https_context
+    ssl._create_default_https_context = _create_unverified_tls_context
+
+    # Try to download the file maxtries times
+    tries = 0
+    if verbose > 0:
+        reporthook = _progress
+    else:
+        reporthook = None
+    while dlsize <= 0 and tries < maxtries:
+        # Remove 0-sized files.
+        outdir = os.path.dirname(outpath)
+        if os.path.exists(outpath):
+            os.remove(outpath)
+        os.makedirs(outdir, exist_ok=True)
+        if verbose:
+            print('Calling RSIG', outpath, '')
+        t0 = time.time()
+        urlretrieve(
+            url=url,
+            filename=outpath,
+            reporthook=reporthook,
+        )
+        # Check timing
+        t1 = time.time()
+        stat = os.stat(outpath)
+        dlsize = stat.st_size
+
+        if dlsize == 0:
+            print('Failed', url, t1 - t0)
+        tries += 1
+
+        if verbose > 0:
+            print('')
+
+    ssl._create_default_https_context = _def_https_context

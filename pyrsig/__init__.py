@@ -1,11 +1,11 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq']
-__version__ = '0.8.2'
+__version__ = '0.8.3'
 
 from . import cmaq
 from .cmaq import open_ioapi, open_mfioapi
 import pandas as pd
-import requests
 from .utils import customize_grid, def_grid_kw as _def_grid_kw
+from .utils import coverages_from_xml, legacy_get
 
 # Used to shorten pandora names for 80 character PEP
 _trvca = 'tropospheric_vertical_column_amount'
@@ -94,9 +94,8 @@ _keys = (
     'viirsnoaa.jrraod.AOD550', 'viirsnoaa.vaooo.AerosolOpticalDepth_at_550nm',
 )
 
-_nocorner_prefixes = (
-    'airnow', 'aqs', 'purpleair', 'pandora', 'cmaq', 'regridded',
-    'calipso'
+_corner_prefixes = (
+    'gasp', 'goes', 'modis', 'omibehr', 'tempo', 'tropomi', 'viirs'
 )
 _nolonlats_prefixes = ('cmaq', 'regridded')
 _noregrid_prefixes = ('cmaq', 'regridded')
@@ -129,225 +128,6 @@ def _actionf(msg, action, ErrorTyp=None):
         raise ErrorTyp(msg)
     elif action == 'warn':
         warnings.warn(msg)
-
-
-def parsexml(root):
-    """Recursive xml parsing:
-    Given a root, return dictionaries for each element and its children.
-    Each element has children, attributes (attr), tag, and text.
-    If any of these has no elements, it will be removed.
-    """
-    out = {}
-    out['tag'] = root.tag.split('}')[-1]
-    out['attr'] = root.attrib
-    out['text'] = root.text
-    out['children'] = []
-
-    for child in root:
-        childd = parsexml(child)
-        out['children'].append(childd)
-
-    if len(out['children']) == 0:
-        del out['children']
-    if out['text'] is None:
-        out['text'] = ''
-
-    out['text'] = out['text'].strip()
-    if len(out['text']) == 0:
-        del out['text']
-    if len(out['attr']) == 0:
-        del out['attr']
-
-    return out
-
-
-def coverages_from_xml(txt):
-    """Based on xml text, create coverage data"""
-    import xml.etree.ElementTree as ET
-
-    root = ET.fromstring(txt)
-
-    xmlout = parsexml(root)
-    out = []
-    for c in xmlout['children']:
-        record = {k: v for k, v in c.items() if k != 'children'}
-        kids = c['children']
-        for e in kids:
-            if 'attr' not in e and len(e.get('children', [])) == 0:
-                record[e['tag']] = e.get('text', '')
-
-            if e['tag'] == 'lonLatEnvelope':
-                envtxt = ''
-                for p in e['children']:
-                    envtxt += ' ' + p['text']
-                record['bbox_str'] = envtxt.strip()
-
-            if e['tag'] == 'domainSet':
-                for s in e['children']:
-                    if s['tag'] == 'temporalDomain':
-                        for tp in s['children']:
-                            for te in tp['children']:
-                                record[te['tag']] = te['text']
-
-        out.append(record)
-
-    return out
-
-
-def _progress(blocknum, readsize, totalsize):
-    """
-    Display progress using dots or % indicator.
-
-    Arguments
-    ---------
-    blocknum : int
-        block number of blocks to be read
-    readsize : int
-        chunksize read
-    totalsize : int
-        -1 unknown or size of file
-    """
-    totalblocks = (totalsize // readsize) + 1
-    pblocks = totalblocks // 10
-    if pblocks <= 0:
-        pblocks = 100
-    if totalsize > 0:
-        print(
-            '\r' + 'Retrieving {:.0f}'.format(readsize/totalsize*100), end='',
-            flush=True
-        )
-    else:
-        if blocknum == 0:
-            print('Retrieving .', end='', flush=True)
-        if (blocknum % pblocks) == 0:
-            print('.', end='', flush=True)
-
-
-def _create_unverified_tls_context(*args, **kwds):
-    """
-    Thin wrapper around ssl._create_unverified_context that adds the option to
-    use TLS negotiation, which is currently used by RSIG servers.
-    """
-    import ssl
-    # Set up SSL context to allow legacy TLS versions
-    ctx = ssl._create_unverified_context(*args, **kwds)
-    ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
-    return ctx
-
-
-class LegacyAdapter(requests.adapters.HTTPAdapter):
-    # "Transport adapter" that allows us to use custom ssl_context.
-
-    def __init__(self, **kwargs):
-        import ssl
-        def_ctx = ssl._create_default_https_context
-        ssl._create_default_https_context = _create_unverified_tls_context
-        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-        ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
-        self.ssl_context = ctx
-        ssl._create_default_https_context = def_ctx
-        super().__init__(**kwargs)
-
-    def init_poolmanager(self, connections, maxsize, block=False):
-        import urllib3
-        self.poolmanager = urllib3.poolmanager.PoolManager(
-            num_pools=connections, maxsize=maxsize,
-            block=block, ssl_context=self.ssl_context)
-
-
-def legacy_get(url, *args, **kwds):
-    import copy
-    session = requests.session()
-    la = LegacyAdapter()
-
-    # Maple has a bad certificate, so here if you are using maple
-    # I disable the certificate, but no the warning
-    if 'maple' in url:
-        la.ssl_context.check_hostname = False
-        kwds = copy.copy(kwds)
-        kwds.setdefault('verify', False)
-
-    session.mount('https://', la)
-
-    return session.get(url, *args, **kwds)
-
-
-def _getfile(url, outpath, maxtries=5, verbose=1, overwrite=False):
-    """
-    Download file from RSIG using fault tolerance and optional caching
-    when overwrite is False.
-
-    Arguments
-    ---------
-    url : str
-        path to retrieve
-    outpath : str
-        path to save file to
-    maxtries : int
-        try this many times before quitting
-    verbose : int
-        Level of verbosity
-    overwrite : bool
-        If True, overwrite existing files.
-        If False, reuse existing files.
-
-    Returns
-    -------
-    None
-    """
-    import time
-    from urllib.request import urlretrieve
-    import ssl
-    import os
-
-    # If the file exists, get the current size
-    if not overwrite and os.path.exists(outpath):
-        stat = os.stat(outpath)
-        dlsize = stat.st_size
-    else:
-        dlsize = 0
-
-    # if the size is non-zero, assume it is good
-    if dlsize > 0:
-        print('Using cached:', outpath)
-        return
-
-    _def_https_context = ssl._create_default_https_context
-    ssl._create_default_https_context = _create_unverified_tls_context
-
-    # Try to download the file maxtries times
-    tries = 0
-    if verbose > 0:
-        reporthook = _progress
-    else:
-        reporthook = None
-    while dlsize <= 0 and tries < maxtries:
-        # Remove 0-sized files.
-        outdir = os.path.dirname(outpath)
-        if os.path.exists(outpath):
-            os.remove(outpath)
-        os.makedirs(outdir, exist_ok=True)
-        if verbose:
-            print('Calling RSIG', outpath, '')
-        t0 = time.time()
-        urlretrieve(
-            url=url,
-            filename=outpath,
-            reporthook=reporthook,
-        )
-        # Check timing
-        t1 = time.time()
-        stat = os.stat(outpath)
-        dlsize = stat.st_size
-
-        if dlsize == 0:
-            print('Failed', url, t1 - t0)
-        tries += 1
-
-        if verbose > 0:
-            print('')
-
-    ssl._create_default_https_context = _def_https_context
 
 
 class RsigApi:
@@ -444,7 +224,6 @@ class RsigApi:
         self._description = {}
         self._keys = None
         self._capabilities = None
-        self._describecoverages = None
         self._coveragesdf = None
         self._capabilitiesdf = None
         self.server = server
@@ -621,7 +400,7 @@ class RsigApi:
 
         return coverages
 
-    def descriptions(self, as_dataframe=True, refresh=False, verbose=0):
+    def descriptions(self, refresh=False, verbose=0):
         """
         Experimental and may change.
 
@@ -638,9 +417,6 @@ class RsigApi:
 
         Arguments
         ---------
-        as_dataframe : bool
-            Defaults to True and descriptions are returned as a dataframe.
-            If False, returns a list of elements.
         refresh : bool
             If True, get new copy and save to ~/.pyrsig/descriptons.xml
             If False (default), reload from saved if available.
@@ -662,142 +438,12 @@ class RsigApi:
             #  ... 43 other name here
             #  'tropomi.rpro.ch4.methane_mixing_ratio_bias_corrected']
         """
-        import re
-        import pandas as pd
-        import warnings
-        import os
-
-        descpath = os.path.expanduser('~/.pyrsig/DescribeCoverage.csv')
-        if not refresh and as_dataframe:
-            if self._coveragesdf is not None:
-                return self._coveragesdf
-            elif os.path.exists(descpath):
-                self._coveragesdf = pd.read_csv(descpath)
-                return self._coveragesdf
-
-        print('Refreshing descriptions...')
-        # Start Cleaning Section
-        # BHH 2023-05-10
-        # This section provides "cleaning" to the xml content provided by
-        # DescribeCoverage. This should not have to happen and should be
-        # removable at some point in the future.
-        # Working with TP to fix xml
-
-        descmidre = re.compile(
-            r'\</CoverageDescription\>.+?\<CoverageDescription.+?\>',
-            flags=re.MULTILINE + re.DOTALL
-        )
-        mismatchtempre = re.compile(
-            r'\</lonLatEnvelope\>\s+\</spatialDomain\>',
-            flags=re.MULTILINE + re.DOTALL
-        )
-
-        # Regex, replacement
-        resubsdesc = [
-            (descmidre, ''),  # concated coverages have extra open/close tags
-            (re.compile('<='), '&lt;='),  # associated with <= 32 in Modis
-            (re.compile('qa_value <'), 'qa_value &lt;'),  # w/ tropomi.ntri
-            (
-                mismatchtempre,
-                '</lonLatEnvelope><domainSet><spatialDomain></spatialDomain>',
-            ),  # Missing open block for spatialDomain in goes (eg imager.calb)
-            (
-                re.compile(r'</CoverageOffering>\s+</CoverageOfferingBrief>'),
-                '</CoverageOffering>',
-            ),  # Ceiliometers have wrong opening tags and extra close tag
-            (
-                re.compile('CoverageOfferingBrief'), 'CoverageOffering'
-            ),  # Ceiliometers have wrong opening tags and extra close tag
-            (
-                re.compile(
-                    r'<rangeSet>\s+<RangeSet>\s+<supportedCRSs>',
-                    flags=re.MULTILINE + re.DOTALL
-                ),
-                '<rangeSet><RangeSet></RangeSet></rangeSet><supportedCRSs>'
-            ),  # Ceiliometers have missing rangeset content and closing tags
-        ]
-
-        if self._describecoverages is None or refresh:
-            if verbose > 1:
-                print('Requesting...', flush=True)
-            self._describecoverages = legacy_get(
-                f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION='
-                '1.0.0&REQUEST=DescribeCoverage'
-            ).text
-
-            ctext = self._describecoverages
-
-            for reg, sub in resubsdesc:
-                ctext = reg.sub(sub, ctext)
-
-            # End Cleaning Section
-            self._describecoverages = ctext
-
-        ctext = self._describecoverages
-
-        # Selecting coverages and removing garbage when necessary.
-        cleanre = re.compile(
-            r'\</name\>.+?\</CoverageOffering\>',
-            flags=re.MULTILINE + re.DOTALL
-        )
-        # <CoverageOffering>.+?</CoverageOffering>
-        coverre = re.compile(
-            r'\<CoverageOffering\>.+?\</CoverageOffering\>',
-            flags=re.MULTILINE + re.DOTALL
-        )
-
-        coverages = []
-        limited_details = []
-        for rex in coverre.finditer(ctext):
-            secttxt = ctext[rex.start():rex.end()]
-            secttxt = (
-                '<CoverageDescription version="1.0.0"'
-                + ' xmlns="http://www.opengeospatial.org/standards/wcs"'
-                + ' xmlns:gml="http://www.opengis.net/gml"'
-                + ' xmlns:xlink="http://www.w3.org/1999/xlink">'
-                + secttxt + '</CoverageDescription>'
+        from .data import get_descriptions
+        if self._coveragesdf is None:
+            self._coveragesdf = get_descriptions(
+                server=self.server, refresh=refresh
             )
-            try:
-                coverage = coverages_from_xml(secttxt)
-                coverages.extend(coverage)
-            except Exception as e:
-                try:
-                    secttxt = cleanre.sub(
-                        '</name></CoverageOffering>', secttxt
-                    )
-                    coverage = coverages_from_xml(secttxt)
-                    coverages.extend(coverage)
-                    limited_details.append(coverage[0]["name"])
-                except Exception as e2:
-                    # If a secondary error was raised, print it... but raise
-                    # the original error
-                    print(e)
-                    raise e2
-
-        nlimited = len(limited_details)
-        if nlimited > 0 and verbose > 0:
-            limitedstr = ', '.join(limited_details)
-            warnings.warn(
-                f'Limited details for {nlimited} coverages: {limitedstr}'
-            )
-
-        if as_dataframe:
-            coverages = pd.DataFrame.from_records(coverages)
-            coverages['bbox_str'] = coverages['bbox_str'].fillna(
-                '-180 -90 180 90'
-            )
-            coverages['endPosition'] = coverages['endPosition'].fillna('now')
-            coverages['prefix'] = coverages['name'].apply(
-                lambda x: x.split('.')[0]
-            )
-            coverages = coverages.drop('tag', axis=1)
-            self._coveragesdf = coverages
-            # If you have arrived here, it means the file did not exist
-            # or was intended to be refreshed. So, make it.
-            os.makedirs(os.path.dirname(descpath), exist_ok=True)
-            self._coveragesdf.to_csv(descpath, index=False)
-
-        return coverages
+        return self._coveragesdf
 
     def capabilities(self, as_dataframe=True, refresh=False, verbose=0):
         """
@@ -897,6 +543,7 @@ class RsigApi:
         Build url, outpath, and download the file. Returns outpath
 
         """
+        from .utils import get_file
         if overwrite is None:
             overwrite = self.overwrite
         url, outpath = self._build_url(
@@ -906,7 +553,7 @@ class RsigApi:
         if verbose > 0:
             print(url)
 
-        _getfile(url, outpath, verbose=verbose, overwrite=overwrite)
+        get_file(url, outpath, verbose=verbose, overwrite=overwrite)
 
         return outpath
 
@@ -1033,10 +680,10 @@ class RsigApi:
         else:
             purpleairstr = ''
 
-        if any([key.startswith(pre) for pre in _nocorner_prefixes]):
-            cornerstr = ''
-        else:
+        if any([key.startswith(pre) for pre in _corner_prefixes]):
             cornerstr = f'&CORNERS={corners}'
+        else:
+            cornerstr = ''
 
         if any([key.startswith(pre) for pre in _nolonlats_prefixes]):
             nolonlatsstr = '&NOLONLATS=1'
@@ -1142,6 +789,8 @@ class RsigApi:
         """
         from . import xdr
         assert backend in {'ascii', 'xdr'}
+        if key.startswith('hms.'):
+            backend = 'xdr'
         outpath = self.get_file(
             backend, key=key, bdate=bdate, edate=edate, bbox=bbox,
             grid=False, verbose=verbose,

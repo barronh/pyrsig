@@ -94,6 +94,8 @@ print(len(keys))
 
 Not all changes are listed, but notable changes are itemized for ease of review.
 
+* v0.8.3: Added xdr Polyton 1.0 format capability, added package
+          DescribeCoverage in data module and restructured utilities.
 * v0.8.2: Added xdr CALIPSO 1.0 format capability.
 * v0.8.1: Added xdr Point 1.0 format capability.
 * v0.8.0: Restructuring module code and adding CMAQ pairing.

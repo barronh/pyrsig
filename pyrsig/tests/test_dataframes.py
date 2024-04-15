@@ -12,6 +12,17 @@ def test_pandora():
         print(ds.shape)
 
 
+def test_hmssmoke():
+    from .. import RsigApi
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        bbox = (-80, 30, -60, 50)
+        rsigapi = RsigApi(bdate='2023-03-01', bbox=bbox, workdir=td)
+        ds = rsigapi.to_dataframe('hms.smoke')
+        print(ds.shape)
+
+
 def test_viirsnoaa():
     from .. import RsigApi
     import tempfile
