@@ -452,3 +452,89 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
             print('')
 
     ssl._create_default_https_context = _def_https_context
+
+
+def grid2poly(gdattrs):
+    """
+    Arguments
+    ---------
+    gdattrs : dict
+        Attributes of IOAPI grid
+    """
+    import numpy as np
+    from shapely import polygons
+    import geopandas as gpd
+    import pandas as pd
+
+    # gdattrs = pyrsig.utils.def_grid_kw['12US1']
+    proj4 = get_proj4(gdattrs)
+    # Calculate x/y centers
+    y = np.arange(gdattrs['NROWS']) + 0.5
+    x = np.arange(gdattrs['NCOLS']) + 0.5
+    # Create a center for each cell
+    xy = np.stack(np.meshgrid(x, y), axis=2).reshape(-1, 2)
+    # Calculate offsets from center for the ll, lr, ur, ul
+    dll = np.array([-0.5, -0.5])
+    dlr = np.array([0.5, -0.5])
+    dur = np.array([0.5, 0.5])
+    dul = np.array([-0.5, 0.5])
+    # Create corners at points for polygons
+    crnr = np.stack([xy + dll, xy + dlr, xy + dur, xy + dul], axis=1)
+    # Calculate grid polygons
+    qgeom = polygons(crnr)
+    index = pd.MultiIndex.from_arrays(xy.T, names=['COL', 'ROW'])
+    qdf = gpd.GeoDataFrame({}, geometry=qgeom, crs=proj4, index=index)
+    return qdf
+
+
+def poly2grid(gdf, gdattrs):
+    """
+    Arguments
+    ---------
+    gdf : geopandas.GeoDataFrame
+        Data to create fractional area overlap.
+    gdattrs : dict
+        Attributes of IOAPI grid
+
+    Returns
+    -------
+    oldf : geopandas.GeoDataFrame
+        Overlap of gdf with grid
+    """
+    import geopandas as gpd
+    import warnings
+
+    qdf = grid2poly(gdattrs)
+    if gdf.crs is None:
+        warnings.warn('No CRS provided; assuming input is EPSG:4326')
+        gdf.crs = 4326
+    gqdf = gdf.to_crs(qdf.crs)
+    oldf = gpd.overlay(qdf.reset_index(), gqdf)
+    oldf['area_overlap'] = oldf['geometry'].area
+    return oldf
+
+
+def poly2ioapi(gdf, gdattrs, how='mean'):
+    import numpy as np
+    import pandas as pd
+    ol = poly2grid(gdf, gdattrs)
+    df = getattr(ol.groupby(['ROW', 'COL']), how)(numeric_only=True)
+    ds = df.to_xarray()
+    outds = ds.interp(
+        COL=np.arange(gdattrs['NCOLS']) + 0.5,
+        ROW=np.arange(gdattrs['NROWS']) + 0.5
+    ).expand_dims(
+        TSTEP=1, LAY=1
+    )
+    outds.coords['TSTEP'] = pd.to_datetime(['1970-01-01 00:00:00Z']).values
+    outds.coords['LAY'] = np.array([1])
+    outkeys = list(outds.data_vars)
+    for k in outkeys:
+        outds[k].attrs.update(
+            long_name=k.ljust(16), var_desc=k.ljust(80),
+            units='unknown'.ljust(16)
+        )
+    outds.attrs['NVARS'] = len(outkeys)
+    outds.attrs['VAR-LIST'] = ''.join([k.ljust(16) for k in outkeys])
+    outds.attrs.update(gdattrs)
+    return outds

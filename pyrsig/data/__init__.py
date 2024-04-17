@@ -183,4 +183,3 @@ def make_descriptions(descpath, server='ofmpub.epa.gov', verbose=0):
     # or was intended to be refreshed. So, make it.
     os.makedirs(os.path.dirname(descpath), exist_ok=True)
     coverages.to_csv(descpath, index=False)
-

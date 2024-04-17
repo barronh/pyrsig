@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq']
-__version__ = '0.8.3'
+__version__ = '0.8.4'
 
 from . import cmaq
 from .cmaq import open_ioapi, open_mfioapi
@@ -7,92 +7,6 @@ import pandas as pd
 from .utils import customize_grid, def_grid_kw as _def_grid_kw
 from .utils import coverages_from_xml, legacy_get
 
-# Used to shorten pandora names for 80 character PEP
-_trvca = 'tropospheric_vertical_column_amount'
-
-_keys = (
-    'airnow.pm25', 'airnow.pm10', 'airnow.ozone', 'airnow.no', 'airnow.no2',
-    'airnow.nox', 'airnow.so2', 'airnow.co', 'airnow.temperature',
-    'airnow.pressure', 'airnow.rh', 'airnow2.pm25', 'airnow2.ozone',
-    'airnow2.no2', 'airnow2.so2', 'airnow2.co',
-    'aqs.pm25', 'aqs.pm25_daily_average', 'aqs.pm25_daily_filter', 'aqs.pm10',
-    'aqs.ozone', 'aqs.ozone_8hour_average', 'aqs.ozone_daily_8hour_maximum',
-    'aqs.co', 'aqs.so2', 'aqs.no2', 'aqs.nox', 'aqs.noy', 'aqs.rh',
-    'aqs.temperature', 'aqs.pressure',
-    'ceilometer.aerosol_layer_heights',
-    'cmaq.equates.conus.aconc.O3', 'cmaq.equates.conus.aconc.NO2',
-    'cmaq.equates.conus.aconc.PM25',
-    'hms.fire_ecosys', 'hms.fire_power', 'hms.smoke',
-    'metar.elevation', 'metar.visibility', 'metar.seaLevelPress',
-    'metar.temperature', 'metar.dewpoint', 'metar.relativeHumidity',
-    'metar.windDir', 'metar.windSpeed', 'metar.windGustSpeed', 'metar.wind',
-    'metar.altimeter', 'metar.minTemp24Hour', 'metar.maxTemp24Hour',
-    'metar.precip1Hour', 'metar.precip3Hour', 'metar.precip6Hour',
-    'metar.precip24Hour', 'metar.pressChange3Hour', 'metar.snowCover'
-    'nesdis.pm25', 'nesdis.co', 'nesdis.co2', 'nesdis.ch4', 'nesdis.n2o',
-    'nesdis.nh3', 'nesdis.nox', 'nesdis.so2', 'nesdis.tnmhc',
-    'pandora.ozone'
-    f'pandora.L2_rfuh5p1_8.formaldehyde_{_trvca}',
-    f'pandora.L2_rfuh5p1_8.formaldehyde_{_trvca}_uncertainty',
-    'pandora.L2_rfus5p1_8.direct_formaldehyde_air_mass_factor',
-    'pandora.L2_rfus5p1_8.direct_formaldehyde_air_mass_factor_uncertainty',
-    'pandora.L2_rfus5p1_8.formaldehyde_total_vertical_column_amount',
-    'pandora.L2_rfus5p1_8.formaldehyde_vertical_column_amount_uncertainty',
-    f'pandora.L2_rnvh3p1_8.water_vapor_{_trvca}',
-    f'pandora.L2_rnvh3p1_8.water_vapor_{_trvca}_uncertainty',
-    'pandora.L2_rnvs3p1_8.nitrogen_dioxide_vertical_column_amount',
-    'pandora.L2_rnvh3p1_8.tropospheric_nitrogen_dioxide',
-    'pandora.L2_rnvh3p1_8.tropospheric_nitrogen_dioxide_uncertainty',
-    'pandora.L2_rnvs3p1_8.direct_nitrogen_dioxide_air_mass_factor',
-    'pandora.L2_rnvs3p1_8.direct_nitrogen_dioxide_air_mass_factor_uncertainty',
-    'pandora.L2_rout2p1_8.ozone_vertical_column_amount',
-    'pandora.L2_rout2p1_8.direct_ozone_air_mass_factor',
-    'pandora.L2_rout2p1_8.ozone_air_mass_factor_uncertainty',
-    'pandora.L2_rsus1p1_8.sulfur_dioxide_vertical_column_amount',
-    'pandora.L2_rsus1p1_8.direct_sulfur_dioxide_air_mass_factor',
-    'pandora.L2_rsus1p1_8.sulfur_dioxide_air_mass_factor_uncertainty',
-    'pandora.L2_rnvssp1_8.nitrogen_dioxide_vertical_column_amount',
-    'pandora.L2_rnvssp1_8.direct_nitrogen_dioxide_air_mass_factor',
-    'pandora.L2_rnvssp1_8.direct_nitrogen_dioxide_air_mass_factor_uncertainty',
-    'purpleair.pm25_corrected',
-    'purpleair.pm25_corrected_hourly', 'purpleair.pm25_corrected_daily',
-    'purpleair.pm25_corrected_monthly', 'purpleair.pm25_corrected_yearly',
-    'regridded.conus.monthly.tropomi.offl.no2',
-    'regridded.conus.monthly.tropomi.offl.hcho',
-    'regridded.conus.monthly.tropomi.offl.ch4',
-    'regridded.conus.monthly.tropomi.offl.co',
-    'regridded.conus.monthly.tropomi.rpro.no2',
-    'regridded.conus.seasonal.tropomi.offl.no2',
-    'regridded.conus.seasonal.tropomi.offl.hcho',
-    'regridded.conus.seasonal.tropomi.offl.ch4',
-    'regridded.conus.seasonal.tropomi.offl.co',
-    'regridded.conus.seasonal.tropomi.rpro.no2',
-    'tempo.proxy_l2.no2.vertical_column_total',
-    'tempo.proxy_l2.no2.vertical_column_total_uncertainty',
-    'tempo.proxy_l2.no2.vertical_column_troposphere',
-    'tempo.proxy_l2.no2.vertical_column_stratosphere',
-    'tempo.proxy_l2.no2.amf_total',
-    'tempo.proxy_l2.no2.amf_total_uncertainty',
-    'tempo.proxy_l2.no2.amf_troposphere',
-    'tempo.proxy_l2.no2.amf_stratosphere',
-    'tempo.proxy_l2.no2.ground_pixel_quality_flag',
-    'tempo.proxy_l2.hcho.vertical_column',
-    'tempo.proxy_l2.hcho.vertical_column_uncertainty',
-    'tempo.proxy_l2.hcho.amf',
-    'tempo.proxy_l2.hcho.amf_uncertainty',
-    'tempo.proxy_l2.o3p.total_ozone_column',
-    'tempo.proxy_l2.o3p.troposphere_ozone_column',
-    'tempo.proxy_l2.o3p.stratosphere_ozone_column',
-    'tempo.proxy_l2.o3p.ozone_information_content',
-    'tempo.proxy_l2.o3p.ground_pixel_quality_flag',
-    'tropomi.offl.no2.nitrogendioxide_tropospheric_column',
-    'tropomi.offl.no2.air_mass_factor_troposphere',
-    'tropomi.offl.hcho.formaldehyde_tropospheric_vertical_column',
-    'tropomi.offl.co.carbonmonoxide_total_column',
-    'tropomi.offl.ch4.methane_mixing_ratio',
-    'tropomi.offl.ch4.methane_mixing_ratio_bias_corrected',
-    'viirsnoaa.jrraod.AOD550', 'viirsnoaa.vaooo.AerosolOpticalDepth_at_550nm',
-)
 
 _corner_prefixes = (
     'gasp', 'goes', 'modis', 'omibehr', 'tempo', 'tropomi', 'viirs'
@@ -222,7 +136,6 @@ class RsigApi:
 
         """
         self._description = {}
-        self._keys = None
         self._capabilities = None
         self._coveragesdf = None
         self._capabilitiesdf = None
@@ -527,11 +440,8 @@ class RsigApi:
             If False, finds all coverages from capabilities service.
 
         """
-        if offline:
-            keys = tuple(_keys)
-        else:
-            keys = sorted(self.capabilities(refresh=True).name.unique())
-
+        descdf = self.descriptions(refresh=not offline)
+        keys = tuple(sorted(descdf['name'].unique()))
         return keys
 
     def get_file(

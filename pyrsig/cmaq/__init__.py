@@ -46,11 +46,26 @@ def save_ioapi(ds, path, format='NETCDF3_CLASSIC', **kwds):
     assert len(set([k[:16] for k in outkeys])) == nv
     varlist = ''.join([k[:16].ljust(16) for k in outkeys])
     dates = pd.to_datetime(ds.TSTEP.values)
-    dt = np.diff(dates).astype('d').max() / 1e9
+    if len(dates) == 1:
+        if 'TSTEP' in ds.attrs:
+            # A bit circular here, but parsing TSTEP as definitive when there
+            # is no time coordinate.
+            tstep = ds.attrs['TSTEP']
+            tstepstr = f'{tstep:06d}'
+            dts = int(tstepstr[-2:])
+            dtm = int(tstepstr[-4:-2])
+            dth = int(tstepstr[:-4])
+            dt = dth * 3600 + dtm * 60 + dts
+        else:
+            # Assume 24h, which is like typical rsig
+            dt = 24 * 3600
+    else:
+        dt = np.diff(dates).astype('d').max() / 1e9
 
     dth = dt // 3600
     dtm = (dt % 3600) // 60
     dts = (dt % 60) // 1
+    tstepstr = f'{dth:.0f}{dtm:02.0f}{dts:02.0f}'
     timec = pd.to_datetime(
         ds.TSTEP.min().values
         + np.arange(len(dates)) * pd.to_timedelta(dt, unit='s')
@@ -66,24 +81,25 @@ def save_ioapi(ds, path, format='NETCDF3_CLASSIC', **kwds):
     ).expand_dims(VAR=nv).transpose('TSTEP', 'VAR', 'DATE-TIME')
     ods.attrs['SDATE'] = int(ods['TFLAG'][0, 0, 0])
     ods.attrs['STIME'] = int(ods['TFLAG'][0, 0, 1])
-    ods.attrs['TSTEP'] = int(f'{dth:.0f}{dtm:02.0f}{dts:02.0f}')
+    ods.attrs['TSTEP'] = int(tstepstr)
 
     for dk in outkeys:
         ok = dk[:16]
-        ods[ok] = ds[dk].copy()
+        ods[ok] = ds[dk].astype('f')
         vprops = ods[ok].attrs
         vprops['long_name'] = vprops.get('long_name', ok)[:16].ljust(16)
         vprops['var_desc'] = vprops.get('var_desc', ok)[:80].ljust(80)
         vprops['units'] = vprops.get('units', 'unknown')[:16].ljust(16)
+        ods[ok].encoding.update(ds[dk].encoding)
 
     now = pd.to_datetime('now', utc=True)
     props['CDATE'] = props['WDATE'] = int(now.strftime('%Y%j'))
     props['CTIME'] = props['WTIME'] = int(now.strftime('%H%M%S'))
-    props['NCOLS'], props['NROWS'] = ds.dims['COL'], ds.dims['ROW']
-    props['NLAYS'], props['NVARS'] = ds.dims['LAY'], ods.dims['VAR']
+    props['NCOLS'], props['NROWS'] = ds.sizes['COL'], ds.sizes['ROW']
+    props['NLAYS'], props['NVARS'] = ds.sizes['LAY'], ods.sizes['VAR']
     props['XORIG'] = float(props['XORIG'] + ds.COL.min() - 0.5)
     props['YORIG'] = float(props['YORIG'] + ds.COL.min() - 0.5)
-    s = [1]
+    s = [1.]
     for i, sm in enumerate(ods.LAY):
         s.append(2 * sm - s[-1])
 
@@ -91,17 +107,22 @@ def save_ioapi(ds, path, format='NETCDF3_CLASSIC', **kwds):
     props['VGLVLS'] = np.array(s, dtype='f')
     props['UPNAM'] = f'pyrsig {__version__}'.ljust(16)
     defprops = {
+        'EXECUTION_ID': '????'.ljust(80),
         'IOAPI_VERSION': 'not applicable'.ljust(16), 'EXEC_ID': '?'.ljust(80),
         'FTYPE': 1, 'NTHIK': 1, 'GDTYP': 2, 'P_ALP': 33.0, 'P_BET': 45.0,
         'P_GAM': -97.0, 'XCENT': -97.0, 'YCENT': 40.0,
         'VGTYP': -9999, 'VGTOP': np.float32(5000.0),
-        'GDNAM': f'{"UNKNOWN":16s}'.ljust(16), 'metadata': ''
+        'GDNAM': f'{"UNKNOWN":16s}'.ljust(16), 'metadata': '',
+        'FILEDESC': ''.ljust(80 * 60), 'UPNAM': 'pyrsig'.ljust(16),
+        'HISTORY': 'pyrsig.cmaq.save_ioapi'.ljust(80 * 60)
     }
-
+    ods.attrs.update(props)
     for pk, pdef in defprops.items():
         ods.attrs.setdefault(pk, pdef)
 
-    return ods.to_netcdf(path, format=format, **kwds)
+    coords = list(ods.coords)
+    odds = ods.drop_indexes(coords).reset_coords(coords, drop=True)
+    return odds.to_netcdf(path, format=format, **kwds)
 
 
 def open_ioapi(path, metapath=None, earth_radius=6370000.):

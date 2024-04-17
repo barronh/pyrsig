@@ -94,7 +94,10 @@ print(len(keys))
 
 Not all changes are listed, but notable changes are itemized for ease of review.
 
-* v0.8.3: Added xdr Polyton 1.0 format capability, added package
+* v0.8.4: Added support for Subset 9.0 CMAQ and Grid 1.0 xdr formats.
+          Updated keys to rely on descriptions (via DescribeCoverage).
+          Added utilites for basic polygon/cmaq intersections for HMS.
+* v0.8.3: Added xdr Polygon 1.0 format capability, added package
           DescribeCoverage in data module and restructured utilities.
 * v0.8.2: Added xdr CALIPSO 1.0 format capability.
 * v0.8.1: Added xdr Point 1.0 format capability.
