@@ -66,6 +66,7 @@ sphinx_gallery_conf = {
         '../../examples/getdata',
         '../../examples/timeseries',
         '../../examples/oversample',
+        '../../examples/maps',
     ]),
     'within_subsection_order': FileNameSortKey,
 }
