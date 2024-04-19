@@ -31,6 +31,11 @@ setuptools.setup(
     install_requires=[
         "pandas", "xarray", "requests"
     ],
+    extras_require={
+        'polygon': [
+            'geopandas',
+        ]
+    },
     include_package_data=True,
     zip_safe=False
 )

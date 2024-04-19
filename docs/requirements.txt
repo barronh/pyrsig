@@ -4,6 +4,7 @@ requests
 numpy
 matplotlib
 pandas
+geopandas
 xarray
 netcdf4
 pycno
