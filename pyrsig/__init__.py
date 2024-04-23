@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq']
-__version__ = '0.8.4'
+__version__ = '0.8.5'
 
 from . import cmaq
 from .cmaq import open_ioapi, open_mfioapi
@@ -89,6 +89,8 @@ class RsigApi:
         tempo_kw : dict
           Dictionary of TEMPO filter parameters default
             'api_key': 'your_key_here' # 'password'
+            'minimum_quality': 'normal'
+            'maximum_cloud_fraction': 1.0
         pandora_kw : dict
           Dictionary of Pandora filter parameters default
           {'minimum_quality': 'high'} other options 'medium' or 'low'
@@ -446,8 +448,8 @@ class RsigApi:
 
     def get_file(
         self, formatstr, key=None, bdate=None, edate=None, bbox=None,
-        grid=False, request='GetCoverage', compress=0, overwrite=None,
-        verbose=0
+        grid=False, corners=None, request='GetCoverage', compress=0,
+        overwrite=None, verbose=0
     ):
         """
         Build url, outpath, and download the file. Returns outpath
@@ -458,7 +460,7 @@ class RsigApi:
             overwrite = self.overwrite
         url, outpath = self._build_url(
             formatstr, key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=grid, request=request, compress=compress
+            grid=grid, request=request, compress=compress, corners=corners
         )
         if verbose > 0:
             print(url)
@@ -469,7 +471,7 @@ class RsigApi:
 
     def _build_url(
         self, formatstr, key=None, bdate=None, edate=None, bbox=None,
-        grid=False, request='GetCoverage',
+        grid=False, corners=None, request='GetCoverage',
         compress=1
     ):
         """
@@ -515,7 +517,8 @@ class RsigApi:
         if bbox[3] < bbox[1]:
             raise ValueError('nlat cannot be less than slat')
 
-        corners = self.corners
+        if corners is None:
+            corners = self.corners
         grid_kw = self.grid_kw
         purpleair_kw = self.purpleair_kw
         tropomi_kw = self.tropomi_kw
@@ -590,8 +593,11 @@ class RsigApi:
         else:
             purpleairstr = ''
 
-        if any([key.startswith(pre) for pre in _corner_prefixes]):
-            cornerstr = f'&CORNERS={corners}'
+        if corners == 1:
+            if any([key.startswith(pre) for pre in _corner_prefixes]):
+                cornerstr = f'&CORNERS={corners}'
+            else:
+                cornerstr = ''
         else:
             cornerstr = ''
 
@@ -663,7 +669,8 @@ class RsigApi:
 
     def to_dataframe(
         self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
-        parse_dates=False, withmeta=False, verbose=0, backend='ascii'
+        parse_dates=False, corners=None, withmeta=False, verbose=0,
+        backend='ascii'
     ):
         """
         All arguments default to those provided during initialization.
@@ -703,7 +710,7 @@ class RsigApi:
             backend = 'xdr'
         outpath = self.get_file(
             backend, key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=False, verbose=verbose,
+            grid=False, verbose=verbose, corners=corners,
             compress=1
         )
         if backend == 'ascii':

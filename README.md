@@ -94,6 +94,7 @@ print(len(keys))
 
 Not all changes are listed, but notable changes are itemized for ease of review.
 
+* v0.8.5: Added simple control over cache warning.
 * v0.8.4: Added support for Subset 9.0 CMAQ and Grid 1.0 xdr formats.
           Updated keys to rely on descriptions (via DescribeCoverage).
           Added utilites for basic polygon/cmaq intersections for HMS.

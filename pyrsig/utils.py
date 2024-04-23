@@ -412,7 +412,7 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
         dlsize = 0
 
     # if the size is non-zero, assume it is good
-    if dlsize > 0:
+    if dlsize > 0 and verbose >= 0:
         print('Using cached:', outpath)
         return
 
@@ -431,7 +431,7 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
         if os.path.exists(outpath):
             os.remove(outpath)
         os.makedirs(outdir, exist_ok=True)
-        if verbose:
+        if verbose > 0:
             print('Calling RSIG', outpath, '')
         t0 = time.time()
         urlretrieve(
