@@ -1,0 +1,39 @@
+pyrsig package
+==============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   pyrsig.cmaq
+   pyrsig.data
+   pyrsig.tests
+
+Submodules
+----------
+
+pyrsig.utils module
+-------------------
+
+.. automodule:: pyrsig.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrsig.xdr module
+-----------------
+
+.. automodule:: pyrsig.xdr
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pyrsig
+   :members:
+   :undoc-members:
+   :show-inheritance:
