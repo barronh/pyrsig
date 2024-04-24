@@ -21,10 +21,7 @@ coordkeys = [
 
 cno = pycno.cno()
 
-# %%
 # Retrieve data from RSIG (or cache)
-# ----------------------------------
-
 datakey = "tropomi.offl.no2.nitrogendioxide_tropospheric_column"
 bdate = "2023-07-23"
 bbox = (-75, 40, -69, 46)
@@ -36,20 +33,14 @@ gtropdf = gpd.GeoDataFrame(
     tropdf.drop(columns=coordkeys), geometry=geom, crs=4326
 )
 
-# %%
 # Make Plot
-# ---------
-
 col = 'nitrogendioxide_tropospheric_column(molecules/cm2)'
 fig, ax = plt.subplots(figsize=(4, 4), dpi=300)
 gtropdf.plot(col, edgecolor="face", linewidth=0.1, legend=True, ax=ax)
 cno.drawstates(ax=ax, resnum=1)
 fig.savefig(f'{datakey}_{bdate}.png')
 
-# %%
 # Save as a GIS Format
-# --------------------
-
 gtropdf.to_file(f'{datakey}_{bdate}.geojson')
 # Shapefiles prefer short names
 gtropdf.rename(columns={
