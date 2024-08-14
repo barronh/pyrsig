@@ -1,0 +1,7 @@
+pyrsig
+======
+
+.. toctree::
+   :maxdepth: 1
+
+   pyrsig

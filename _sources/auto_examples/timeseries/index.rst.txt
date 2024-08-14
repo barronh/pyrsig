@@ -1,0 +1,117 @@
+
+
+.. _sphx_glr_auto_examples_timeseries:
+
+.. _timeseries_examples:
+
+Timeseries examples
+-------------------
+
+Examples showing timeseries analyses that illustrate the power of pyrsig.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of NO2 columns from CMAQ and Pandora over a small window over New York/Ne...">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_cmaqpandora_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_cmaqpandora.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">CMAQ vs Pandora</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of NO2 from AirNow and TEMPO in El Paso, TX during unvalidated release 20...">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_elpaso_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_elpaso.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">El Paso AirNow vs TEMPO</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of VIIRS AOD and TropOMI in NYC.">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_nyc_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_nyc.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">NYC VIIRS AOD vs TropOMI NO2</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of NO2 from AQS and TropOMI in Phoenix.">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_phoenix_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_phoenix.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Phoenix AQS vs TropOMI</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of NO2 from the Pittsburg Pandora during unvalidated release 2023-12-17 t...">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_pittsburg_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_pittsburg.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Pittsburg Pandora vs TEMPO</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/timeseries/plot_cmaqpandora
+   /auto_examples/timeseries/plot_elpaso
+   /auto_examples/timeseries/plot_nyc
+   /auto_examples/timeseries/plot_phoenix
+   /auto_examples/timeseries/plot_pittsburg
+
