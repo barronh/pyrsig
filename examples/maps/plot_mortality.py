@@ -1,8 +1,32 @@
 """
-Plot Smoke Polygons
-===================
+Pairing Population with Concentration
+=====================================
 
-Get HMS Smoke from RSIG and create daily plots.
+This example performs a simple health benefit assessment by pairing model
+concentrations with population datasets in RSIG. The population dataset comes
+from the Integrated Climate and Land Use Scenarios (ICLUS). The concentration
+dataset comes from the EPA's Air QUAlity TimE Series Project (EQUATES) project.
+The concentration response function (CRF) uses Krewski 2009.
+
+
+Conceptualy, mortality or morbitidy (M) is attributed to cause (i) based on an
+attributable fraction (F) as a function of space (x). For air quality
+applications, the F_x is a function of pollutant concentrations or mixing
+ratios. Often, M_x is known at a coarser spatial resolution than is ideal. In
+that case, M_x may be translated into a fractional baseline incidence (y0_x)
+and used to estimate M_x using spatially resolved P_x.
+
+m_x = M_x * F_x = y0_x * P_x * F_x
+
+In this example, the problem is (over)simplified in three ways:
+1. Mortality is applied at the county-level assuming no intracounty variation.
+2. It assumes the age-stratification is nationally homogenous.
+3. It assumes that baseline incidence is nationally homogenous.
+
+The example datasets and CRF can be replaced. The geopandas package read_file
+function can be used to open shapefiles with M_x at polygons. So, you could
+create age-specific mortality incidence at census tract level to improve this
+example.
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,15 +50,15 @@ ckey = 'PM25'
 #   * 30+ year-old population
 # * Simplifying Assumptions
 #   * Baseline mortality incidence is spatiall uniform
-#     * [GDB IHME](vizhub.healthdata.org/gbd-results) for 2019 in the US 
+#     * [GDB IHME](vizhub.healthdata.org/gbd-results) for 2019 in the US
 #     * all cause deaths =   2853165.03
 #     * population       = 329996155.19
 #   * Age distribution is spatially unfiorm
 #     * Age distribution from the US Census ACSST5Y2020
-#     * US population 30 years or older: 201686433 
+#     * US population 30 years or older: 201686433
 #     * US population total            : 329824950
 beta = np.log(1.06) / 10
-y0 = 2853165.03 /329996155.19
+y0 = 2853165.03 / 329996155.19
 f_pop = 201686433 / 329824950
 
 
@@ -125,12 +149,14 @@ tprops = dict(
 )
 tprops['transform'] = axx[0].transAxes
 axx[0].text(s='$\\overline{C^p}$ = ' f'{C_p:.2f}', **tprops)
-lkw = dict(label=f'Population [#]')
+lkw = dict(label='Population [#]')
 finaldf.plot('P', ax=axx[1], legend=True, legend_kwds=lkw)
 tprops['transform'] = axx[1].transAxes
 axx[1].text(s='$\\sum{P}$ = ' f'{P:.0f}', **tprops)
 pycno.cno().drawstates(ax=axx)
 fig.suptitle(
-    f'$M_i = f_a y_0 P_x F_x$ = {f_pop:.2f} * {y0:.5f} * P$_x$ * (1 - exp(-{beta:.6f} C$_x$)) = {M_i:.0f}'
+    '$M_i = f_a y_0 P_x F_x$ = '
+    + f'{f_pop:.2f} * {y0:.5f} * P$_x$ * '
+    + f'(1 - exp(-{beta:.6f} C$_x$)) = {M_i:.0f}'
 )
 fig.savefig(f'{ckey}_mortality.png')
