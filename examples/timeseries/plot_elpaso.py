@@ -59,7 +59,7 @@ tax.plot(tempods.index.values, tempods.values, marker='s', color='r')
 
 # Configure axes
 ax.set(ylabel='AirNow NO2 ppb', ylim=(0, 10))
-tax.set(ylim=(0.3e15, 4e15), ylabel='TropOMI NO2 molecules/cm$^2$')
+tax.set(ylim=(0.3e15, 4e15), ylabel='TEMPO NO2 molecules/cm$^2$')
 
 plt.show()
 # Or save out figure

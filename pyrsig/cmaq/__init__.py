@@ -125,7 +125,7 @@ def save_ioapi(ds, path, format='NETCDF3_CLASSIC', **kwds):
     return odds.to_netcdf(path, format=format, **kwds)
 
 
-def open_ioapi(path, metapath=None, earth_radius=6370000.):
+def open_ioapi(path, metapath=None, earth_radius=6370000., **kwds):
     """
     Open an IOAPI file, add coordinate data, and optionally add RSIG metadata.
 
@@ -138,6 +138,8 @@ def open_ioapi(path, metapath=None, earth_radius=6370000.):
         added as metadata global property.
     earth_radius : float
         Assumed radius of the earth. 6370000 is the WRF default.
+    kwds : mappable
+        Passed to xr.open_dataset
 
     Returns
     -------
@@ -145,8 +147,8 @@ def open_ioapi(path, metapath=None, earth_radius=6370000.):
         Dataset with IOAPI metadata
     """
     import xarray as xr
-
-    f = xr.open_dataset(path, engine='netcdf4')
+    kwds.setdefault('engine', 'netcdf4')
+    f = xr.open_dataset(path, **kwds)
     f = add_ioapi_meta(
         f, path=path, metapath=metapath, earth_radius=earth_radius
     )
@@ -176,24 +178,39 @@ def add_ioapi_meta(ds, metapath=None, earth_radius=6370000., path=''):
     import numpy as np
     import warnings
     f = ds
-    lvls = f.attrs['VGLVLS']
-    tflag = f['TFLAG'].astype('i').values[:, 0, :]
-    yyyyjjj = tflag[:, 0]
-    yyyyjjj = np.where(yyyyjjj < 1, 1970001, yyyyjjj)
-    HHMMSS = tflag[:, 1]
-    tstrs = []
-    for j, t in zip(yyyyjjj, HHMMSS):
-        tstrs.append(f'{j:07d}T{t:06d}')
-
     try:
+        tflag = f['TFLAG'].astype('i').values[:, 0, :]
+        yyyyjjj = tflag[:, 0]
+        yyyyjjj = np.where(yyyyjjj < 1, 1970001, yyyyjjj)
+        HHMMSS = tflag[:, 1]
+        tstrs = []
+        for j, t in zip(yyyyjjj, HHMMSS):
+            tstrs.append(f'{j:07d}T{t:06d}')
+
         time = pd.to_datetime(tstrs, format='%Y%jT%H%M%S')
         f.coords['TSTEP'] = time
     except Exception:
         pass
 
-    f.coords['LAY'] = (lvls[:-1] + lvls[1:]) / 2.
-    f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
-    f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
+    if 'VGLVLS' in f.attrs:
+        lvls = f.attrs['VGLVLS']
+        if len(lvls) > 1:
+            f.coords['LAY'] = (lvls[:-1] + lvls[1:]) / 2.
+        else:
+            f.coords['LAY'] = [np.mean(lvls)]
+
+    nrs = [f.sizes.get('ROW', None), f.attrs.get('NROWS', None)]
+    for nr in nrs:
+        if nr is not None:
+            f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
+            break
+
+    ncs = [f.sizes.get('COL', None), f.attrs.get('NCOLS', None)]
+    for nc in ncs:
+        if nc is not None:
+            f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
+            break
+
     try:
         proj4str = get_proj4(f.attrs, earth_radius=earth_radius)
         f.attrs['crs_proj4'] = proj4str

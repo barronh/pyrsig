@@ -1,7 +1,10 @@
 __all__ = ['from_xdrfile', 'from_xdr']
 
 
-def from_xdrfile(path, na_values=None, decompress=None, as_dataframe=True):
+def from_xdrfile(
+    path, na_values=None, decompress=None, as_dataframe=True,
+    decompress_inline=True
+):
     """
     Currently supports profile, site and swath (v2.0). Each is in XDR format
     with a custom set of header rows in text format. The text header rows also
@@ -13,8 +16,11 @@ def from_xdrfile(path, na_values=None, decompress=None, as_dataframe=True):
         Path to file in XDR format with RSIG headers
     decompress : bool
         If None, use decompress if path ends in .gz
-        If True, decompress buffer.
-        If False, buffer is already decompressed (or was never compressed)
+        If True, decompress to temporary file.
+        If False, do not decompress to temporary file (was never compressed)
+    decompress_inline : bool
+        if True (default), use gzip.open to decompress and read file
+        if False, decompress file on disk
     as_dataframe : bool
         If True (default), return data as a pandas.Dataframe.
         If False, return a xarray.Dataset. Only subset and grid support
@@ -25,17 +31,39 @@ def from_xdrfile(path, na_values=None, decompress=None, as_dataframe=True):
     df : pd.DataFrame
         Dataframe with XDR content
     """
+    import gzip
+    import os
+    import pandas as pd
+
     if decompress is None:
         decompress = path.endswith('.gz')
-    with open(path, 'rb') as inf:
-        buf = inf.read()
-        return from_xdr(
-            buf, decompress=decompress, na_values=na_values,
-            as_dataframe=as_dataframe
-        )
+    fsize = os.stat(path).st_size
+    if fsize == 20:
+        return pd.DataFrame()
+    elif fsize < 20:
+        raise IOError('File likely failed to download.')
+    if decompress:
+        if decompress_inline:
+            inf = gzip.open(path)
+        else:
+            temppath = path.replace('.gz', '')
+            assert temppath != path
+            if not os.path.exists(temppath):
+                with gzip.open(path, 'rb') as inf:
+                    with open(temppath, 'wb') as outf:
+                        outf.write(inf.read())
+            inf = open(temppath, 'rb')
+    else:
+        inf = open(path, 'rb')
+    outf = from_xdr(
+        inf, decompress=decompress, na_values=na_values,
+        as_dataframe=as_dataframe
+    )
+    inf.close()
+    return outf
 
 
-def from_xdr(buffer, na_values=None, decompress=False, as_dataframe=True):
+def from_xdr(inf, na_values=None, decompress=False, as_dataframe=True):
     """
     Currently supports profile, site and swath (v2.0). Each is in XDR format
     with a custom set of header rows in text format. The text header rows also
@@ -49,13 +77,13 @@ def from_xdr(buffer, na_values=None, decompress=False, as_dataframe=True):
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    inf : file
+        Data file in XDR format with RSIG headers
     na_values : scalar
         Used to remove known missing values.
     decompress : bool
-        If True, decompress buffer.
-        If False, buffer is already decompressed (or was never compressed)
+        If True, decompress to temporary file.
+        If False, do not decompress to temporary file (was never compressed)
     as_dataframe : bool
         If True (default), return data as a pandas.Dataframe.
         If False, return a xarray.Dataset. Only subset and grid support
@@ -66,59 +94,56 @@ def from_xdr(buffer, na_values=None, decompress=False, as_dataframe=True):
     df : pd.DataFrame
         Dataframe with XDR content
     """
-    import gzip
     import numpy as np
-    if decompress:
-        buffer = gzip.decompress(buffer)
 
-    defspec = buffer[:40].decode().split('\n')[0].lower().strip()
+    inf.seek(0, 0)
+    defspec = inf.read(40).decode().split('\n')[0].lower().strip()
+    inf.seek(0, 0)
     if defspec.startswith('profile'):
-        df = from_profile(buffer)
+        df = from_profile(inf)
     elif defspec.startswith('site'):
-        df = from_site(buffer)
+        df = from_site(inf)
     elif defspec.startswith('point'):
-        df = from_point(buffer)
+        df = from_point(inf)
     elif defspec.startswith('swath'):
-        df = from_swath(buffer)
+        df = from_swath(inf)
     elif defspec.startswith('calipso'):
-        df = from_calipso(buffer)
+        df = from_calipso(inf)
     elif defspec.startswith('polygon'):
-        df = from_polygon(buffer)
+        df = from_polygon(inf)
     elif defspec.startswith('grid'):
-        df = from_grid(buffer, as_dataframe=as_dataframe)
+        df = from_grid(inf, as_dataframe=as_dataframe)
     elif defspec.startswith('subset'):
-        df = from_subset(buffer, as_dataframe=as_dataframe)
+        df = from_subset(inf, as_dataframe=as_dataframe)
     else:
         raise IOError(f'{defspec} not in profile, site, swath')
 
     if na_values is not None:
-        df = df.replace(na_values, np.nan)
+        df.replace(na_values, np.nan, inplace=True)
 
     return df
 
 
-def from_polygon(buffer):
+def from_polygon(bf):
     """
     Currently supports Polygon (v1.0) which has 10 header rows in text format.
     The text header rows also describe the binary portion of the file, which
     includes three segments of data corresponding to shx, shp, and dbf files
-    embeded within the buffer.
+    embeded within the file.
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
 
     Returns
     -------
     df : pd.DataFrame
         Dataframe with XDR content
     """
-    import io
     import tempfile
     import geopandas as gpd
 
-    bf = io.BytesIO(buffer)
     for i in range(10):
         _l = bf.readline().decode().strip()
         if i == 0:
@@ -138,26 +163,28 @@ def from_polygon(buffer):
     dbfe = dbfs + dbfn
     with tempfile.TemporaryDirectory() as td:
         filestem = f'{td}/{prefix}_{dates}_{datee}'
+        bf.seek(shxs, 0)
         with open(filestem + '.shx', 'wb') as shxf:
-            shxf.write(buffer[shxs:shxe])
+            shxf.write(bf.read(shxe - shxs))
         with open(filestem + '.shp', 'wb') as shpf:
-            shpf.write(buffer[shps:shpe])
+            shpf.write(bf.read(shpe - shps))
         with open(filestem + '.dbf', 'wb') as dbff:
-            dbff.write(buffer[dbfs:dbfe])
+            dbff.write(bf.read(dbfe - dbfs))
         outdf = gpd.read_file(filestem + '.shp')
 
+    outdf.crs = 4326
     return outdf
 
 
-def from_profile(buffer):
+def from_profile(bf):
     """
     Currently supports Profile (v2.0) which has 14 header rows in text format.
     The text header rows also describe the binary portion of the file.
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
 
     Returns
     -------
@@ -180,10 +207,7 @@ def from_profile(buffer):
     """
     import numpy as np
     import pandas as pd
-    import xdrlib
-    import io
 
-    bf = io.BytesIO(buffer)
     for i in range(14):
         _l = bf.readline()
         if i == 0:
@@ -195,24 +219,17 @@ def from_profile(buffer):
         elif i == 10:
             units = _l.decode().strip().split()
 
-    n = bf.tell()
-    up = xdrlib.Unpacker(buffer)
-    up.set_position(n)
-
-    notes = [up.unpack_fstring(80).decode().strip() for i in range(nprof)]
-    longnpb = up.unpack_fstring(nprof * 8)
-    longnp = np.frombuffer(longnpb, dtype='>l')
-    sdn = up.get_position()
+    notes = [bf.read(80).decode().strip() for i in range(nprof)]
+    longnp = np.frombuffer(bf.read(nprof * 8), dtype='>l')
     # Read all values at once
-    # vals = np.frombuffer(buffer[sdn:], dtype='>d')
     dfs = []
-    up.set_position(sdn)
     varwunits = [varkey + f'({units[i]})' for i, varkey in enumerate(varkeys)]
     for i, npoints in enumerate(longnp):
         nfloats = npoints * nvar
-        vals = np.array(up.unpack_farray(nfloats, up.unpack_double)).reshape(
+        vals = np.frombuffer(bf.read(nfloats * 8), dtype='>d').reshape(
             nvar, npoints
         )
+        vals = vals.byteswap().view(vals.dtype.newbyteorder())
         df = pd.DataFrame(dict(zip(varwunits, vals)))
         df['NOTE'] = notes[i]
         dfs.append(df)
@@ -247,15 +264,15 @@ def from_profile(buffer):
     return df
 
 
-def from_swath(buffer):
+def from_swath(bf):
     """
     Currently supports Swath (v2.0) which has 14 header rows in text format.
     The text header rows also describe the binary portion of the file.
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
 
     Returns
     -------
@@ -280,10 +297,7 @@ def from_swath(buffer):
 
     import numpy as np
     import pandas as pd
-    import xdrlib
-    import io
 
-    bf = io.BytesIO(buffer)
     for i in range(14):
         _l = bf.readline()
         if i == 0:
@@ -299,34 +313,28 @@ def from_swath(buffer):
 
     assert (defspec == defspec)
 
-    n = bf.tell()
-    up = xdrlib.Unpacker(buffer)
-    up.set_position(n)
-
     # MSB 64-bit integers (yyyydddhhmm) timestamps[scans]
-    nts = np.frombuffer(up.unpack_fstring(nscan * 8), dtype='>l')
+    nts = np.frombuffer(bf.read(nscan * 8), dtype='>l')
     # MSB 64-bit integers points[scans]
-    nps = np.frombuffer(up.unpack_fstring(nscan * 8), dtype='>l')
-
+    nps = np.frombuffer(bf.read(nscan * 8), dtype='>l')
     infmt = '%Y%j%H%M'
     outfmt = '%Y-%m-%dT%H:%M:%S%z'
     timestamps = pd.to_datetime(nts, format=infmt, utc=True).strftime(outfmt)
 
-    sdn = up.get_position()
     # Read all values at once
     # IEEE-754 64-bit reals data_1[variables][points_1] ...
     #           data_S[variables][points_S]
     dfs = []
-    up.set_position(sdn)
     varwunits = [varkey + f'({units[i]})' for i, varkey in enumerate(varkeys)]
     # To-do
     # Switch from iterative unpacking to numpy.frombuffer, which is much faster
     # this requires some fancy indexing and complex repeats.
     for i, npoints in enumerate(nps):
         nfloats = npoints * nvar
-        vals = np.array(up.unpack_farray(nfloats, up.unpack_double)).reshape(
+        vals = np.frombuffer(bf.read(nfloats * 8), dtype='>d').reshape(
             nvar, npoints
         )
+        vals = vals.byteswap().view(vals.dtype.newbyteorder())
         df = pd.DataFrame(dict(zip(varwunits, vals)))
         df['Timestamp(UTC)'] = timestamps[i]
         dfs.append(df)
@@ -344,15 +352,15 @@ def from_swath(buffer):
     return df
 
 
-def from_site(buffer):
+def from_site(bf):
     """
     Currently supports Site (v2.0) which has 14 header rows in text format.
     The text header rows also describe the binary portion of the file.
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
 
     Returns
     -------
@@ -376,10 +384,7 @@ def from_site(buffer):
     """
     import numpy as np
     import pandas as pd
-    import xdrlib
-    import io
 
-    bf = io.BytesIO(buffer)
     for i in range(13):
         _l = bf.readline()
         if i == 0:
@@ -393,27 +398,20 @@ def from_site(buffer):
         elif i == 8:
             units = _l.decode().strip().split()
 
-    time = pd.date_range(stime, periods=nt, freq='H')
-    n = bf.tell()
-    up = xdrlib.Unpacker(buffer)
-    up.set_position(n)
+    time = pd.date_range(stime, periods=nt, freq='h')
+    notes = [bf.read(80).decode().strip() for i in range(nsite)]
 
-    notes = [up.unpack_fstring(80).decode().strip() for i in range(nsite)]
-
-    nis = np.frombuffer(up.unpack_fstring(nsite * 4), dtype='>i')
-    xys = np.frombuffer(up.unpack_fstring(nsite * 8), dtype='>f').reshape(
+    nis = np.frombuffer(bf.read(nsite * 4), dtype='>i')
+    xys = np.frombuffer(bf.read(nsite * 8), dtype='>f').reshape(
         nsite, 2
     )
 
-    sdn = up.get_position()
     # Read all values at once
-    # vals = np.fromstring(buffer[sdn:], dtype='>d')
-    up.set_position(sdn)
     varwunits = [varkey + f'({units[i]})' for i, varkey in enumerate(varkeys)]
 
-    # Unpacking data using from buffer, which is much faster than iteratively
+    # Unpacking data using frombuffer, which is much faster than iteratively
     # calling xdr.unpack_farray
-    vals = np.frombuffer(buffer[sdn:], dtype='>f').reshape(1, nsite, nt)
+    vals = np.frombuffer(bf.read(), dtype='>f').reshape(1, nsite, nt)
     atimes = np.array(time, ndmin=1)[None, :].repeat(nsite, 0).ravel()
     anotes = np.array(notes)[:, None].repeat(nt, 1).T.ravel()
     astation = nis[:, None].repeat(nt, 1).T.ravel()
@@ -458,15 +456,15 @@ def from_site(buffer):
     return df
 
 
-def from_point(buffer):
+def from_point(bf):
     """
     Currently supports Point (v1.0) which has 12 header rows in text format.
     The text header rows also describe the binary portion of the file.
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
 
     Returns
     -------
@@ -488,10 +486,7 @@ def from_point(buffer):
     """
     import numpy as np
     import pandas as pd
-    import xdrlib
-    import io
 
-    bf = io.BytesIO(buffer)
     for i in range(11):
         _l = bf.readline()
         if i == 0:
@@ -506,15 +501,11 @@ def from_point(buffer):
         elif i == 8:
             units = _l.decode().strip().split()
 
-    n = bf.tell()
-    up = xdrlib.Unpacker(buffer)
-    up.set_position(n)
+    notes = [bf.read(80).decode().strip() for i in range(npoint)]
 
-    notes = [up.unpack_fstring(80).decode().strip() for i in range(npoint)]
-
-    sdn = up.get_position()
-    # Use numpy to unpack from buffer becuase it is faster than unpack
-    vals = np.frombuffer(buffer[sdn:], dtype='>d').reshape(nvar, npoint)
+    # Use numpy to unpack frombuffer becuase it is faster than unpack
+    vals = np.frombuffer(bf.read(), dtype='>d').reshape(nvar, npoint)
+    vals = vals.byteswap().view(vals.dtype.newbyteorder())
     varkeys = [
         {'id': 'STATION'}.get(varkey, varkey).upper()
         for varkey in varkeys
@@ -545,15 +536,15 @@ def from_point(buffer):
     return df
 
 
-def from_calipso(buffer):
+def from_calipso(bf):
     """
     Currently supports Calipso (v1.0) which has 15 header rows in text format.
     The text header rows also describe the binary portion of the file.
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
 
     Returns
     -------
@@ -581,11 +572,8 @@ def from_calipso(buffer):
     """
     import numpy as np
     import pandas as pd
-    import xdrlib
-    import io
     import xarray as xr
 
-    bf = io.BytesIO(buffer)
     headerlines = []
     for i in range(15):
         _l = bf.readline().decode()
@@ -605,22 +593,18 @@ def from_calipso(buffer):
             # bbox = [float(d) for d in _l.strip().split()]
             pass  # not loading time because it is duplicative
 
-    n = bf.tell()
-    up = xdrlib.Unpacker(buffer)
-    up.set_position(n)
-    sdn = up.get_position()
-    stime = sdn
+    stime = bf.tell()
     etime = stime + nprof * 8
     sbnd = etime
     ebnd = sbnd + (nprof * 4) * 8
     sdims = ebnd
     edims = sdims + (nprof * 2) * 8
     sdata = edims
-    # time = np.frombuffer(buffer[stime:etime], dtype='>l')
-    # bounds = np.frombuffer(
-    #     buffer[sbnd:ebnd], dtype='>d'
-    # ).reshape(nprof, 2, 2)
-    dims = np.frombuffer(buffer[sdims:edims], dtype='>l').reshape(nprof, 2)
+    # time = np.frombuffer(bf.read(etime - stime), dtype='>l')
+    # bshape = [nprof, 2, 2]
+    # tbnds = np.frombuffer(bf.read(ebnd - sbnd), dtype='>d').reshape(*bshape)
+    bf.seek(sdims, 0)
+    dims = np.frombuffer(bf.read(edims - sdims), dtype='>l').reshape(nprof, 2)
     if (
         not (dims[:, 1] == dims[0, 1]).all()
     ):
@@ -636,7 +620,8 @@ def from_calipso(buffer):
     data = []
     for iprof, (npoint, nlev) in enumerate(dims):
         edata = sdata + (3 * npoint + 2 * npoint * nlev) * 8
-        vals = np.frombuffer(buffer[sdata:edata], dtype='>d')
+        vals = np.frombuffer(bf.read(edata - sdata), dtype='>d')
+        vals = vals.byteswap().view(vals.dtype.newbyteorder())
         sd = 0
         ed = sd + npoint * 3
         ptimes, plons, plats = vals[sd:ed].reshape(3, npoint)
@@ -670,15 +655,15 @@ def from_calipso(buffer):
     return df
 
 
-def from_grid(buffer, as_dataframe=True):
+def from_grid(bf, as_dataframe=True):
     """
     Currently supports Grid (v1.0) which has 12 header rows in text format.
     The text header rows also describe the binary portion of the file.
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
     as_dataframe : bool
         If True (default), return data as a pandas.Dataframe.
         If False, return a xarray.Dataset.
@@ -710,10 +695,8 @@ def from_grid(buffer, as_dataframe=True):
     """
     import numpy as np
     import pandas as pd
-    import io
     import xarray as xr
 
-    bf = io.BytesIO(buffer)
     headerlines = []
     for i in range(12):
         _l = bf.readline().decode().strip()
@@ -734,21 +717,15 @@ def from_grid(buffer, as_dataframe=True):
             # bbox = [float(d) for d in _l.strip().split()]
             pass  # not loading time because it is duplicative
 
-    sdn = bf.tell()
-    # [rows][columns]:
-    slon = sdn
-    elon = slon + nrow * ncol * 8
-    # [rows][columns]:
-    slat = elon
-    elat = slat + nrow * ncol * 8
-    # [timesteps][variables][rows][columns]:
-    svar = elat
-    evar = svar + ntime * nvar * nrow * ncol * 8
-    lon = np.frombuffer(buffer[slon:elon], dtype='>d').reshape(nrow, ncol)
-    lat = np.frombuffer(buffer[slat:elat], dtype='>d').reshape(nrow, ncol)
-    data = np.frombuffer(buffer[svar:evar], dtype='>d').reshape(
-        ntime, nvar, nrow, ncol
-    )
+    nbytes = nrow * ncol * 8
+    lon = np.frombuffer(bf.read(nbytes), dtype='>d').reshape(nrow, ncol)
+    lon = lon.byteswap().view(lon.dtype.newbyteorder())
+    lat = np.frombuffer(bf.read(nbytes), dtype='>d').reshape(nrow, ncol)
+    lat = lat.byteswap().view(lat.dtype.newbyteorder())
+    dshape = ntime, nvar, nrow, ncol
+    nbytes = np.prod(dshape) * 8
+    data = np.frombuffer(bf.read(nbytes), dtype='>d').reshape(*dshape)
+    data = data.byteswap().view(data.dtype.newbyteorder())
     ds = xr.Dataset()
     ds.attrs['rsig_program'] = rsig_program
     dt = pd.to_timedelta('3600s')
@@ -781,7 +758,7 @@ def from_grid(buffer, as_dataframe=True):
         return ds
 
 
-def from_subset(buffer, as_dataframe=True):
+def from_subset(bf, as_dataframe=True):
     """
     Currently supports Subset (v9.0) which has 17 header rows in text format.
     The text header rows also describe the binary portion of the file. This
@@ -792,8 +769,8 @@ def from_subset(buffer, as_dataframe=True):
 
     Arguments
     ---------
-    buffer : bytes
-        Data buffer in XDR format with RSIG headers
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
     as_dataframe : bool
         If True (default), return data as a pandas.Dataframe.
         If False, return a xarray.Dataset.
@@ -832,12 +809,10 @@ def from_subset(buffer, as_dataframe=True):
     """
     import numpy as np
     import pandas as pd
-    import io
     import xarray as xr
     from .utils import get_proj4
     import pyproj
 
-    bf = io.BytesIO(buffer)
     headerlines = []
     for i in range(17):
         _l = bf.readline().decode().strip()
@@ -868,6 +843,12 @@ def from_subset(buffer, as_dataframe=True):
             projparts = np.array(_l.split(), dtype='d')
             vgparts = np.array(projparts[-nlay - 3:], dtype='f')
             gridparts = projparts[:-len(vgparts)]
+        elif i == 16:
+            is64 = '64-bit' in _l
+            if is64:
+                dtval = '>d'
+            else:
+                dtval = '>f'
 
     vgprops = {}
     vgprops['VGTYP'] = np.int32(vgparts[0])
@@ -893,6 +874,8 @@ def from_subset(buffer, as_dataframe=True):
         projattrs['P_GAM'] = crsprops['lon_0']
         projattrs['XCENT'] = crsprops['lon_0']
         projattrs['YCENT'] = crsprops['lat_0']
+    elif 'lonlat' in crshdr:
+        projattrs['GDTYP'] = 1
     else:
         raise KeyError(f'Need implement {crshdr}')
         # projattrs['GDTYP'] = 7 # merc
@@ -900,8 +883,7 @@ def from_subset(buffer, as_dataframe=True):
 
     proj4 = get_proj4(projattrs, earth_radius=earth_radius)
     proj = pyproj.Proj(proj4)
-    sdn = bf.tell()
-    data = np.frombuffer(buffer[sdn:], dtype='>f').reshape(
+    data = np.frombuffer(bf.read(), dtype=dtval).reshape(
         nvar, ntime, nlay, nrow, ncol
     )
     ds = xr.Dataset()
@@ -940,7 +922,7 @@ def from_subset(buffer, as_dataframe=True):
         ds[vk] = dims, vals, attrs
 
     if as_dataframe:
-        df = ds.astype('f').to_dataframe()
+        df = ds.astype(dtval[1:]).to_dataframe()
         time = df.index.get_level_values('TSTEP')
         df['Timestamp(UTC)'] = time.strftime('%Y-%m-%dT%H:%M:%S+0000')
         keepcols = ['Timestamp(UTC)', 'LONGITUDE', 'LATITUDE'] + varkeys

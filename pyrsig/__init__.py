@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq']
-__version__ = '0.8.5'
+__version__ = '0.9.0'
 
 from . import cmaq
 from .cmaq import open_ioapi, open_mfioapi
@@ -13,6 +13,12 @@ _corner_prefixes = (
 )
 _nolonlats_prefixes = ('cmaq', 'regridded')
 _noregrid_prefixes = ('cmaq', 'regridded')
+_shpxdrprefixes = ['hms.']
+_shpbinprefixes = [
+    'landuse.atlantic.population_iclus',
+    'landuse.gulf.population_iclus',
+    'landuse.pacific.population_iclus',
+]
 
 
 def _actionf(msg, action, ErrorTyp=None):
@@ -705,9 +711,13 @@ class RsigApi:
 
         """
         from . import xdr
-        assert backend in {'ascii', 'xdr'}
-        if key.startswith('hms.'):
+        from . import bin
+        assert backend in {'ascii', 'xdr', 'bin'}
+        if any([key.startswith(pfx) for pfx in _shpxdrprefixes]):
             backend = 'xdr'
+        elif any([key.startswith(pfx) for pfx in _shpbinprefixes]):
+            backend = 'bin'
+
         outpath = self.get_file(
             backend, key=key, bdate=bdate, edate=edate, bbox=bbox,
             grid=False, verbose=verbose, corners=corners,
@@ -715,8 +725,12 @@ class RsigApi:
         )
         if backend == 'ascii':
             df = pd.read_csv(outpath, delimiter='\t', na_values=[-9999., -999])
-        else:
+        elif backend == 'xdr':
             df = xdr.from_xdrfile(outpath, na_values=[-9999., -999])
+        elif backend == 'bin':
+            df = bin.from_binfile(outpath)
+        else:
+            raise KeyError(f'format {backend} unknown; use xdr, bin or ascii')
 
         if withmeta:
             metapath = self.get_file(
@@ -1099,3 +1113,11 @@ class RsigGui:
             _actionf('bdate is later than edate', action)
 
         return iswe & issn & isbe
+
+
+# Add easy access defaults
+_defapi = RsigApi()
+descriptions = _defapi.descriptions
+to_dataframe = _defapi.to_dataframe
+to_ioapi = _defapi.to_ioapi
+to_netcdf = _defapi.to_netcdf
