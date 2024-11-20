@@ -1,6 +1,40 @@
 __all__ = ['from_xdrfile', 'from_xdr']
 
 
+def getgridprops(gdnam, crshdr, crsparts, projparts, gridparts, vgparts):
+    import numpy as np
+    vgprops = {}
+    vgprops['VGTYP'] = np.int32(vgparts[0])
+    vgprops['VGTOP'] = np.float32(vgparts[1])
+    vgprops['VGLVLS'] = np.array(vgparts[2:], dtype='f')
+    gridkeys = ['NCOLS', 'NROWS', 'XORIG', 'YORIG', 'XCELL', 'YCELL']
+    gridprops = dict(zip(gridkeys, gridparts))
+    projattrs = {'GDNAM': gdnam}
+    projattrs.update(gridprops)
+    crskeys = crshdr.split(': ')[-1].split()
+    crsprops = dict(zip(crskeys, crsparts))
+    if 'stereographic' in crshdr:
+        projattrs['GDTYP'] = 6
+        projattrs['P_ALP'] = crsprops['lat_0'] / 90
+        projattrs['XCENT'] = projattrs['P_BET'] = crsprops['lon_0']
+        projattrs['YCENT'] = crsprops['lat_0']
+        projattrs['P_GAM'] = crsprops['lat_sec']
+    elif 'lcc' in crshdr:
+        projattrs['GDTYP'] = 2
+        projattrs['P_ALP'] = crsprops['lat_1']
+        projattrs['P_BET'] = crsprops['lat_2']
+        projattrs['P_GAM'] = crsprops['lon_0']
+        projattrs['XCENT'] = crsprops['lon_0']
+        projattrs['YCENT'] = crsprops['lat_0']
+    elif 'lonlat' in crshdr:
+        projattrs['GDTYP'] = 1
+    else:
+        raise KeyError(f'Need implement {crshdr}')
+        # projattrs['GDTYP'] = 7 # merc
+        # projattrs['GDTYP'] = 1 # lonlat
+    return {'vertical': vgprops, 'projection': projattrs, 'crs': crsprops}
+
+
 def from_xdrfile(
     path, na_values=None, decompress=None, as_dataframe=True,
     decompress_inline=True
@@ -41,7 +75,9 @@ def from_xdrfile(
     if fsize == 20:
         return pd.DataFrame()
     elif fsize < 20:
-        raise IOError('File likely failed to download.')
+        raise IOError(
+            'File size less than 20-bytes; likely failed to download.'
+        )
     if decompress:
         if decompress_inline:
             inf = gzip.open(path)
@@ -74,6 +110,11 @@ def from_xdr(inf, na_values=None, decompress=False, as_dataframe=True):
     * Site 2.0: from_site
     * Profile 2.0: from_profile
     * Swath 2.0: from_swath
+    * Point 1.0: from_point
+    * CALIPSO 1.0: from_calipso
+    * Polygon 1.0: from_polygon
+    * Grid 1.0: from_grid
+    * Subset 9.0: from_subset
 
     Arguments
     ---------
@@ -140,6 +181,20 @@ def from_polygon(bf):
     -------
     df : pd.DataFrame
         Dataframe with XDR content
+
+    Notes
+    -----
+    xdrdump master_hms_smoke_2018-07-01_to_2018-07-02.xdr|m
+    Polygon 1.0
+    https://www.ospo.noaa.gov/Products/land/hms.html,hmsserver
+    2018-07-01T00:00:00-0000 2018-07-02T23:59:59-0000
+    # Variable names:
+    smoke
+    # Variable units:
+    ug/m3
+    # name shxdatabytes shpdatabytes dbfdatabytes and
+    # shxfiledata shpfiledata dbffiledata:
+    hms_smoke 828 30812 2468
     """
     import tempfile
     import geopandas as gpd
@@ -204,6 +259,24 @@ def from_profile(bf):
     #   Next nprof * 80 characters are notes for each profile
     #   Next nprof * 8 are N_p number of points for each profile as long int
     #   Next N * sum(N_p for p in nprof) * 8 are data as 64-bit reals
+
+    Example Header
+    --------------
+    Profile 2.0
+    http://www.esrl.noaa.gov/gmd/grad/neubrew/,NEUBrewSubset
+    2010-07-10T00:00:00-0000 2010-07-10T23:59:59-0000
+    # Subset domain: <min_lon> <min_lat> <max_lon> <max_lat>:
+    -126 24 -66 50
+    # Dimensions: variables profiles:
+    6 5
+    # Variable names:
+    timestamp id longitude latitude elevation ozone
+    # Variable units:
+    yyyymmddhhmmss - deg deg m molecules/cm3
+    # char notes[profiles][80] and
+    # MSB 64-bit integers points[profiles] and
+    # IEEE-754 64-bit reals data_1[variables][points_1]
+       ... data_P[variables][points_P]:
     """
     import numpy as np
     import pandas as pd
@@ -220,7 +293,7 @@ def from_profile(bf):
             units = _l.decode().strip().split()
 
     notes = [bf.read(80).decode().strip() for i in range(nprof)]
-    longnp = np.frombuffer(bf.read(nprof * 8), dtype='>l')
+    longnp = np.frombuffer(bf.read(nprof * 8), dtype='>i8')
     # Read all values at once
     dfs = []
     varwunits = [varkey + f'({units[i]})' for i, varkey in enumerate(varkeys)]
@@ -293,6 +366,24 @@ def from_swath(bf):
     #   Next nsite * 4 are number of times for each site (N_s) as 32-bit int
     #   Next nvar * sum(2 for s in nsite) * 4 are data as 64-bit reals
     #   Next nvar * sum(N_s for s in nsite) * 4 are data as 64-bit reals
+
+    Swath 2.0
+    http://www.star.nesdis.noaa.gov/smcd/emb/viirs_aerosol/,VIIRSSubset
+    2013-06-15T00:00:00-0000
+    # Dimensions: variables timesteps scans:
+    12 24 4
+    # Variable names:
+    Longitude Latitude Scan_Start_Time faot550 Longitude_SW Longitude_SE
+       ... Longitude_NW Longitude_NE Latitude_SW Latitude_SE Latitude_NW
+       ... Latitude_NE
+    # Variable units:
+    deg deg YYYYDDDHHMM - deg deg deg deg deg deg deg deg
+    # Domain: <min_lon> <min_lat> <max_lon> <max_lat>
+    -113 26 -111 26.5
+    # MSB 64-bit integers (yyyydddhhmm) timestamps[scans] and
+    # MSB 64-bit integers points[scans] and
+    # IEEE-754 64-bit reals data_1[variables][points_1]
+       ... data_S[variables][points_S]:
     """
 
     import numpy as np
@@ -314,9 +405,9 @@ def from_swath(bf):
     assert (defspec == defspec)
 
     # MSB 64-bit integers (yyyydddhhmm) timestamps[scans]
-    nts = np.frombuffer(bf.read(nscan * 8), dtype='>l')
+    nts = np.frombuffer(bf.read(nscan * 8), dtype='>i8')
     # MSB 64-bit integers points[scans]
-    nps = np.frombuffer(bf.read(nscan * 8), dtype='>l')
+    nps = np.frombuffer(bf.read(nscan * 8), dtype='>i8')
     infmt = '%Y%j%H%M'
     outfmt = '%Y-%m-%dT%H:%M:%S%z'
     timestamps = pd.to_datetime(nts, format=infmt, utc=True).strftime(outfmt)
@@ -379,8 +470,28 @@ def from_site(bf):
     # Line 10-13: definition of data chunks lines
     #   Next nsite * 80 characters are notes for each profile
     #   Next nsite * 4 are IDs number of times for each site as 32-bit integers
-    #   Next sum(2 for s in nsite) * 4 are data as 64-bit reals
-    #   Next sum(N_s for s in nsite) * 4 are data as 64-bit reals
+    #     or 64-bit integers.
+    #   Next sum(2 for s in nsite) * 4 are data as 32-bit reals
+    #     or 64-bit integers.
+    #   Next sum(N_s for s in nsite) * 4 are data as 32-bit reals
+    #     or 64-bit integers.
+
+    Example Header
+    --------------
+    SITE 2.0
+    http://airnow.gov/,reformat_airnow_obs,SiteSubset
+    2005-08-26T00:00:00-0000
+    # data dimensions: timesteps stations
+    3 9
+    # Variable names:
+    PM25
+    # Variable units:
+    ug/m3
+    # char notes[stations][80] and
+    # MSB 64-bit integers ids[stations] and
+    # IEEE-754 64-bit reals sites[stations][2=<longitude,latitude>] and
+    # IEEE-754 64-bit reals data[timesteps][stations]:
+
     """
     import numpy as np
     import pandas as pd
@@ -397,21 +508,31 @@ def from_site(bf):
             varkeys = _l.decode().strip().split()
         elif i == 8:
             units = _l.decode().strip().split()
+        elif i == 10:
+            idtype = _l.decode().strip()
+        elif i == 11:
+            xytype = _l.decode().strip()
+        elif i == 12:
+            valtype = _l.decode().strip()
+
+    idtype = np.dtype({True: '>i8', False: '>i4'}['64' in idtype])
+    xytype = np.dtype({True: '>f8', False: '>f4'}['64' in xytype])
+    valtype = np.dtype({True: '>f8', False: '>f4'}['64' in valtype])
 
     time = pd.date_range(stime, periods=nt, freq='h')
     notes = [bf.read(80).decode().strip() for i in range(nsite)]
 
-    nis = np.frombuffer(bf.read(nsite * 4), dtype='>i')
-    xys = np.frombuffer(bf.read(nsite * 8), dtype='>f').reshape(
-        nsite, 2
-    )
+    buff = bf.read(nsite * idtype.itemsize)
+    nis = np.frombuffer(buff, dtype=idtype)
+    buff = bf.read(nsite * xytype.itemsize * 2)
+    xys = np.frombuffer(buff, dtype=xytype).reshape(nsite, 2)
 
     # Read all values at once
     varwunits = [varkey + f'({units[i]})' for i, varkey in enumerate(varkeys)]
 
     # Unpacking data using frombuffer, which is much faster than iteratively
     # calling xdr.unpack_farray
-    vals = np.frombuffer(bf.read(), dtype='>f').reshape(1, nsite, nt)
+    vals = np.frombuffer(bf.read(), dtype=valtype).reshape(1, nsite, nt)
     atimes = np.array(time, ndmin=1)[None, :].repeat(nsite, 0).ravel()
     anotes = np.array(notes)[:, None].repeat(nt, 1).T.ravel()
     astation = nis[:, None].repeat(nt, 1).T.ravel()
@@ -483,6 +604,19 @@ def from_point(bf):
     # Line 10-12: definition of data chunks lines
     #   Next npoint * 80 characters are notes for each point
     #   Next nvariable * npoint * 8 bytes are data[variables][]
+
+    Example Header
+    --------------
+    Point 1.0
+    https://satepsanone.nesdis.noaa.gov/pub/FIRE/BBEP-geo,GOESBBSubset
+    2018-11-09T00:00:00-00002018-11-10T23:00:00-0000
+    # Dimensions: variables points:
+    4 1876
+    # Variable names:
+    Timestamp Longitude Latitude PM25_emission
+    # Variable units:
+    yyyymmddhhmmss deg deg kg
+    # IEEE-754 64-bit reals data[variables][points]:
     """
     import numpy as np
     import pandas as pd
@@ -551,8 +685,8 @@ def from_calipso(bf):
     df : pd.DataFrame
         Dataframe with XDR content
 
-    Notes
-    -----
+    Example Header
+    --------------
     CALIPSO 1.0
     https://eosweb.larc.nasa.gov/project/calipso/calipso_table,CALIPSOSubset
     2016-05-04T00:00:00-0000
@@ -600,11 +734,11 @@ def from_calipso(bf):
     sdims = ebnd
     edims = sdims + (nprof * 2) * 8
     sdata = edims
-    # time = np.frombuffer(bf.read(etime - stime), dtype='>l')
+    # time = np.frombuffer(bf.read(etime - stime), dtype='>i8')
     # bshape = [nprof, 2, 2]
     # tbnds = np.frombuffer(bf.read(ebnd - sbnd), dtype='>d').reshape(*bshape)
     bf.seek(sdims, 0)
-    dims = np.frombuffer(bf.read(edims - sdims), dtype='>l').reshape(nprof, 2)
+    dims = np.frombuffer(bf.read(edims - sdims), dtype='>i8').reshape(nprof, 2)
     if (
         not (dims[:, 1] == dims[0, 1]).all()
     ):
@@ -673,8 +807,8 @@ def from_grid(bf, as_dataframe=True):
     df : pd.DataFrame
         Dataframe with XDR content
 
-    Notes
-    -----
+    Example Header
+    --------------
     xdrdump master_hrrr_wind_2020-02-17.xdr
     Grid 1.0
     http://home.chpc.utah.edu/~u0553130/Brian_Blaylock/,HRRRSubset
@@ -850,36 +984,13 @@ def from_subset(bf, as_dataframe=True):
             else:
                 dtval = '>f'
 
-    vgprops = {}
-    vgprops['VGTYP'] = np.int32(vgparts[0])
-    vgprops['VGTOP'] = np.float32(vgparts[1])
-    vglvls = vgprops['VGLVLS'] = np.array(vgparts[2:], dtype='f')
-    gridkeys = ['NCOLS', 'NROWS', 'XORIG', 'YORIG', 'XCELL', 'YCELL']
-    gridprops = dict(zip(gridkeys, gridparts))
-    projattrs = {'GDNAM': gdnam}
-    projattrs.update(gridprops)
-    crskeys = crshdr.split(': ')[-1].split()
-    crsprops = dict(zip(crskeys, crsparts))
-    earth_radius = crsprops['major_semiaxis']
-    if 'stereographic' in crshdr:
-        projattrs['GDTYP'] = 6
-        projattrs['P_ALP'] = crsprops['lat_0'] / 90
-        projattrs['XCENT'] = projattrs['P_BET'] = crsprops['lon_0']
-        projattrs['YCENT'] = crsprops['lat_0']
-        projattrs['P_GAM'] = crsprops['lat_sec']
-    elif 'lcc' in crshdr:
-        projattrs['GDTYP'] = 2
-        projattrs['P_ALP'] = crsprops['lat_1']
-        projattrs['P_BET'] = crsprops['lat_2']
-        projattrs['P_GAM'] = crsprops['lon_0']
-        projattrs['XCENT'] = crsprops['lon_0']
-        projattrs['YCENT'] = crsprops['lat_0']
-    elif 'lonlat' in crshdr:
-        projattrs['GDTYP'] = 1
-    else:
-        raise KeyError(f'Need implement {crshdr}')
-        # projattrs['GDTYP'] = 7 # merc
-        # projattrs['GDTYP'] = 1 # lonlat
+    gridprops = getgridprops(
+        gdnam, crshdr, crsparts, projparts, gridparts, vgparts
+    )
+    vgprops = gridprops['vertical']
+    vglvls = vgprops['VGLVLS']
+    projattrs = gridprops['projection']
+    earth_radius = gridprops['crs']['major_semiaxis']
 
     proj4 = get_proj4(projattrs, earth_radius=earth_radius)
     proj = pyproj.Proj(proj4)
@@ -933,6 +1044,119 @@ def from_subset(bf, as_dataframe=True):
         return df
     else:
         return ds
+
+
+def from_regriddedswath(bf):
+    """
+    Currently supports regridded-swath (v2.0) which has 19 header rows in text
+    format. The text header rows also describe the binary portion of the file.
+    This data can be very large for high resolution continental data. For
+    example, CMAQ EQUATES CONUS for one 4D variable requires 4GB of memory as
+    a dataframe whereas the same data from CMAQ EQUATES HEMI is just 0.065GB.
+    Both are much smaller as a Dataset where coordinate data is not repeated.
+
+    Arguments
+    ---------
+    bf : file
+        File opened in byte read in XDR format with RSIG headers
+    as_dataframe : bool
+        If True (default), return data as a pandas.Dataframe.
+        If False, return a xarray.Dataset.
+
+    Notes
+    -----
+    In progress.
+
+    Returns
+    -------
+    df : pd.DataFrame
+        Dataframe with XDR content
+
+    Notes
+    -----
+    xdrdump master_regridded_viirs_ivaot_faot550_2013-06-15.xdr|m
+    REGRIDDED-Swath 2.0
+    http://....nesdis.noaa.gov/smcd/emb/viirs_aerosol/,VIIRSSubset,XDRConvert
+    2013-06-15T20:00:00-0000
+    # timesteps
+    2
+    # Variable name:
+    faot550
+    # Variable units:
+    -
+    # stereographic proj: lat_0 lon_0 lat_sec major_semiaxis minor_semiaxis
+    90 -98 45 6370000.000000 6370000.000000
+    # Grid: ncols nrows xorig yorig xcell ycell vgtyp vgtop vglvls[2]:
+    137 137 -7398000.0 -7398000.0 108000.0 108000.0 2 10000.0 1 0.995
+    # MSB 64-bit integers points[timesteps] and
+    # IEEE-754 64-bit reals longitudes[timesteps][points] and
+    # IEEE-754 64-bit reals latitudes[timesteps][points] and
+    # MSB 64-bit integers columns[timesteps][points] and
+    # MSB 64-bit integers rows[timesteps][points] and
+    # IEEE-754 64-bit reals data[timesteps][points]:
+    154
+    719
+    -1.2970142966950573e+02
+    -1.2908750532347997e+02
+    -1.2783553910026154e+02
+    ...
+    """
+    import numpy as np
+    import pandas as pd
+    # from .utils import get_proj4
+
+    headerlines = []
+    for i in range(17):
+        _l = bf.readline().decode().strip()
+        headerlines.append(_l)
+        if i == 0:
+            assert (_l.lower() == 'regridded-swath 2.0')
+        elif i == 1:
+            rsig_program = _l
+        elif i == 2:
+            stime = pd.to_datetime(_l)
+        elif i == 4:
+            ntime, = np.array(_l.split(), dtype='i')
+        elif i == 6:
+            varkeys = _l.split()
+        elif i == 8:
+            units = _l.split()
+        elif i == 9:
+            crshdr = _l.lower()
+        elif i == 10:
+            crsparts = np.array(_l.split(), dtype='d')
+        elif i == 12:
+            projparts = np.array(_l.split(), dtype='d')
+            nlay = 1
+            vgparts = np.array(projparts[-nlay - 3:], dtype='f')
+            gridparts = projparts[:-len(vgparts)]
+
+    dt = pd.to_datetime('1h')
+    times = []
+    points = np.frombuffer(bf.read(ntime), dtype='>i8')
+    outfmt = '%Y-%m-%dT%H:%M:%S%z'
+    dts = np.concat([np.ones(points[ti]) * ti * dt for ti in ntime])
+    times = (stime + dts).strftime(outfmt)
+    npoints = points.sum()
+    lons = np.frombuffer(bf.read(npoints), dtype='>d')
+    lats = np.frombuffer(bf.read(npoints), dtype='>d')
+    cols = np.frombuffer(bf.read(npoints), dtype='>i8')
+    rows = np.frombuffer(bf.read(npoints), dtype='>i8')
+    vals = np.frombuffer(bf.read(npoints), dtype='>d')
+    valkey = f'{varkeys[0]}({units[0]})'
+    gdn = 'unknown'  # gdnam
+    gattrs = getgridprops(gdn, crshdr, crsparts, projparts, gridparts, vgparts)
+    df = pd.DataFrame({
+        'Timestep(UTC)': times,
+        'LONGITUDE(deg)': lons,
+        'LATITUDE(deg)': lats,
+        'COLUMN(-)': cols,
+        'ROW(-)': rows,
+        valkey: vals,
+    })
+    df.attrs.update(gattrs)
+    df.attrs['rsig_program'] = rsig_program
+    return df
 
 
 if __name__ == '__main__':
