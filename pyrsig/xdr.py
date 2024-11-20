@@ -159,7 +159,10 @@ def from_xdr(inf, na_values=None, decompress=False, as_dataframe=True):
     elif defspec.startswith('regridded-swath'):
         df = from_regriddedswath(inf)
     else:
-        raise IOError(f'{defspec} not in profile, site, swath')
+        raise IOError(
+            f'{defspec} not in supported formats (profile, site, swath,'
+            ' calipso, polygon, grid, subset, or regridded-swath)'
+        )
 
     if na_values is not None:
         df.replace(na_values, np.nan, inplace=True)
