@@ -1106,7 +1106,7 @@ def from_regriddedswath(bf):
     # from .utils import get_proj4
 
     headerlines = []
-    for i in range(17):
+    for i in range(19):
         _l = bf.readline().decode().strip()
         headerlines.append(_l)
         if i == 0:
@@ -1131,28 +1131,31 @@ def from_regriddedswath(bf):
             vgparts = np.array(projparts[-nlay - 3:], dtype='f')
             gridparts = projparts[:-len(vgparts)]
 
-    dt = pd.to_datetime('1h')
+    dt = pd.to_timedelta('1h')
     times = []
-    points = np.frombuffer(bf.read(ntime), dtype='>i8')
+    points = np.frombuffer(bf.read(ntime * 8), dtype='>i8')
     outfmt = '%Y-%m-%dT%H:%M:%S%z'
-    dts = np.concat([np.ones(points[ti]) * ti * dt for ti in ntime])
-    times = (stime + dts).strftime(outfmt)
+    dts = pd.Series(np.concatenate([
+        np.ones(points[ti]) * ti * dt
+        for ti in range(ntime)
+    ]))
+    times = (stime + dts).dt.strftime(outfmt).values
     npoints = points.sum()
-    lons = np.frombuffer(bf.read(npoints), dtype='>d')
-    lats = np.frombuffer(bf.read(npoints), dtype='>d')
-    cols = np.frombuffer(bf.read(npoints), dtype='>i8')
-    rows = np.frombuffer(bf.read(npoints), dtype='>i8')
-    vals = np.frombuffer(bf.read(npoints), dtype='>d')
+    lons = np.frombuffer(bf.read(npoints * 8), dtype='>d')
+    lats = np.frombuffer(bf.read(npoints * 8), dtype='>d')
+    cols = np.frombuffer(bf.read(npoints * 8), dtype='>i8')
+    rows = np.frombuffer(bf.read(npoints * 8), dtype='>i8')
+    vals = np.frombuffer(bf.read(npoints * 8), dtype='>d')
     valkey = f'{varkeys[0]}({units[0]})'
     gdn = 'unknown'  # gdnam
     gattrs = getgridprops(gdn, crshdr, crsparts, projparts, gridparts, vgparts)
     df = pd.DataFrame({
-        'Timestep(UTC)': times,
-        'LONGITUDE(deg)': lons,
-        'LATITUDE(deg)': lats,
-        'COLUMN(-)': cols,
-        'ROW(-)': rows,
-        valkey: vals,
+        'Timestep(UTC)': times.astype(f'={times.dtype.char}'),
+        'LONGITUDE(deg)': lons.astype(f'={lons.dtype.char}'),
+        'LATITUDE(deg)': lats.astype(f'={lats.dtype.char}'),
+        'COLUMN(-)': cols.astype(f'={cols.dtype.char}'),
+        'ROW(-)': rows.astype(f'={rows.dtype.char}'),
+        valkey: vals.astype(f'={vals.dtype.char}'),
     })
     df.attrs.update(gattrs)
     df.attrs['rsig_program'] = rsig_program
