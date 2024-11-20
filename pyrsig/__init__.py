@@ -75,7 +75,10 @@ class RsigApi:
         grid_kw : str or dict
           If str, must be 12US1, 1US1, 12US2, 1US2, 36US3, 108NHEMI2, 36NHEMI2
           and will be used to set parameters based on EPA domains. If dict,
-          IOAPI mapping parameters see default for details.
+          IOAPI mapping parameters. For details, look at the defaults:
+            import pyrsig; print(pyrsig.RsigApi().grid_kw)
+          The REGRID_AGGREGATE defines how the regridded values are aggregated
+          in time. Options are None (default), daily, or all.
         viirsnoaa_kw : dict
           Dictionary of VIIRS NOAA filter parameters default
           {'minimum_quality': 'high'} other options 'medium' or 'low'
@@ -97,6 +100,7 @@ class RsigApi:
             'api_key': 'your_key_here' # 'password'
             'minimum_quality': 'normal'
             'maximum_cloud_fraction': 1.0
+            'maximum_solar_zenith_angle': 70.
         pandora_kw : dict
           Dictionary of Pandora filter parameters default
           {'minimum_quality': 'high'} other options 'medium' or 'low'
@@ -197,6 +201,7 @@ class RsigApi:
         tempo_kw.setdefault('minimum_quality', 'normal')
         tempo_kw.setdefault('maximum_cloud_fraction', 1.0)
         tempo_kw.setdefault('api_key', 'your_key_here')
+        tempo_kw.setdefault('maximum_solar_zenith_angle', 70.)
 
         self.tempo_kw = tempo_kw
 
@@ -582,6 +587,7 @@ class RsigApi:
             tempostr = (
                 '&MAXIMUM_CLOUD_FRACTION={maximum_cloud_fraction}'
                 '&MINIMUM_QUALITY={minimum_quality}&KEY={api_key}'
+                '&MAXIMUM_SOLAR_ZENITH_ANGLE={maximum_solar_zenith_angle}'
             ).format(**tempo_kw)
         else:
             tempostr = ''
@@ -676,7 +682,7 @@ class RsigApi:
     def to_dataframe(
         self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
         parse_dates=False, corners=None, withmeta=False, verbose=0,
-        backend='ascii'
+        backend='ascii', grid=False
     ):
         """
         All arguments default to those provided during initialization.
@@ -720,7 +726,7 @@ class RsigApi:
 
         outpath = self.get_file(
             backend, key=key, bdate=bdate, edate=edate, bbox=bbox,
-            grid=False, verbose=verbose, corners=corners,
+            grid=grid, verbose=verbose, corners=corners,
             compress=1
         )
         if backend == 'ascii':
@@ -735,7 +741,7 @@ class RsigApi:
         if withmeta:
             metapath = self.get_file(
                 'ascii', key=key, bdate=bdate, edate=edate, bbox=bbox,
-                grid=False, verbose=verbose, request='GetMetadata',
+                grid=grid, verbose=verbose, request='GetMetadata',
                 compress=1
             )
             metatxt = open(metapath, 'r').read()
