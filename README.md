@@ -2,6 +2,9 @@
 
 Python interface to RSIG Web API
 
+[![Docs](https://github.com/barronh/pyrsig/actions/workflows/documentation.yaml/badge.svg)](https://barronh.github.io/pyrsig/)
+
+
 ## Install
 
 From pypi.org (most stable):
