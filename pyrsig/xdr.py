@@ -156,6 +156,8 @@ def from_xdr(inf, na_values=None, decompress=False, as_dataframe=True):
         df = from_grid(inf, as_dataframe=as_dataframe)
     elif defspec.startswith('subset'):
         df = from_subset(inf, as_dataframe=as_dataframe)
+    elif defspec.startswith('regridded-swath'):
+        df = from_regriddedswath(inf)
     else:
         raise IOError(f'{defspec} not in profile, site, swath')
 
