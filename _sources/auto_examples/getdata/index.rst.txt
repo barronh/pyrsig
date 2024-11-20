@@ -1,0 +1,135 @@
+
+
+.. _sphx_glr_auto_examples_getdata:
+
+.. _getdata_examples:
+
+Get data examples
+-----------------
+
+Examples showing how to get data.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get a list of RSIG coverage that are available. The offline list is a quick refere...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_0_capabilities_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_0_capabilities.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get List of Possible Coverages</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get AQS observations as a Pandas DataFrame. Replace aqs.ozone with airnow.ozone to...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_1_aqsno2_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_1_aqsno2.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get DataFrame for AQS ozone</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get TropOMI NO2 tropospheric column densities as a pandas DataFrame.">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_2_tropomidf_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_2_tropomidf.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get DataFrame for TropOMI NO2</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get TropOMI as an xarray Dataset. This example downloads a NetCDF file with COARDS...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_3_tropomicoards_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_3_tropomicoards.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get COARDS formatted NetCDF TropOMI NO2</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get TropOMI as an xarray Dataset. This example downloads a NetCDF file with IOAPI ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_4_tropominc_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_4_tropominc.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get IOAPI formatted NetCDF TropOMI NO2</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get PurpleAir measurements as a DataFrame. PurpleAir, unlike other coverages, requ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_5_purpleairpm_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_5_purpleairpm.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get DataFrame for PurpleAir PM25</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/getdata/get_0_capabilities
+   /auto_examples/getdata/get_1_aqsno2
+   /auto_examples/getdata/get_2_tropomidf
+   /auto_examples/getdata/get_3_tropomicoards
+   /auto_examples/getdata/get_4_tropominc
+   /auto_examples/getdata/get_5_purpleairpm
+
