@@ -105,6 +105,10 @@ cell_off = np.array([[[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]]])
 xy = df.reset_index()[['COL', 'ROW']].values[:, None, :]
 geom = polygons(xy + cell_off)
 cgdf = gpd.GeoDataFrame(df, geometry=geom, crs=ds.crs_proj4)
+bmdf = cgdf.to_crs(4326).copy().reset_index()
+bmdf['COL'] = bmdf['COL'].apply(lambda x: f'{x + .5:.0f}').astype('i')
+bmdf['ROW'] = bmdf['ROW'].apply(lambda x: f'{x + .5:.0f}').astype('i')
+bmdf.to_file(f'{datakey}.shp')
 
 
 # %%
