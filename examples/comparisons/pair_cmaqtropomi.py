@@ -8,6 +8,7 @@ integral at each hour.
 
 - This analysis ignores satellite differential sensitivity, since CMAQ PHOTDIAG1
   outputs the whole column with perfect sensitivity.
+  
 - CMAQ column outputs include all molecules up to the model top defined by VGTOP
   When VGTOP is 5000Pa, this includes some, but not all stratosphere. Further,
   CMAQ does not have many stratosphere reactions/species. Comparisons could be

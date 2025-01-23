@@ -1,3 +1,9 @@
+"""
+Pairing CMAQ with AirNow Ozone
+==============================
+
+This example performs a simple comparison of CMAQ to AirNow for ozone.
+"""
 import pyrsig
 
 
