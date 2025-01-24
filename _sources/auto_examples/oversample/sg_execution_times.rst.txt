@@ -1,0 +1,13 @@
+
+:orphan:
+
+.. _sphx_glr_auto_examples_oversample_sg_execution_times:
+
+
+Computation times
+=================
+**01:02.399** total execution time for **auto_examples_oversample** files:
+
++--------------------------------------------------------------------------------+-----------+--------+
+| :ref:`sphx_glr_auto_examples_oversample_plot_conus4k.py` (``plot_conus4k.py``) | 01:02.399 | 0.0 MB |
++--------------------------------------------------------------------------------+-----------+--------+

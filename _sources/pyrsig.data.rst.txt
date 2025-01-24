@@ -1,0 +1,10 @@
+pyrsig.data package
+===================
+
+Module contents
+---------------
+
+.. automodule:: pyrsig.data
+   :members:
+   :undoc-members:
+   :show-inheritance:
