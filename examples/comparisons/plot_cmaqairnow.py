@@ -5,6 +5,7 @@ Pairing CMAQ with AirNow Ozone
 This example performs a simple comparison of CMAQ to AirNow for ozone.
 """
 import pyrsig
+import pycno
 
 
 cmaqkey = 'cmaq.equates.conus.aconc.O3'
@@ -25,17 +26,21 @@ df = pyrsig.cmaq.pair_rsigcmaq(ds, 'O3', datakey)
 # Calculate stats table with common quantile, correlation, and bias metrics
 statsdf = pyrsig.utils.quickstats(df[['ozone', 'CMAQ_O3']], 'ozone')
 # Print them for the user to review.
-print(statsdf.to_csv())
-# count,21607.0,24192.0
-# mean,25.355614523071228,25.866846084594727
-# std,11.526748941988622,7.350318908691406
-# min,0.0,0.00026858781347982585
-# 25%,19.0,22.68592643737793
-# 50%,28.0,27.47078800201416
-# 75%,33.0,30.673885345458984
-# max,64.0,48.06443405151367
-# r,1.0,0.6378620099737814
-# mb,0.0,0.5112315615234984
-# nmb,0.0,0.02016245991822938
-# fmb,0.0,0.019961226206574992
-# ioa,1.0,0.7575190422148421
+print(statsdf.to_markdown())
+
+dds = ds['O3'].mean('TSTEP')
+ddf = df.groupby(['x', 'y'], as_index=False).mean(numeric_only=True)
+
+qm = dds.plot()
+qm.axes.scatter(
+    ddf.x, ddf.y, c=ddf.ozone, norm=qm.norm, cmap=qm.cmap, edgecolor='w'
+)
+pycno.cno(ds.crs_proj4).drawstates()
+qm.figure.savefig('ozone_map.png')
+
+vmax = df[['ozone', 'CMAQ_O3']].max().max()
+ax = df.plot.hexbin(x='ozone', y='CMAQ_O3', mincnt=1, extent=(0, vmax, 0, vmax))
+ax.set(xlabel='Obs Ozone [ppb]', ylabel='CMAQ [ppb]', facecolor='gainsboro')
+ax.axline((0, 0), slope=1, label='1:1')
+ax.collections[0].colorbar.set_label('count')
+ax.figure.savefig('ozone_scatter.png')
