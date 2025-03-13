@@ -73,8 +73,8 @@ def pair_rsigcmaq(
     qds : xarray.Dataset or str
         If a str, it must be the path to CMAQ file.
         If an xarray.Dataset, it must have CMAQ structure and:
-        - encoding['source'] string describing the file
         - crs_proj4 added by pyrsig.open_ioapi
+        - optionally, encoding['source'] string describing the file
     qkey : str
         CMAQ variable key (must be in the CMAQ file)
     datakey : str
