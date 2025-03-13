@@ -684,9 +684,8 @@ class RsigApi:
         corners=None, withmeta=False, verbose=0, grid=False
     ):
         """
-        Only works with queries that return subset or grid
-        """
-        """
+        Only works with queries that return subset or grid.
+
         All arguments default to those provided during initialization.
 
         Arguments
