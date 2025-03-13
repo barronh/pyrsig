@@ -1,4 +1,4 @@
-__all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq']
+__all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'grids']
 __version__ = '0.10.0'
 
 from . import cmaq
@@ -6,7 +6,7 @@ from .cmaq import open_ioapi, open_mfioapi
 import pandas as pd
 from .utils import customize_grid, def_grid_kw as _def_grid_kw
 from .utils import coverages_from_xml, legacy_get
-
+from . import grids
 
 _corner_prefixes = (
     'gasp', 'goes', 'modis', 'omibehr', 'tempo', 'tropomi', 'viirs'
@@ -581,14 +581,14 @@ class RsigApi:
             tropomistr = ''
 
         if key.startswith('tempo.l2'):
-            if tempo_kw['api_key'] == 'your_key_here':
-                raise ValueError('''You must set the tempo_kw api_key
-(e.g., api.tempo_kw["api_key"] = "...") before submitting a query.''')
             tempostr = (
                 '&MAXIMUM_CLOUD_FRACTION={maximum_cloud_fraction}'
-                '&MINIMUM_QUALITY={minimum_quality}&KEY={api_key}'
+                '&MINIMUM_QUALITY={minimum_quality}'
                 '&MAXIMUM_SOLAR_ZENITH_ANGLE={maximum_solar_zenith_angle}'
             ).format(**tempo_kw)
+            fake_keys = ('your_key_here', 'anonymous', 'none')
+            if tempo_kw['api_key'] not in fake_keys:
+                tempostr += '&KEY={api_key}'.format(**tempo_kw)
         else:
             tempostr = ''
 
@@ -678,6 +678,58 @@ class RsigApi:
             gridstr += "&REGRID_AGGREGATE={REGRID_AGGREGATE}"
 
         return gridstr.format(**grid_kw)
+
+    def to_dataset(
+        self, key=None, bdate=None, edate=None, bbox=None,
+        corners=None, withmeta=False, verbose=0, grid=False
+    ):
+        """
+        Only works with queries that return subset or grid
+        """
+        """
+        All arguments default to those provided during initialization.
+
+        Arguments
+        ---------
+        key : str
+          Default key for query (e.g., 'aqs.o3', 'purpleair.pm25_corrected',
+          or 'tropomi.offl.no2.nitrogendioxide_tropospheric_column')
+        bdate : str or pd.Datetime
+          beginning date (inclusive) defaults to yesterday at 0Z
+        edate : str or pd.Datetime
+          ending date (inclusive) defaults to bdate + 23:59:59
+        bbox : tuple
+          wlon, slat, elon, nlat in decimal degrees (-180 to 180)
+        withmeta: bool
+          If True, add 'GetMetadata' results as a "metadata" attribute of the
+          dataframe. This is useful for understanding the underlying datasets
+          used to create the result.
+        verbose : int
+          level of verbosity
+
+        Returns
+        -------
+        ds : xarray.Dataset
+            Results from download
+
+        """
+        from . import xdr
+        outpath = self.get_file(
+            'xdr', key=key, bdate=bdate, edate=edate, bbox=bbox,
+            grid=grid, verbose=verbose, corners=corners,
+            compress=1
+        )
+        ds = xdr.from_xdrfile(outpath, as_dataframe=False)
+        if withmeta:
+            metapath = self.get_file(
+                'ascii', key=key, bdate=bdate, edate=edate, bbox=bbox,
+                grid=grid, verbose=verbose, request='GetMetadata',
+                compress=1
+            )
+            metatxt = open(metapath, 'r').read()
+            ds.attrs['metadata'] = metatxt
+
+        return ds
 
     def to_dataframe(
         self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
@@ -814,18 +866,20 @@ class RsigApi:
             'netcdf-ioapi', key=key, bdate=bdate, edate=edate, bbox=bbox,
             grid=True, compress=1, verbose=verbose
         )
+        ncpath = outpath[:-3]
         # Uncompress the netcdf file. If encoding is available, apply it
-        if not self.overwrite and os.path.exists(outpath[:-3]):
-            print('Using cached:', outpath[:-3])
+        if not self.overwrite and os.path.exists(ncpath):
+            if verbose >= 0:
+                print('Using cached:', ncpath)
         else:
             with gzip.open(outpath, 'rb') as f_in:
-                with open(outpath[:-3], 'wb') as f_out:
+                with open(ncpath, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
                     f_out.flush()
             if self.encoding is not None:
                 import xarray as xr
 
-                with xr.open_dataset(outpath[:-3]) as tmpf:
+                with xr.open_dataset(ncpath) as tmpf:
                     tmpf.load()
                 for key in tmpf.data_vars:
                     tvar = tmpf[key]
@@ -833,7 +887,7 @@ class RsigApi:
                     if key in ('TFLAG', 'COUNT'):
                         tvar.encoding.pop('_FillValue', '')
 
-                tmpf.to_netcdf(outpath[:-3], format='NETCDF4_CLASSIC')
+                tmpf.to_netcdf(ncpath, format='NETCDF4_CLASSIC')
 
         if withmeta:
             metapath = self.get_file(
@@ -843,7 +897,7 @@ class RsigApi:
         else:
             metapath = None
 
-        f = open_ioapi(outpath[:-3], metapath=metapath)
+        f = open_ioapi(ncpath, metapath=metapath)
         if removegz:
             os.remove(outpath)
 
@@ -891,16 +945,18 @@ class RsigApi:
             'netcdf-coards', key=key, bdate=bdate, edate=edate, bbox=bbox,
             grid=grid, compress=1, verbose=verbose
         )
+        ncpath = outpath[:-3]
         # Uncompress the netcdf file. If encoding is available, apply it
-        if not self.overwrite and os.path.exists(outpath[:-3]):
-            print('Using cached:', outpath[:-3])
+        if not self.overwrite and os.path.exists(ncpath):
+            if verbose > 0:
+                print('Using cached:', ncpath)
         else:
             with gzip.open(outpath, 'rb') as f_in:
-                with open(outpath[:-3], 'wb') as f_out:
+                with open(ncpath, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
                     f_out.flush()
 
-        f = xr.open_dataset(outpath[:-3])
+        f = xr.open_dataset(ncpath)
 
         if withmeta:
             metapath = self.get_file(
@@ -1050,7 +1106,7 @@ class RsigGui:
         import pandas as pd
         return (
             pd.to_datetime(self._dates.value)
-            + pd.to_timedelta(self._hours.value, unit='H')
+            + pd.to_timedelta(self._hours.value, unit='h')
         )
 
     @property
@@ -1119,6 +1175,103 @@ class RsigGui:
             _actionf('bdate is later than edate', action)
 
         return iswe & issn & isbe
+
+
+def findkeys(
+    temporal=None, bbox=None, case=False, flags=0, verbose=1, **kwds
+):
+    """
+    Arguments
+    ---------
+    temporal : str
+       Date or date range (2023-01-01 or 2023-01-01/2023-12-31)
+    bbox : iterable
+       If provided (default: None), bounding box (e.g., -180, -90, 180, 90)
+    case : bool, default False
+        If True, case sensitive.
+    flags : int, default 0 (no flags)
+        Regex module flags, e.g. re.IGNORECASE.
+    kwds : mappable
+        Regular expressions for columns (eg., name='tempo.*') see descdf
+        returns for more columns
+    verbose : int
+        Level of verbosity
+
+    Returns
+    -------
+    descdf : pandas.DataFrame
+        Has columns: name, label, description, bbox_str, beginPosition,
+        timeResolution, endPosition, and prefix
+    """
+    api = RsigApi()
+    df = api.descriptions().fillna('')
+    for k, v in kwds.items():
+        if verbose > 1:
+            print(df.shape[0], f'before query ({k} {v})')
+        qstr = f'{k}.str.match("{v}", case={case}, flags={flags})'
+        df = df.query(qstr)
+        if verbose > 0:
+            print(df.shape[0], f'after query ({qstr})')
+
+    if bbox is not None:
+        from shapely import box
+        import numpy as np
+        if verbose > 1:
+            print(df.shape[0], f'before bbox ({bbox})')
+        bbox = box(*bbox)
+        keepids = []
+        for id, row in df.iterrows():
+            try:
+                dbbox = np.array(row['bbox_str'].split(), dtype='f')
+            except Exception as e:
+                if verbose > 2:
+                    etmpl = '{name} {bbox_str} {e}'
+                    print(etmpl.format(e=e, **row))
+
+                dbbox = np.array([-180, -90, 180, 90], dtype='f')
+            dbbox = box(*dbbox)
+            if bbox.intersects(dbbox):
+                keepids.append(id)
+
+        df = df.loc[keepids]
+        if verbose > 0:
+            print(df.shape[0], f'after bbox ({bbox})')
+
+    if temporal is not None:
+        if verbose > 1:
+            print(df.shape[0], f'before temporal ({temporal})')
+        parts = temporal.split('/')
+        start = pd.to_datetime(parts[0], utc=True)
+        if len(parts) == 1:
+            end = start
+        else:
+            if parts[1].startswith('PT'):
+                end = start + pd.to_timedelta(parts[1][2:])
+            else:
+                end = pd.to_datetime(parts[1], utc=True)
+        keepids = []
+        for id, row in df.iterrows():
+            try:
+                dstart = pd.to_datetime(row['beginPosition'], utc=True)
+                if row['endPosition'].startswith('PT'):
+                    dend = dstart + pd.to_timedelta(row['endPosition'][2:])
+                else:
+                    dend = pd.to_datetime(row['endPosition'], utc=True)
+            except Exception as e:
+                if verbose > 2:
+                    etmpl = '{name} {beginPosition} {endPosition} {e}'
+                    print(etmpl.format(e=e, **row))
+
+                keepids.append(id)
+                continue
+            if start <= dend and end >= dstart:
+                keepids.append(id)
+
+        df = df.loc[keepids]
+        if verbose > 0:
+            print(df.shape[0], f'after temporal ({start} {end})')
+
+    return df.copy()
 
 
 # Add easy access defaults
