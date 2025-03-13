@@ -136,6 +136,7 @@ def from_xdr(inf, na_values=None, decompress=False, as_dataframe=True):
         Dataframe with XDR content
     """
     import numpy as np
+    import pandas as pd
 
     inf.seek(0, 0)
     defspec = inf.read(40).decode().split('\n')[0].lower().strip()
@@ -164,7 +165,7 @@ def from_xdr(inf, na_values=None, decompress=False, as_dataframe=True):
             ' calipso, polygon, grid, subset, or regridded-swath)'
         )
 
-    if na_values is not None:
+    if na_values is not None and isinstance(df, pd.DataFrame):
         df.replace(na_values, np.nan, inplace=True)
 
     return df
@@ -870,7 +871,8 @@ def from_grid(bf, as_dataframe=True):
     dt = pd.to_timedelta('3600s')
     reftime = '1970-01-01T00:00:00+0000'
     attrs = dict(units=f'seconds since {reftime}', long_name='time')
-    ds.coords['time'] = ('time',), stime + np.arange(ntime) * dt, attrs
+    timevals = pd.date_range(stime, freq=dt, periods=ntime)
+    ds.coords['time'] = ('time',), timevals.values, attrs
     attrs = dict(units='index', long_name='x_center')
     ds.coords['x'] = ('x',), np.arange(ncol, dtype='d') + 0.5
     attrs = dict(units='index', long_name='y_center')
