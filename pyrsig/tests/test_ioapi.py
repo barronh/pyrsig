@@ -13,6 +13,48 @@ def test_tropomi():
         print(ds.dims)
 
 
+def test_tropomi_save():
+    from .. import RsigApi
+    from ..cmaq import save_ioapi, open_ioapi
+    import tempfile
+    import numpy as np
+
+    with tempfile.TemporaryDirectory() as td:
+        rsigapi = RsigApi(
+            bdate='2022-03-01', workdir=td,
+            bbox=(-97, 20, -65, 50)
+        )
+        ds = rsigapi.to_ioapi(
+            'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
+        )
+        save_ioapi(ds, f'{td}/test.nc')
+        ds2 = open_ioapi(f'{td}/test.nc')
+        for pk in ds.attrs:
+            p1 = ds.attrs[pk]
+            p2 = ds2.attrs[pk]
+            if pk in ('WTIME', 'CTIME', 'UPNAM'):
+                continue
+            if isinstance(p1, str):
+                p1 = p1.strip()
+                p2 = p2.strip()
+            # print(pk, p1, p2)
+            assert (pk == pk and np.all(p1 == p2))
+
+        for k in ['TFLAG', 'LATITUDE', 'LONGITUDE', 'NO2', 'COUNT']:
+            # print(k)
+            v1 = ds[k]
+            v2 = ds2[k]
+            assert (k == k and np.allclose(v1, v2))
+            for pk in v1.attrs:
+                p1 = v1.attrs[pk]
+                p2 = v2.attrs[pk]
+                if isinstance(p1, str):
+                    p1 = p1.strip()
+                    p2 = p2.strip()
+                # print(pk, p1, p2)
+                assert (k == k and pk == pk and np.all(p1 == p2))
+
+
 def test_tropomi_stereo():
     from .. import RsigApi
     import tempfile

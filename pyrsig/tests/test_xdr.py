@@ -7,7 +7,7 @@ def test_polygon():
         rsigapi = RsigApi(bdate='2023-03-01', bbox=bbox, workdir=td)
         ds = rsigapi.to_dataframe('hms.smoke')
         print(ds.shape)
-    return ds
+    return
 
 
 def test_swath():

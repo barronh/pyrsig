@@ -62,3 +62,16 @@ def test_customize_grid():
     ncx0, ncy0 = fitnoclip['XORIG'], fitnoclip['YORIG']
     ncnc, ncnr = fitnoclip['NCOLS'], fitnoclip['NROWS']
     assert (ncx0, ncy0, ncnc, ncnr) == (804000.0, -2820000.0, 262, 116)
+
+
+def test_findkeys():
+    from .. import findkeys
+    df1 = findkeys()
+    df2 = findkeys(name='tempo.l2.no2')
+    df3 = findkeys(name='tempo.l2.no2', label='.*molec')
+    df4 = findkeys(bbox=(90, 30, 95, 50))
+    df5 = findkeys(temporal='2018-01-01/now')
+    assert df2.shape[0] < df1.shape[0]
+    assert df3.shape[0] < df2.shape[0]
+    assert df4.shape[0] < df1.shape[0]
+    assert df5.shape[0] < df1.shape[0]
