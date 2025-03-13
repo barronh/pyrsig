@@ -72,11 +72,12 @@ def save_ioapi(ds, path, format='NETCDF3_CLASSIC', **kwds):
     )
     jdays = timec.strftime('%Y%j').astype('i')
     hms = timec.strftime('%H%M%S').astype('i')
+    tvdesc = 'Timestep-valid flags:  (1) YYYYDDD or (2) HHMMSS'.ljust(80)
     ods['TFLAG'] = xr.DataArray(
         np.array([jdays, hms]).T, name='TFLAG', dims=('TSTEP', 'DATE-TIME'),
         attrs=dict(
-            long_name='TFLAG'.ljust(16), units='<YYYYJJJ,HHMMSS>',
-            var_desc='Time flag'.ljust(80)
+            long_name='TFLAG'.ljust(16), units='<YYYYDDD,HHMMSS>',
+            var_desc=tvdesc
         )
     ).expand_dims(VAR=nv).transpose('TSTEP', 'VAR', 'DATE-TIME')
     ods.attrs['SDATE'] = int(ods['TFLAG'][0, 0, 0])
@@ -233,6 +234,56 @@ def add_ioapi_meta(ds, metapath=None, earth_radius=6370000., path=''):
     return f
 
 
+def get_lonlat(grid, earth_radius=637e4):
+    """
+    Arguments
+    ---------
+    grid : str, dict, or xarray.Dataset
+        If str, must be a named grid in utils.def_grid_kw.
+        If dict, must have IOAPI grid definition keys.
+        If xr.Dataset, attrs must have IOAPI grid definition keys.
+    earth_radius : float
+        Default earth_radius if not provided in grid
+
+    Returns
+    -------
+    llf : xarray.Dataset
+        Variables lon and lat
+    """
+    import xarray as xr
+    import pyproj
+    from ..utils import get_proj4
+    if isinstance(grid, xr.Dataset):
+        ds = grid
+    elif isinstance(grid, (str, dict)):
+        ds = open_griddesc(grid)
+    else:
+        estr = f'grid requires (str, dict or xr.Dataset); got {type(grid)}'
+        raise TypeError(estr)
+
+    if 'crs_proj4' in ds.attrs:
+        proj4str = ds.attrs['crs_proj4']
+    else:
+        proj4str = get_proj4(ds.attrs, earth_radius=earth_radius)
+
+    proj = pyproj.Proj(proj4str)
+    R, C = xr.broadcast(ds.ROW, ds.COL)
+    LON, LAT = proj(C, R, inverse=True)
+    lonatts = dict(units='degrees_east', long_name='lon', var_desc='lon')
+    latatts = dict(units='degrees_north', long_name='lat', var_desc='lat')
+    LON = xr.DataArray(LON, coords=R.coords, attrs=lonatts)
+    LAT = xr.DataArray(LAT, coords=R.coords, attrs=latatts)
+    llds = xr.Dataset(dict(lon=LON, lat=LAT))
+    xatts = [
+        'SDATE', 'STIME', 'TSTEP', 'NVARS', 'VAR-LIST',
+        'NLAYS', 'VGTOP', 'VLGLVS',
+        'g', 'R', 'A', 'T0', 'P0', 'REGRID_AGGREGATE'
+    ]
+    cpatts = {k: v for k, v in ds.attrs.items() if k not in xatts}
+    llds.attrs.update(cpatts)
+    return llds
+
+
 def open_mfioapi(
     paths, metapaths=None, earth_radius=6370000., **kwargs
 ):
@@ -276,3 +327,30 @@ def open_mfioapi(
     outf.attrs['metadata'] = metastr
 
     return outf
+
+
+def open_griddesc(grid, earth_radius=637e4, **grid_kw):
+    """
+    Arguments
+    ---------
+    grid : str
+        Name of grid in def_grid_kw, or
+        required IOAPI properties of  a grid:
+            GDTYP, NCOLS, NROWS, XORIG, YORIG, XCELL, YCELL,
+            P_ALP, P_BET, P_GAM, XCENT, YCENT, VGTYP, VGTOP, NLAYS
+        optional: earth_radius, g, R, A, T0, P0, REGRID_AGGREGATE
+
+    Returns
+    -------
+    ds : xr.Dataset
+        Dataset with properties and meta variables added.
+    """
+    import xarray as xr
+    from ..utils import def_grid_kw
+    if isinstance(grid, str):
+        grid = def_grid_kw[grid]
+    if isinstance(grid, dict):
+        ds = add_ioapi_meta(xr.Dataset(attrs=grid), earth_radius=earth_radius)
+    else:
+        raise ValueError(f'grid must be a str or dictionary; got {type(grid)}')
+    return ds
