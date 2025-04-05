@@ -1,4 +1,4 @@
-__all__ = ['open_mfioapi', 'pair_rsigcmaq']
+__all__ = ['open_ioapi', 'open_mfioapi', 'pair_rsigcmaq']
 
 from .pair import pair_rsigcmaq
 import pandas as pd
