@@ -35,7 +35,7 @@ def loadrc():
             usropts = json.load(usr)
             opts.update(**usropts)
 
-    return opts 
+    return opts
 
 
 def get_descriptions(server='ofmpub.epa.gov', refresh=False, verbose=0):
