@@ -1,0 +1,12 @@
+{
+    "servers": {
+        "ofmpub.epa.gov": {
+            "legacy": false,
+            "verify": true
+        },
+        "maple.hesc.epa.gov": {
+            "legacy": false,
+            "verify": false
+        }
+    }
+}

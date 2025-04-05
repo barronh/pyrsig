@@ -226,19 +226,48 @@ def coverages_from_xml(txt):
 
 
 def legacy_get(url, *args, **kwds):
+    """
+    Previously used LegacyAdapter, but now selectively chooses adapter
+    based on package options.
 
+    Arguments
+    ---------
+    url : str
+        Path for get call.
+    args : iterable
+        Arguments to get
+    kwds : mappable
+        Keywords to get
+
+    Returns
+    -------
+    response : requests.Response
+        Response from requests get
+    """
+    from . import rcParams
     import copy
-    session = requests.session()
-    la = LegacyAdapter()
+    from urllib.parse import urlparse
 
+    session = requests.session()
+    kwds = copy.copy(kwds)
     # Maple has a bad certificate, so here if you are using maple
     # I disable the certificate, but no the warning
-    if 'maple' in url:
-        la.ssl_context.check_hostname = False
-        kwds = copy.copy(kwds)
+    # ofmpub had a TLS problem and required legacy verification
+    # Now allows TLS, but has self-cerification with legacy verification
+    domain = urlparse(url).netloc
+    opts = {'legacy': False, 'verify': True}
+    opts = rcParams['servers'].get(domain, opts)
+    if opts['legacy']:
+        ha = LegacyAdapter()
+    else:
+        ha = requests.adapters.HTTPAdapter()
+
+    if not opts['verify']:
+        ha.ssl_context.check_hostname = False
         kwds.setdefault('verify', False)
 
-    session.mount('https://', la)
+    if opts['legacy'] or not opts['verify']:
+        session.mount('https://', ha)
 
     return session.get(url, *args, **kwds)
 
@@ -332,7 +361,12 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
     import ssl
     import os
     from .utils import _create_unverified_tls_context
+    from urllib.parse import urlparse
+    from . import rcParams
 
+    domain = urlparse(url).netloc
+    opts = {'legacy': False, 'verify': True}
+    opts = rcParams['servers'].get(domain, opts)
     # If the file exists, get the current size
     if not overwrite and os.path.exists(outpath):
         stat = os.stat(outpath)
@@ -346,7 +380,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
         return
 
     _def_https_context = ssl._create_default_https_context
-    ssl._create_default_https_context = _create_unverified_tls_context
+    if opts['legacy']:
+        ssl._create_default_https_context = _create_unverified_tls_context
 
     # Try to download the file maxtries times
     tries = 0
@@ -354,6 +389,7 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
         reporthook = _progress
     else:
         reporthook = None
+
     while dlsize <= 0 and tries < maxtries:
         # Remove 0-sized files.
         outdir = os.path.dirname(outpath)
@@ -363,11 +399,7 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
         if verbose > 0:
             print('Calling RSIG', outpath, '')
         t0 = time.time()
-        urlretrieve(
-            url=url,
-            filename=outpath,
-            reporthook=reporthook,
-        )
+        urlretrieve(url=url, filename=outpath, reporthook=reporthook)
         # Check timing
         t1 = time.time()
         stat = os.stat(outpath)

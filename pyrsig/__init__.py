@@ -1279,3 +1279,6 @@ descriptions = _defapi.descriptions
 to_dataframe = _defapi.to_dataframe
 to_ioapi = _defapi.to_ioapi
 to_netcdf = _defapi.to_netcdf
+
+from .data import loadrc
+rcParams = loadrc()
