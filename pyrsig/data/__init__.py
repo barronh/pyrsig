@@ -2,9 +2,40 @@ __all__ = ['get_descriptions', 'make_descriptions']
 
 from os.path import dirname, join, expanduser, exists
 
+_pkgdatapath = dirname(__file__)
 _userdescpath = expanduser('~/.pyrsig/DescribeCoverage.csv')
-_pkgdescpath = join(dirname(__file__), 'DescribeCoverage.csv')
+_pkgdescpath = join(_pkgdatapath, 'DescribeCoverage.csv')
+_userrcpath = expanduser('~/.pyrsig/pyrsigrc.json')
+_pkgrcpath = join(_pkgdatapath, 'pyrsigrc.json')
 _describecoverages = None
+
+
+def loadrc():
+    """
+    Load package options from either ~/.pyrsig/pyrsigrc.yml or the pyrsig/data
+    equivalent path
+
+    Arguments
+    ---------
+    None
+
+    Returns
+    -------
+    opts : dict
+        Dictionary of options
+    """
+    import json
+    import copy
+    with open(_pkgrcpath, 'r') as pkg:
+        pkgopts = json.load(pkg)
+
+    opts = copy.deepcopy(pkgopts)
+    if exists(_userrcpath):
+        with open(_userrcpath, 'r') as usr:
+            usropts = json.load(usr)
+            opts.update(**usropts)
+
+    return opts
 
 
 def get_descriptions(server='ofmpub.epa.gov', refresh=False, verbose=0):
