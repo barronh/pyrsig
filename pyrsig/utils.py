@@ -366,8 +366,12 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
         t0 = time.time()
         try:
             urlretrieve(url=url, filename=outpath, reporthook=reporthook)
-        except Exception:
-            pass
+        except Exception as e:
+            # if an error occurs the download is bad and should be redone.
+            if os.path.exists(outpath):
+                os.remove(outpath)
+            laste = e
+
         # Check timing
         t1 = time.time()
         if os.path.exists(outpath):
@@ -382,6 +386,9 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
 
         if verbose > 0:
             print('')
+
+    if dlsize <= 0:
+        raise laste
 
     ssl._create_default_https_context = _def_https_context
 
