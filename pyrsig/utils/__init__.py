@@ -3,7 +3,7 @@ __all__ = [
     'coverages_from_xml', 'legacy_get', 'get_file'
 ]
 import requests
-from .grids import def_grid_kw, shared_grid_kw
+from ..grids import def_grid_kw, shared_grid_kw
 
 
 def get_proj4(attrs, earth_radius=6370000.):
@@ -244,7 +244,7 @@ def legacy_get(url, *args, **kwds):
     response : requests.Response
         Response from requests get
     """
-    from . import rcParams
+    from .. import rcParams
     import copy
     from urllib.parse import urlparse
 
@@ -360,9 +360,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
     from urllib.request import urlretrieve
     import ssl
     import os
-    from .utils import _create_unverified_tls_context
     from urllib.parse import urlparse
-    from . import rcParams
+    from .. import rcParams
 
     domain = urlparse(url).netloc
     opts = {'legacy': False, 'verify': True}

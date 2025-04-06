@@ -49,7 +49,7 @@ Quick Links
 -----------
 
 * :doc:`auto_examples/index`
-* :doc:`pyrsig`
+* :doc:`api/pyrsig`
 
 .. toctree::
    :maxdepth: 2
@@ -58,4 +58,4 @@ Quick Links
 
    self
    auto_examples/index
-   pyrsig
+   api/pyrsig
