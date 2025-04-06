@@ -379,8 +379,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
         print('Using cached:', outpath)
         return
 
-    _def_https_context = ssl._create_default_https_context
-    if opts['legacy']:
+    if not opts['verify']:
+        _def_https_context = ssl._create_default_https_context
         ssl._create_default_https_context = _create_unverified_tls_context
 
     # Try to download the file maxtries times
@@ -412,7 +412,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
         if verbose > 0:
             print('')
 
-    ssl._create_default_https_context = _def_https_context
+    if not opts['verify']:
+        ssl._create_default_https_context = _def_https_context
 
 
 def grid2poly(gdattrs):
