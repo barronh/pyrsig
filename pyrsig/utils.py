@@ -390,20 +390,30 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
     else:
         reporthook = None
 
+    outdir = os.path.dirname(outpath)
+    os.makedirs(outdir, exist_ok=True)
     while dlsize <= 0 and tries < maxtries:
         # Remove 0-sized files.
-        outdir = os.path.dirname(outpath)
         if os.path.exists(outpath):
             os.remove(outpath)
-        os.makedirs(outdir, exist_ok=True)
         if verbose > 0:
             print('Calling RSIG', outpath, '')
         t0 = time.time()
-        urlretrieve(url=url, filename=outpath, reporthook=reporthook)
+        try:
+            urlretrieve(url=url, filename=outpath, reporthook=reporthook)
+        except Exception as e:
+            # if an error occurs the download is bad and should be redone.
+            if os.path.exists(outpath):
+                os.remove(outpath)
+            laste = e
+
         # Check timing
         t1 = time.time()
-        stat = os.stat(outpath)
-        dlsize = stat.st_size
+        if os.path.exists(outpath):
+            stat = os.stat(outpath)
+            dlsize = stat.st_size
+        else:
+            dlsize = 0
 
         if dlsize == 0:
             print('Failed', url, t1 - t0)
@@ -414,6 +424,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
 
     if not opts['verify']:
         ssl._create_default_https_context = _def_https_context
+    if dlsize <= 0:
+        raise laste
 
 
 def grid2poly(gdattrs):

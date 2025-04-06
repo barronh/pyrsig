@@ -11,6 +11,7 @@ def test_tropomi_coards():
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
+        ds.close()
 
 
 def test_tropomi_coards_withmeta():
@@ -27,3 +28,4 @@ def test_tropomi_coards_withmeta():
             withmeta=True
         )
         print(ds.dims, len(ds.attrs['metadata']))
+        ds.close()

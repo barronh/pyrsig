@@ -11,6 +11,7 @@ def test_tropomi():
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
+        ds.close()
 
 
 def test_tropomi_save():
@@ -53,6 +54,8 @@ def test_tropomi_save():
                     p2 = p2.strip()
                 # print(pk, p1, p2)
                 assert (k == k and pk == pk and np.all(p1 == p2))
+        ds.close()
+        ds2.close()
 
 
 def test_tropomi_stereo():
@@ -68,6 +71,7 @@ def test_tropomi_stereo():
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
+        ds.close()
 
 
 def test_tropomi_merc():
@@ -83,6 +87,7 @@ def test_tropomi_merc():
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
+        ds.close()
 
 
 def test_tropomi_lonlat():
@@ -98,6 +103,7 @@ def test_tropomi_lonlat():
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
+        ds.close()
 
 
 def test_tropomi_cache():
@@ -113,10 +119,12 @@ def test_tropomi_cache():
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
+        ds.close()
         ds = rsigapi.to_ioapi(
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
+        ds.close()
         rsigapi = RsigApi(
             bdate='2022-03-01', workdir=td, overwrite=True,
             bbox=(-97, 20, -65, 50)
@@ -125,6 +133,7 @@ def test_tropomi_cache():
             'tropomi.offl.no2.nitrogendioxide_tropospheric_column'
         )
         print(ds.dims)
+        ds.close()
 
 
 def test_tropomi_encoding_remove():
@@ -141,6 +150,7 @@ def test_tropomi_encoding_remove():
             removegz=True
         )
         print(ds.dims)
+        ds.close()
 
 
 def test_tropomi_withmeta():
@@ -157,6 +167,7 @@ def test_tropomi_withmeta():
             withmeta=True, removegz=True
         )
         print(ds.dims, len(ds.attrs['metadata']))
+        ds.close()
 
 
 def test_equates():
@@ -172,3 +183,4 @@ def test_equates():
             'cmaq.equates.conus.aconc.O3'
         )
         print(ds.dims)
+        ds.close()
