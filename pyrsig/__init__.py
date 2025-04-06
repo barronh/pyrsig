@@ -1,5 +1,5 @@
 __all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'grids']
-__version__ = '0.10.0'
+__version__ = '0.11.0'
 
 from . import cmaq
 from .cmaq import open_ioapi, open_mfioapi
@@ -7,6 +7,7 @@ import pandas as pd
 from .utils import customize_grid, def_grid_kw as _def_grid_kw
 from .utils import coverages_from_xml, legacy_get
 from . import grids
+from .data import loadrc as _loadrc
 
 _corner_prefixes = (
     'gasp', 'goes', 'modis', 'omibehr', 'tempo', 'tropomi', 'viirs'
@@ -1279,3 +1280,5 @@ descriptions = _defapi.descriptions
 to_dataframe = _defapi.to_dataframe
 to_ioapi = _defapi.to_ioapi
 to_netcdf = _defapi.to_netcdf
+
+rcParams = _loadrc()
