@@ -1,4 +1,6 @@
-__all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'grids']
+__all__ = [
+    'RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'emiss', 'grids'
+]
 __version__ = '0.11.0'
 
 from . import cmaq
@@ -7,6 +9,7 @@ import pandas as pd
 from .utils import customize_grid, def_grid_kw as _def_grid_kw
 from .utils import coverages_from_xml, legacy_get
 from . import grids
+from . import emiss
 from .data import loadrc as _loadrc
 
 _corner_prefixes = (
