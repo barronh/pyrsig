@@ -69,6 +69,7 @@ sphinx_gallery_conf = {
         '../../examples/oversample',
         '../../examples/maps',
         '../../examples/comparisons',
+        '../../examples/emissions',
     ]),
     'within_subsection_order': FileNameSortKey,
 }

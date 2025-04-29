@@ -12,7 +12,7 @@ Functions:
 - to_cartesian(r, alpha, theta=0, degrees=False)
 - rotate_array(a, theta, degrees=False)
 - emg(x, alpha, x0, sigma, mu, beta, return_parts=False)
-- fitemg1d(y, dx, verbose=0, addyhat=True)
+- fitemg1d(y, dx, verbose=0, addvldhat=True)
 - fitemg(vcds, us, vs, degrees=False, dx=1, nxplume...)
 """
 
@@ -263,22 +263,22 @@ def emg(x, alpha, x0, sigma, mu, beta, return_parts=False):
         return out
 
 
-def fitemg1d(y, dx, verbose=0, addyhat=True):
+def fitemg1d(vld, dx, verbose=0, addvldhat=True):
     """
     Arguments
     ---------
-    y : np.array
+    vld : np.array
         shape (n,) is the line density assuming focal point at n // 2
     dx : float
         Width in length units (consistent with units of b, eg, b [=] mol/m2
         then dx [=] m)
-    addyhat : bool
-        If True (default), add the fit line (yhat) to the output
+    addvldhat : bool
+        If True (default), add the fit line (vldhat) to the output
 
     Returns
     -------
     out : dict
-        x, y, params (from fitemg1d), and (optionally) yhat
+        x, vld, params (from fitemg1d), and (optionally) vldhat
 
     Example
     -------
@@ -300,7 +300,7 @@ def fitemg1d(y, dx, verbose=0, addyhat=True):
     yfit = fitemg1d(y, dx=1e3)
     print(np.array2string(np.round(x / 1000, 1).astype('i')))
     print(np.array2string(np.round(y, 1)))
-    print(np.array2string(np.round(yfit['yhat'], 1)))
+    print(np.array2string(np.round(yfit['vldhat'], 1)))
     # [-75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10  -5   0   5  10
     #   15  20  25  30  35  40  45  50  55  60  65  70  75  80  85  90  95 100
     #  105 110 115 120 125 130 135 140 145 150 155]
@@ -313,7 +313,7 @@ def fitemg1d(y, dx, verbose=0, addyhat=True):
     """
     from scipy.optimize import curve_fit
     import numpy as np
-    ny = y.size
+    ny = vld.size
     assert (ny % 2 == 1)
     n = ny // 2
     x = (np.arange(ny)[:] - n) * dx
@@ -324,20 +324,20 @@ def fitemg1d(y, dx, verbose=0, addyhat=True):
     mu0 = -2 * np.float32(dx)
     pdf_max = emg(x, alpha=1, x0=x00, sigma=sigma0, mu=mu0, beta=0).max()
     # should this be divided by (pdf_max * dx)?
-    alpha0 = (y.max() - y.min()) / pdf_max
-    beta0 = y.min()
+    alpha0 = (vld.max() - vld.min()) / pdf_max
+    beta0 = vld.min()
     guess = np.array([alpha0, x00, sigma0, mu0, beta0], dtype='f')
     if verbose > 0:
         print('p0', dict(zip('alpha x0 sigma mu beta'.split(), guess)))
     lb = np.array([1e-1, 1e-1, 1e-1, x.min(), 0])
-    ub = np.array([1e10, x.max() * 4, x.max() * 4, x.max(), y.max()])
+    ub = np.array([1e10, x.max() * 4, x.max() * 4, x.max(), vld.max()])
     pfit, pcov = curve_fit(
-        emg, x, y, p0=guess, bounds=(lb, ub), check_finite=False
+        emg, x, vld, p0=guess, bounds=(lb, ub), check_finite=False
     )
     pfit = dict(zip('alpha x0 sigma mu beta'.split(), pfit))
-    out = {'x': x, 'y': y, 'params': pfit}
-    if addyhat:
-        out['yhat'] = emg(x, **pfit)
+    out = {'x': x, 'params': pfit}
+    if addvldhat:
+        out['vldhat'] = emg(x, **pfit)
     return out
 
 
@@ -347,7 +347,7 @@ def fitemg(
     """
     Arguments
     ---------
-    vcds : array-like
+    vcds : xr.DataArray
         Vertical column densities 3d (t, y, x) where (x, y) must be square
         (x == y). Units seem to work best when mol/m2. The area unit must
         match the length unit of dx.
@@ -362,12 +362,12 @@ def fitemg(
         calculating the line density (mol/m) along the plume. Defaults to the
         half width minus 1.
     degrees : bool
-        Perform calculations of wind direction in degrees
+        Perform calculations of wind direction in degrees (default=True)
 
     Returns
     -------
     fitresult : dict
-        yhat: best fit function
+        vldhat: best fit function
         ws: wind speeds
         wd: wind directions
         wsmean: mean of wind speeds
@@ -376,9 +376,11 @@ def fitemg(
     import numpy as np
     from warnings import warn
     import copy
+    import xarray as xr
+
     dims = ('time', 'y', 'x')
-    attrs = copy.deepcopy({k: v in vcds.attrs.items()})
-    vcds = np.ma.masked_invalid(vcds)
+    attrs = copy.deepcopy({k: v for k, v in vcds.attrs.items()})
+    vcds = np.ma.masked_invalid(vcds.data)
     if vcds.ndim == 2:
         # add a third dimension
         vcds = vcds[np.newaxis, :, :]
@@ -412,20 +414,31 @@ def fitemg(
     sliceacross = slice(
         max(0, n - nxplume), min(ny, n + nxplume + 1)
     )
-    y = rot[sliceacross, :].sum(0) * dx
-    out = fitemg1d(y, dx=dx, verbose=verbose)
+    vld = rot[sliceacross, :].sum(0) * dx
+    out = fitemg1d(vld, dx=dx, verbose=verbose)
     outf = xr.Dataset()
     outf.coords['x'] = out['x']
-    outf.coords['y'] = out['y']
+    outf.coords['y'] = out['x']
     outf['ROTATED_VCD'] = dims, rots, attrs
-    outf['yhat'] = ('x',), emg(out['x'], **out['params'])
+    outf['vld'] = ('x',), vld
+    outf['vldhat'] = ('x',), emg(out['x'], **out['params']), out['params']
     outf['ws'] = ('time',), wss, dict(units='m/s')
-    outf['wd'] = ('time',), wds, dict(units='degrees')
-    outf['wsmean'] = (,), wss.mean(), dict(units='m/s')
-    outf['tau'] = (,), out['params']['x0'] / outf['wsmean'], dict(unit='s')
-    #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    emis_ps = 1.32 * out['params']['alpha'] / outf['tau']
-    eattrs = dict(description='emis_nox', unit'molNOx/s')
-    outf['emis'] = (,), emis_ps, eattrs
-    outf.attrs.update(out['params'])
-    return out
+    wdunits = {True: 'degrees', False: 'radians'}[degrees]
+    outf['wd'] = ('time',), wds, dict(units=wdunits)
+    tattrs = dict(
+        units='s', description='vldhat.x0 / ws.mean()', long_name='tau'
+    )
+    outf['tau'] = (), out['params']['x0'] / wss.mean(), tattrs
+    # xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    emis_ps = out['params']['alpha'] / outf['tau'].data
+    eattrs = dict(
+        long_name='emis_no2', units='molNO2/s',
+        description=(
+            'emis_no2 = vldhat.alpha / tau = vldhat.alpha * ws.mean() '
+            '/ vldhat.x0'
+        ),
+        comment='emis_nox = emis_no2 * NOx/NO2 (e.g., 1.32)',
+
+    )
+    outf['emis_no2'] = (), emis_ps, eattrs
+    return outf

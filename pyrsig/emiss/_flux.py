@@ -19,11 +19,11 @@ def divergence(c, dy, dx, order=4, withdiag=True):
 
     Notes
     -----
-    Adapted from https://github.com/Kang-Sun-CfA/
-    Oversampling_matlab/blob/v0.2/popy.py#L1711C1-L1732C1
+    Adapted from https://github.com/Kang-Sun-CfA/Oversampling_matlab/blob
+                        /v0.2/popy.py#L1711C1-L1732C1
     """
     import numpy as np
-
+    c = np.asarray(c)
     if np.isscalar(dx):
         dx = np.broadcast_to(dx, c.shape)
     if np.isscalar(dy):

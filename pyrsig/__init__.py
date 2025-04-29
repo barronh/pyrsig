@@ -1,5 +1,6 @@
 __all__ = [
-    'RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'emiss', 'grids'
+    'RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'emiss',
+    'grids'
 ]
 __version__ = '0.11.0'
 
@@ -13,7 +14,7 @@ from . import emiss
 from .data import loadrc as _loadrc
 
 _corner_prefixes = (
-    'gasp', 'goes', 'modis', 'omibehr', 'tempo', 'tropomi', 'viirs'
+    'gasp', 'goes', 'modis', 'omibehr', 'tempo', 'tropomi', 'viirs', 'omi'
 )
 _nolonlats_prefixes = ('cmaq', 'regridded')
 _noregrid_prefixes = ('cmaq', 'regridded')
@@ -734,6 +735,43 @@ class RsigApi:
 
         return ds
 
+    def _datesfunc(
+        self, func, bdates, edates=None, **kwds
+    ):
+        """
+        Thin wrapper around to_* functions
+
+        Arguments
+        ---------
+        func : method
+            to_dataframe, to_ioapi or to_dataset
+        bdates : list
+          Start dates
+        edates : list
+          End dates
+        kwds : mappable
+          See func for explanation of all other keywords.
+
+        Returns
+        -------
+        out : list
+            List of outputs from func
+        """
+        if edates is None:
+            edates = bdates + pd.to_timedelta('86399s')
+        outs = []
+        for bdate, edate in zip(bdates, edates):
+            try:
+                out = func(
+                    bdate=bdate, edate=edate, **kwds
+                )
+            except Exception:
+                print(f'Unable to retieve {bdate} {edate}')
+                continue
+            outs.append(out)
+
+        return outs
+
     def to_dataframe(
         self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
         parse_dates=False, corners=None, withmeta=False, verbose=0,
@@ -771,8 +809,21 @@ class RsigApi:
             Results from download
 
         """
+        from collections.abc import Iterable
         from . import xdr
         from . import bin
+        if isinstance(bdate, Iterable) and not isinstance(bdate, str):
+            kwds = dict(
+                key=key, bbox=bbox, unit_keys=unit_keys,
+                parse_dates=parse_dates, corners=corners, withmeta=withmeta,
+                verbose=verbose, backend=backend, grid=grid
+            )
+            dfs = self._datesfunc(
+                self.to_dataframe, bdates=bdate, edates=edate, **kwds
+            )
+            df = pd.concat(dfs, ignore_index=True)
+            return df
+
         assert backend in {'ascii', 'xdr', 'bin'}
         if any([key.startswith(pfx) for pfx in _shpxdrprefixes]):
             backend = 'xdr'
@@ -863,6 +914,18 @@ class RsigApi:
         import gzip
         import shutil
         import os
+        from collections.abc import Iterable
+        if isinstance(bdate, Iterable) and not isinstance(bdate, str):
+            import xarray as xr
+            kwds = dict(
+                key=key, bbox=bbox, withmeta=withmeta,
+                removegz=removegz, verbose=verbose
+            )
+            dss = self._datesfunc(
+                self.to_ioapi, bdates=bdate, edates=edate, **kwds
+            )
+            dss = xr.concat(dss, dim='TSTEP')
+            return dss
 
         # always use compression for network speed.
         outpath = self.get_file(
@@ -936,12 +999,22 @@ class RsigApi:
         -------
         ds : xarray.Dataset
             Results from download
-
         """
         import gzip
         import shutil
         import os
         import xarray as xr
+        from collections.abc import Iterable
+        if isinstance(bdate, Iterable) and not isinstance(bdate, str):
+            kwds = dict(
+                key=key, bbox=bbox, withmeta=withmeta,
+                removegz=removegz, verbose=verbose
+            )
+            dss = self._datesfunc(
+                self.to_netcdf, bdates=bdate, edates=edate, **kwds
+            )
+            dss = xr.concat(dss, dim='time')
+            return dss
 
         # always use compression for network speed.
         outpath = self.get_file(

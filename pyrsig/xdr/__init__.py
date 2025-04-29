@@ -158,7 +158,7 @@ def from_xdr(inf, na_values=None, decompress=False, as_dataframe=True):
     elif defspec.startswith('subset'):
         df = from_subset(inf, as_dataframe=as_dataframe)
     elif defspec.startswith('regridded-swath'):
-        df = from_regriddedswath(inf)
+        df = from_regriddedswath(inf, as_dataframe=as_dataframe)
     else:
         raise IOError(
             f'{defspec} not in supported formats (profile, site, swath,'
@@ -951,7 +951,7 @@ def from_subset(bf, as_dataframe=True):
     import numpy as np
     import pandas as pd
     import xarray as xr
-    from .utils import get_proj4
+    from ..utils import get_proj4
     import pyproj
 
     headerlines = []
@@ -1053,7 +1053,7 @@ def from_subset(bf, as_dataframe=True):
         return ds
 
 
-def from_regriddedswath(bf):
+def from_regriddedswath(bf, as_dataframe=True):
     """
     Currently supports regridded-swath (v2.0) which has 19 header rows in text
     format. The text header rows also describe the binary portion of the file.
@@ -1110,7 +1110,7 @@ def from_regriddedswath(bf):
     """
     import numpy as np
     import pandas as pd
-    # from .utils import get_proj4
+    # from ..utils import get_proj4
 
     headerlines = []
     for i in range(19):
@@ -1166,7 +1166,27 @@ def from_regriddedswath(bf):
     })
     df.attrs.update(gattrs)
     df.attrs['rsig_program'] = rsig_program
-    return df
+    if as_dataframe:
+        return df
+    c2c = {}
+    c2c['Timestep(UTC)'] = 'Timestep'
+    c2c['LONGITUDE(deg)'] = 'LONGITUDE'
+    c2c['LATITUDE(deg)'] = 'LATITUDE'
+    c2c['COLUMN(-)'] = 'COL'
+    c2c['ROW(-)'] = 'ROW'
+    c2c[valkey] = varkeys[0]
+    df = df.rename(columns=c2c)
+    df['Timestep'] = (
+        pd.to_datetime(df['Timestep']) - pd.to_datetime('1970-01-01T00Z')
+    ).dt.total_seconds()
+    idxcols = ['Timestep', 'ROW', 'COL']
+    ds = df.set_index(idxcols).to_xarray()
+    ds['LONGITUDE'].attrs.update(units='deg')
+    ds['LATITUDE'].attrs.update(units='deg')
+    ds[varkeys[0]].attrs.update(units=units[0])
+    ds.attrs.update(gattrs)
+    ds.attrs['rsig_program'] = rsig_program
+    return ds
 
 
 if __name__ == '__main__':

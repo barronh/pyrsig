@@ -75,11 +75,35 @@ def_grid_kw = {
         XORIG=-170, YORIG=14, XCELL=0.02, YCELL=0.02,
         P_ALP=0., P_BET=0., P_GAM=0., XCENT=0., YCENT=0.
     ),
+    # import xarray as xr
+    # import pyproj
+    # import numpy as np
+    # gpath = 's3://hrrrzarr/grid/HRRR_chunk_index.zarr'
+    # ds = xr.open_zarr(gpath, storage_options=dict(anon=True))
+    # pstr = (
+    #    '+proj=lcc +lat_0=38.5 +lat_1=38.5 +lat_2=38.5 +lon_0=-97.5'
+    #    ' +R=6371229.0'
+    # )
+    # proj = pyproj.Proj(pstr)
+    # pcrnr = np.array([[ds.x[0], ds.y[0]], [ds.x[-1], ds.y[-1]]])
+    # llpcrnr = np.array(proj(pcrnr[:, 0], pcrnr[:, 1], inverse=True))
+    # llcrnr = np.array([
+    #     ds.longitude.values[[0, -1], [0, -1]],
+    #     ds.latitude.values[[0, -1], [0, -1]]
+    # ])
+    # display('Cell Center')
+    # display(pcrnr)
+    # display(llcrnr)
+    # display(llpcrnr)
+    # display('Cell Outer Edge')
+    # pcrnr + np.array([[-1], [1]]) * 1500
     'HRRR3K': dict(
         GDNAM='HRRR3K', GDTYP=2, NCOLS=1799, NROWS=1059,
+        # ORIG based on HRRRZARR projected x/y coordinates
         XORIG=-2699020.14252193, YORIG=-1588806.15255666,
         XCELL=3000., YCELL=3000., earth_radius=6371229.,
         P_ALP=38.5, P_BET=38.5, P_GAM=-97.5, XCENT=-97.5, YCENT=38.5,
+        # https://hrrrzarr.s3.amazonaws.com/grid/projparams.json
     ),
 }
 
