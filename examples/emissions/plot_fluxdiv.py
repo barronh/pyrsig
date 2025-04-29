@@ -63,7 +63,7 @@ ds['WIND_80M_U'] = wds['WIND_80M_U']
 ds['WIND_80M_V'] = wds['WIND_80M_V']
 ds['DCDX'] = ds['NO2'] * np.nan
 ds['DCDY'] = ds['NO2'] * np.nan
-for ti, t in enumerate(ds.TSTEP.dt.strftime('%FT%HZ')):
+for ti, t in enumerate(ds.TSTEP.dt.strftime('%FT%HZ').values):
     print(t)
     v = ds['NO2'][ti, 0]
     if not v.isnull().all():
@@ -72,6 +72,12 @@ for ti, t in enumerate(ds.TSTEP.dt.strftime('%FT%HZ')):
         ds['DCDY'][ti, 0] = dcdy
 
 ds['FDV'] = ds['DCDX'] * ds['WIND_80M_U'] + ds['DCDY'] * ds['WIND_80M_V']
-Z = FDV.mean(('TSTEP', 'LAY'))
+Z = ds['FDV'].mean(('TSTEP', 'LAY'))
 qm = Z.plot()
 qm.figure.savefig('flux.png')
+try:
+    cbsa = gpd.read_file('https://www2.census.gov/geo/tiger/TIGER2023/COUNTY/tl_2023_us_county.zip', bbox=tuple(bbox)).to_crs(ds.crs_proj4)
+    cbsa.plot(facecolor='none', edgecolor='k', ax=qm.axes)
+    qm.figure.savefig('flux.png')
+except Exception as e:
+    print('failed to add map', str(e))

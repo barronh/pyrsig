@@ -391,6 +391,7 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
 
     outdir = os.path.dirname(outpath)
     os.makedirs(outdir, exist_ok=True)
+    laste = 'Internal Server Failure - 0 length file returned'
     while dlsize <= 0 and tries < maxtries:
         # Remove 0-sized files.
         if os.path.exists(outpath):
@@ -415,7 +416,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
             dlsize = 0
 
         if dlsize == 0:
-            print('Failed', url, t1 - t0)
+            print('Failed:', url, t1 - t0)
+            print('Failed:', str(laste))
         tries += 1
 
         if verbose > 0:
@@ -424,6 +426,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
     if not opts['verify']:
         ssl._create_default_https_context = _def_https_context
     if dlsize <= 0:
+        if os.path.exists(outpath):
+            os.remove(outpath)
         raise laste
 
 
