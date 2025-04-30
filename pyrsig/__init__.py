@@ -78,12 +78,20 @@ class RsigApi:
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
         grid_kw : str or dict
-          If str, must be 12US1, 1US1, 12US2, 1US2, 36US3, 108NHEMI2, 36NHEMI2
+          If str, must be 12US1, 1US1, 12US2, 1US2, 36US3, 108NHEMI2, 36NHEMI2,
+          global_1pt0, global_0pt1, global_0pt01, TEMPOL3_0pt02, HRRR3K
           and will be used to set parameters based on EPA domains. If dict,
-          IOAPI mapping parameters. For details, look at the defaults:
-            import pyrsig; print(pyrsig.RsigApi().grid_kw)
-          The REGRID_AGGREGATE defines how the regridded values are aggregated
-          in time. Options are None (default), daily, or all.
+          IOAPI mapping parameters. For details, look at the help on grids or
+          at the values in 12US1:
+            import pyrsig
+            help(pyrsig.grids)
+            print(pyrsig.grids.def_grid_kw['12US1'])
+          There are two special RSIG regrid keywords that control regridding:
+            - REGRID_AGGREGATE defines how the regridded values are aggregated
+              in time. Options are None (default), daily, or all.
+            - REGRID defines how RSIG regrids data. Options are weighted
+              (default) or mean. weighted uses fractional area contribution,
+              while mean uses simple mean of pixels whose centroid is in a cell
         viirsnoaa_kw : dict
           Dictionary of VIIRS NOAA filter parameters default
           {'minimum_quality': 'high'} other options 'medium' or 'low'
@@ -183,9 +191,13 @@ class RsigApi:
             grid_kw = '12US1'
 
         if isinstance(grid_kw, str):
-            if grid_kw not in _def_grid_kw:
+            if grid_kw not in grids.def_grid_kw:
                 raise KeyError('unknown grid, you must specify properites')
-            grid_kw = _def_grid_kw[grid_kw].copy()
+            grid_kw = grids.def_grid_kw[grid_kw].copy()
+
+        # if the user has not provided a regular parameter, add it for them
+        for k, v in grids.shared_grid_kw.items():
+            grid_kw.setdefault(k, v)
 
         if gridfit:
             grid_kw = customize_grid(grid_kw, self.bbox)
@@ -674,7 +686,7 @@ class RsigApi:
             raise KeyError('GDTYP only implemented for ')
 
         gridstr = (
-            '&REGRID=weighted'
+            '&REGRID={REGRID}'
             + projstr
             + '&ELLIPSOID={earth_radius},{earth_radius}'
             + '&GRID={NCOLS},{NROWS},{XORIG},{YORIG},{XCELL},{YCELL}'

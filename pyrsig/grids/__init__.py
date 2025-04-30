@@ -1,4 +1,78 @@
 __all__ = ['def_grid_kw']
+__doc__ = """
+def_grid_kw : dict
+    Keys are names of known grids. Values are dictionary of keywords for IOAPI
+    grid defintion and RSIG regridding options:
+        IOAPI parameters:
+            GDNAM : str
+                Name of the grid (e.g., '12US1')
+            GDTYP : int
+                IOAPI numbered grid type (e.g., 2: lambert conformal;
+                6: polar stereographic)
+            NCOLS : int
+                number of columns (e.g., 459)
+            NROWS : int
+                number of rows (e.g., 299)
+            XORIG : float
+                The projected x-coordinate of the bottom left corner of the
+                bottom-most left-most cell in meters (e.g., -2556000.0)
+            YORIG : float
+                The projected y-coordinate of the bottom left corner of the
+                bottom-most left-most cell in meters (e.g., -1728000.0)
+            XCELL : float
+                Width of grid cell in meters (e.g., 12000.)
+            YCELL : float
+                Height of grid cell in meters (e.g., 12000.)
+            P_ALP : float
+                First of three parameters whose meaning depends on GDTYP
+                - GDTYP=2: the first true standard latitude (e.g., 33)
+                - GDTYP=6: either 1 for north pole or -1 for south pole.
+            P_BET : float
+                Second of three parameters whose meaning depends on GDTYP
+                - GDTYP=2: the second true standard latitude (e.g., 45)
+                - GDTYP=6: the secant latitude (i.e., of true scale)
+            P_GAM : float
+                Thrid of three parameters whose meaning depends on GDTYP
+                - GDTYP=2: the central meridian (e.g., -97)
+                - GDTYP=6: the central meridian (e.g., -98)
+            XCENT : float
+                 The longitude for the center (0,0) of the projected system.
+                 (.e.g, -97.0)
+            YCENT : float
+                 The latitude for the center (0,0) of the projected system.
+                 (.e.g, 40..0)
+            VGTYP : int
+                Vertical grid coordinate where 7 terrain following fractional
+                pressure (s=(p-ptop)/(psurf - ptop)) or -9999 is the new WRF
+                hybrid vertical coordinate that transitions to constant
+                pressure at s=0.2
+            VGTOP : float
+                Top of the vertical domain in Pascals (e.g., 5000.)
+            NLAYS : int
+                Number of vertical layers (e.g., 35)
+
+        RSIG regridding options:
+            earth_radius : float
+                6370000.
+            g : float
+                Gravitational acceleration in m/s**2 (e.g., 9.81)
+            R : float
+                Ideal gas constant in J/kg/K (e.g., 287.04)
+            A : float
+                 Atmospheric lapse rate in K (e.g., 50.)
+            T0 : float
+                Reference temperature in Kelvin (e.g., 290.)
+            P0 : float
+                Reference pressure in Pascals (e.g., 1000e2)
+            REGRID_AGGREGATE : str
+                Options: 'None', 'daily', 'all'
+            REGRID : str
+                Options: 'weighted' or 'mean'
+                weighted uses fractional area weights
+                mean is the simple average of pixels with centroids in the grid
+    A=50., T0=290, P0=1000e2, REGRID_AGGREGATE='None', REGRID='weighted'
+
+"""
 def_grid_kw = {
     '12US1': dict(
         GDNAM='12US1', GDTYP=2, NCOLS=459, NROWS=299,
@@ -109,7 +183,7 @@ def_grid_kw = {
 
 shared_grid_kw = dict(
     VGTYP=7, VGTOP=5000., NLAYS=35, earth_radius=6370000., g=9.81, R=287.04,
-    A=50., T0=290, P0=1000e2, REGRID_AGGREGATE='None'
+    A=50., T0=290, P0=1000e2, REGRID_AGGREGATE='None', REGRID='weighted'
 )
 
 for key in def_grid_kw:
