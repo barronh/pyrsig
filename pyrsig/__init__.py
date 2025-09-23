@@ -279,7 +279,6 @@ class RsigApi:
         hrrr_kw.setdefault('CMAQ', 1)
         self.hrrr_kw = hrrr_kw
 
-
     def set_grid_kw(self, grid_kw):
         if isinstance(grid_kw, str):
             if grid_kw not in _def_grid_kw:
@@ -815,7 +814,6 @@ class RsigApi:
         if edates is None:
             edates = bdates + pd.to_timedelta('86399s')  # default to 1day
         outs = []
-        key = kwds.get('key', 'unknown')
         for bdate, edate in zip(bdates, edates):
             try:
                 out = func(

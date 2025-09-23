@@ -1,6 +1,7 @@
 __all__ = [
     'get_proj4', 'customize_grid', 'def_grid_kw', 'shared_grid_kw',
-    'coverages_from_xml', 'legacy_get', 'get_file', 'check_server', 'get_server'
+    'coverages_from_xml', 'legacy_get', 'get_file', 'check_server',
+    'get_server'
 ]
 import requests
 from ..grids import def_grid_kw, shared_grid_kw
@@ -76,7 +77,6 @@ def customize_grid(grid_kw, bbox, clip=True):
         adjusted such that it only covers bbox or (if clip) only covers
         the portion of bbox covered by the original grid_kw.
     """
-    import pyproj
     import numpy as np
     from ..cmaq import get_lonlat
 
@@ -345,9 +345,9 @@ def check_server(server):
         ssl._create_default_https_context = _create_unverified_tls_context
     try:
         url = f'https://{server}'
-        r = urlopen(url=url)
+        urlopen(url=url)
         out = True
-    except Exception as e:
+    except Exception:
         out = False
     if not opts['verify']:
         ssl._create_default_https_context = _def_https_context
