@@ -1,6 +1,6 @@
 __all__ = [
     'get_proj4', 'customize_grid', 'def_grid_kw', 'shared_grid_kw',
-    'coverages_from_xml', 'legacy_get', 'get_file'
+    'coverages_from_xml', 'legacy_get', 'get_file', 'check_server', 'get_server'
 ]
 import requests
 from ..grids import def_grid_kw, shared_grid_kw
@@ -78,6 +78,7 @@ def customize_grid(grid_kw, bbox, clip=True):
     """
     import pyproj
     import numpy as np
+    from ..cmaq import get_lonlat
 
     if isinstance(grid_kw, str):
         grid_kw = def_grid_kw[grid_kw]
@@ -97,18 +98,17 @@ def customize_grid(grid_kw, bbox, clip=True):
         ogrid_kw['YORIG'] = yorig
         return ogrid_kw
 
-    proj4str = get_proj4(grid_kw)
-    proj = pyproj.Proj(proj4str)
-    llx, lly = proj(*bbox[:2])
-    urx, ury = proj(*bbox[2:])
-    midx, midy = proj((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2)
-    maxy = np.max([lly, ury, midy])
-    miny = np.min([lly, ury, midy])
-    maxx = np.max([llx, urx, midx])
-    minx = np.min([llx, urx, midx])
-
-    lli, llj = np.floor([minx, miny]).astype('i')
-    uri, urj = np.ceil([maxx, maxy]).astype('i')
+    er = grid_kw.get('earth_radius', 637e4)
+    llf = get_lonlat(grid_kw, earth_radius=er)
+    inlon = ((llf['lon'] >= bbox[0]) & (llf['lon'] <= bbox[2]))
+    inlat = ((llf['lat'] >= bbox[1]) & (llf['lat'] <= bbox[3]))
+    keep = inlon & inlat
+    COL = llf.COL.sel(COL=keep.any('ROW'))
+    ROW = llf.ROW.sel(ROW=keep.any('COL'))
+    lli = int(COL.min() // 1)
+    uri = int(COL.max() // 1) + 1
+    llj = int(ROW.min() // 1)
+    urj = int(ROW.max() // 1) + 1
     if clip:
         lli, llj = np.maximum(0, [lli, llj])
         uri = np.minimum(grid_kw['NCOLS'], uri)
@@ -331,6 +331,40 @@ def _progress(blocknum, readsize, totalsize):
             print('Retrieving .', end='', flush=True)
         if (blocknum % pblocks) == 0:
             print('.', end='', flush=True)
+
+
+def check_server(server):
+    import ssl
+    from urllib.request import urlopen
+    from .. import rcParams
+
+    opts = {'legacy': False, 'verify': True}
+    opts = rcParams['servers'].get(server, opts)
+    if not opts['verify']:
+        _def_https_context = ssl._create_default_https_context
+        ssl._create_default_https_context = _create_unverified_tls_context
+    try:
+        url = f'https://{server}'
+        r = urlopen(url=url)
+        out = True
+    except Exception as e:
+        out = False
+    if not opts['verify']:
+        ssl._create_default_https_context = _def_https_context
+    return out
+
+
+def get_server(servers=None):
+    from .. import rcParams
+    if servers is None:
+        servers = ['maple.hesc.epa.gov']  # prefer maple
+        servers += list(rcParams.get('servers', []))  # try all the rest
+        servers += ['ofmpub.epa.gov']  # default to ofmpub if none found
+
+    for server in servers:
+        if check_server(server):
+            break
+    return server
 
 
 def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
