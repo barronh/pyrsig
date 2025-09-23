@@ -2,16 +2,29 @@
 Calculate Emissions by Fitting a Modified Guassian
 ==================================================
 
-This example uses Houston Texas as an example applicatin of this technique.
-This example uses just 4 days, but could be extended to a whole year or the
-ozone season to get a more robust estimate of emissions.
+This example uses Dallas Fort Worth Texas as an illustrative application of
+this technique. For illustration, only 3 days are used. In practice, it should
+use as whole year or the ozone season to get a more robust estimate.
 
 Steps:
 1. Create a 3km custom L3 product on the HRRR grid,
 2. Retrieve HRRR winds at center of domain,
 3. Rotate daily rasters so that wind blows from left to right,
-4. Fit Eq 1 of Goldberg et al. (10.5194/acp-22-10875-2022; equivalent to scipy.stats.exponnorm),
+4. Fit Eq 1 of Goldberg et al. (10.5194/acp-22-10875-2022; ~exponnorm),
 5. Derive tau parameter and estimate emissions.
+
+The 4 day result 41 moles/s, which is in good agreement with the 2017 NEI[1,2]
+60870 short-tons/yr (38 moles/s) and larger than the 2020 NEI[3,4] 47110 short-
+tons/yr (29 moles/s).
+
+These days were selected because of the reasonable agreement. In actual
+application, you should check the rotation of each day and apply to many days.
+The alignment of winds with plumes is imperfect due to meandering winds.
+
+[1] https://enviro.epa.gov/envirofacts/embed/nei?pType=TIER&pReport=county&pState=&pState=48&pPollutant=&pPollutant=NOX&pSector=&pYear=2017&pCounty=48439&pTier=&pWho=NEI
+[2] https://enviro.epa.gov/envirofacts/embed/nei?pType=TIER&pReport=county&pState=&pState=48&pPollutant=&pPollutant=NOX&pSector=&pYear=2017&pCounty=48113&pTier=&pWho=NEI
+[3] https://enviro.epa.gov/envirofacts/embed/nei?pType=TIER&pReport=county&pState=&pState=48&pPollutant=&pPollutant=NOX&pSector=&pYear=2020&pCounty=48439&pTier=&pWho=NEI
+[4] https://enviro.epa.gov/envirofacts/embed/nei?pType=TIER&pReport=county&pState=&pState=48&pPollutant=&pPollutant=NOX&pSector=&pYear=2020&pCounty=48113&pTier=&pWho=NEI
 """
 
 import matplotlib.pyplot as plt
@@ -28,10 +41,9 @@ import xarray as xr
 # - Date range can be a few days at a time
 # - vbbox is the box to retrieve VCDs
 
-workdir = 'houston'
-# loc = (-112.0777, 33.4482)  # Phoenix Arizona - fit is not good due to multiple loci
-loc = (-95.1, 29.720621)  # Houston Texas
-dates = pd.date_range('2023-05-01T00Z', '2023-05-04T00Z')
+workdir = 'dfw'
+loc = (-96.95, 32.85)
+dates = pd.date_range('2023-05-01T00Z', '2023-05-04T00Z', freq='1d')
 vbbox = np.array(loc + loc) + np.array([-1, -1, 1, 1]) * 1.5
 
 
@@ -61,7 +73,7 @@ ds = ds.where(lambda x: x>-9e30)
 # --------------------------
 # - Find the domain center
 # - Create a 0.01 degree box around it
-# - retrieve the HRRR 80m wind components (requries xdr)
+# - retrieve the HRRR 80m wind components (requires xdr)
 
 # Find the center lon/lat to query for wind speed
 llds = ds.isel(TSTEP=0, LAY=0).sel(ROW=ds.ROW.mean(), COL=ds.COL.mean(), method='nearest')
@@ -70,6 +82,7 @@ wbbox = np.array(wloc + wloc) + np.array([-1, -1, 1, 1]) * .005
 wrsig = pyrsig.RsigApi(bbox=wbbox, workdir=workdir)
 wkey = 'hrrr.wind_80m'
 df = wrsig.to_dataframe(bdate=dates, key=wkey, unit_keys=False, parse_dates=True, backend='xdr')
+df = df.loc[df['time'].dt.tz_convert(None).isin(ds.TSTEP.data)]  # only if a valid record is avail
 
 # Add wind components to the VCD dataset
 ds['wind_80m_u'] = ('TSTEP',), df.wind_80m_u.values, dict(units='m/s')
@@ -84,7 +97,9 @@ ds['wind_80m_v'] = ('TSTEP',), df.wind_80m_v.values, dict(units='m/s')
 molperm2 = ds.NO2 / 6.022e23 * 1e4
 dxm = ds.XCELL
 emgout = pyrsig.emiss.fitemg(molperm2, ds.wind_80m_u, ds.wind_80m_v, dx=dxm)
-emgout.to_netcdf('emg.nc')
+emgout['wind_80m_u'] = ('time',), ds.wind_80m_u.data
+emgout['wind_80m_v'] = ('time',), ds.wind_80m_v.data
+emgout.to_netcdf(f'{workdir}/emg.nc')
 
 
 # %%
