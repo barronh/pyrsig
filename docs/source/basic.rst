@@ -6,11 +6,24 @@
 pyrsig User's Guide
 ===================
 
-Python interface to RSIG Web API
+Python interface to RSIG Web API.
 
 The key value of `pyrsig` is to present RSIG data in pandas DataFrames and
 xarray Datasets. This makes it easy to do advanced analyses in a pythonic
 way. Example analyses are provided, but the sky is the limit.
+
+RSIG connects you to air quality data. The figure below highlights how RSIG
+operates as a central access point for air quality data from many data
+partners. `pyrsig` is one app that you can choose to get data from RSIG and
+all its partners.
+
+.. image:: _static/rsig_network.png
+    :alt: RSIG Interargency Networked Data
+
+variables and petabytes of data.
+More information about RSIG and RSIG datasets is available at EPA's `RSIG website`_.
+
+.. _RSIG website: https://www.epa.gov/hesc/remote-sensing-information-gateway
 
 
 Getting Started

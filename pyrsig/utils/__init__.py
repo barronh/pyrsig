@@ -105,14 +105,18 @@ def customize_grid(grid_kw, bbox, clip=True):
     keep = inlon & inlat
     COL = llf.COL.sel(COL=keep.any('ROW'))
     ROW = llf.ROW.sel(ROW=keep.any('COL'))
+    # convert centroids (0.5, NCOLS - 0.5) to indices (0, NCOLS - 1)
     lli = int(COL.min() // 1)
     uri = int(COL.max() // 1) + 1
+    # convert centroids (0.5, NROWS - 0.5) to indices (0, NROWS - 1)
     llj = int(ROW.min() // 1)
     urj = int(ROW.max() // 1) + 1
     if clip:
         lli, llj = np.maximum(0, [lli, llj])
         uri = np.minimum(grid_kw['NCOLS'], uri)
         urj = np.minimum(grid_kw['NROWS'], urj)
+    else:
+        raise DeprecationWarning('clip is implied now.')
     ogrid_kw['XORIG'] = grid_kw['XORIG'] + lli * grid_kw['XCELL']
     ogrid_kw['YORIG'] = grid_kw['YORIG'] + llj * grid_kw['YCELL']
     ogrid_kw['NCOLS'] = uri - lli
@@ -228,7 +232,9 @@ def coverages_from_xml(txt):
 def legacy_get(url, *args, **kwds):
     """
     Previously used LegacyAdapter, but now selectively chooses adapter
-    based on package options.
+    based on domain and package options. If verify option for domain
+    is False, suppress warning because it is expected. If legacy is True,
+    use old TLS that was deprecated in openssl v3.
 
     Arguments
     ---------
@@ -247,29 +253,30 @@ def legacy_get(url, *args, **kwds):
     from .. import rcParams
     import copy
     from urllib.parse import urlparse
+    from urllib3.exceptions import InsecureRequestWarning
+    import warnings
 
     session = requests.session()
     kwds = copy.copy(kwds)
-    # Maple has a bad certificate, so here if you are using maple
-    # I disable the certificate, but no the warning
-    # ofmpub had a TLS problem and required legacy verification
-    # Now allows TLS, but has self-cerification with legacy verification
+    # Option verify=False allows self-signed certificates (eg, maple)
+    # Option legacy=True allows old TLS to support ofmpub until patched
     domain = urlparse(url).netloc
     opts = {'legacy': False, 'verify': True}
     opts = rcParams['servers'].get(domain, opts)
     if opts['legacy']:
         ha = LegacyAdapter()
-    else:
-        ha = requests.adapters.HTTPAdapter()
-
-    if not opts['verify']:
-        ha.ssl_context.check_hostname = False
-        kwds.setdefault('verify', False)
-
-    if opts['legacy'] or not opts['verify']:
+        if not opts['verify']:
+            ha.ssl_context.check_hostname = False
         session.mount('https://', ha)
 
-    return session.get(url, *args, **kwds)
+    if not opts['verify']:
+        kwds.setdefault('verify', False)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", InsecureRequestWarning)
+        r = session.get(url, *args, **kwds)
+
+    return r
 
 
 def _create_unverified_tls_context(*args, **kwds):
@@ -286,8 +293,7 @@ def _create_unverified_tls_context(*args, **kwds):
 
 class LegacyAdapter(requests.adapters.HTTPAdapter):
     # "Transport adapter" that allows us to use custom ssl_context.
-
-    def __init__(self, **kwargs):
+    def __init__(self, verify=True, **kwargs):
         import ssl
         def_ctx = ssl._create_default_https_context
         ssl._create_default_https_context = _create_unverified_tls_context
