@@ -1,13 +1,13 @@
 # pyrsig
 
 [![Docs](https://github.com/barronh/pyrsig/actions/workflows/documentation.yaml/badge.svg)](https://barronh.github.io/pyrsig/)
-![Tests](https://github.com/barronh/pyrsig/actions/workflows/tests.yml/badge.svg)
+[![Tests](https://github.com/barronh/pyrsig/actions/workflows/tests.yml/badge.svg)](https://github.com/barronh/pyrsig/actions/workflows/tests.yml)
 [![pypi](https://github.com/barronh/pyrsig/actions/workflows/python-publish.yml/badge.svg)](https://pypi.org/project/pyrsig/)
 
 
-`pyrsig`: a Python interface to RSIG Web API. RSIG connects you to petabytes
-of air quality data from EPA, NASA, NOAA, and many other partners. `pyrsig`
-connects RSIG to xarray, pandas, and all your favorite python libraries.
+`pyrsig` is a Python interface to the RSIG Web API. RSIG connects you to
+petabytes of air quality data from EPA, NASA, NOAA, and many other partners.
+`pyrsig` connects RSIG to xarray, pandas, and all your favorite python libraries.
 
 
 ## Install
