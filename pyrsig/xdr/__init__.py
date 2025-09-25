@@ -1008,8 +1008,9 @@ def from_subset(bf, as_dataframe=True):
     ds.attrs.update(**projattrs)
     ds.attrs.update(**vgprops)
     ds.attrs['UPNAM'] = rsig_program.ljust(16)
-    dt = pd.to_timedelta('3600s')
-    t = stime + np.arange(ntime) * dt
+    # dt = pd.to_timedelta('3600s')
+    # t = stime + np.arange(ntime) * dt
+    t = pd.date_range(stime, periods=ntime, freq='3600s')
     reftime = '1970-01-01T00:00:00+0000'
     attrs = dict(long_name='TSTEP', units=f'seconds since {reftime}')
     ds.coords['TSTEP'] = t
@@ -1042,6 +1043,7 @@ def from_subset(bf, as_dataframe=True):
     if as_dataframe:
         df = ds.astype(dtval[1:]).to_dataframe()
         time = df.index.get_level_values('TSTEP')
+        # time = pd.to_datetime(time)
         df['Timestamp(UTC)'] = time.strftime('%Y-%m-%dT%H:%M:%S+0000')
         keepcols = ['Timestamp(UTC)', 'LONGITUDE', 'LATITUDE'] + varkeys
         renamer = {vk: f'{vk}({vu})' for vk, vu in zip(varkeys, units)}
