@@ -1,4 +1,7 @@
-__all__ = ['RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'grids']
+__all__ = [
+    'RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'emiss',
+    'grids'
+]
 __version__ = '0.11.0'
 
 from . import cmaq
@@ -7,13 +10,26 @@ import pandas as pd
 from .utils import customize_grid, def_grid_kw as _def_grid_kw
 from .utils import coverages_from_xml, legacy_get
 from . import grids
+from . import emiss
 from .data import loadrc as _loadrc
 
+
+rcParams = _loadrc()
+
+# This is the list of prefixes for WCS that support CORNERS=1 and will return
+# Longitude_SW(deg), Longitude_SE(deg), Longitude_NE(deg), Longitude_NW(deg),
+# Latitude_SW(deg), Latitude_SE(deg), Latitude_NE(deg), Latitude_NW(deg),
 _corner_prefixes = (
-    'gasp', 'goes', 'modis', 'omibehr', 'tempo', 'tropomi', 'viirs'
+    'gasp', 'goes', 'modis', 'omibehr', 'tempo', 'tropomi', 'viirs', 'omi'
 )
+# Projected raster datasets do not need lon/lat when retrieved as ioapi or
+# coards(?). When returning a CSV, they are the only coordinate information.
 _nolonlats_prefixes = ('cmaq', 'regridded')
-_noregrid_prefixes = ('cmaq', 'regridded')
+# Pre-ioapi datasets do not support regridded
+_noregrid_prefixes = ('cmaq', 'regridded', 'hrrr', 'tempo.l3')
+# Requesting xdr format for polygons supports one of two formats:
+# xdr : contains binary chunks described by a 10-line ascii header
+# bin : contains binary chunks described by a 1-line ascii header
 _shpxdrprefixes = ['hms.']
 _shpbinprefixes = [
     'landuse.atlantic.population_iclus',
@@ -55,8 +71,8 @@ class RsigApi:
     def __init__(
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
         tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None, tempo_kw=None,
-        pandora_kw=None, calipso_kw=None,
-        server='ofmpub.epa.gov', compress=1, corners=1, encoding=None,
+        pandora_kw=None, calipso_kw=None, hrrr_kw=None,
+        server=None, compress=1, corners=1, encoding=None,
         overwrite=False, workdir='.', gridfit=False
     ):
         """
@@ -74,12 +90,20 @@ class RsigApi:
         bbox : tuple
           wlon, slat, elon, nlat in decimal degrees (-180 to 180)
         grid_kw : str or dict
-          If str, must be 12US1, 1US1, 12US2, 1US2, 36US3, 108NHEMI2, 36NHEMI2
+          If str, must be 12US1, 1US1, 12US2, 1US2, 36US3, 108NHEMI2, 36NHEMI2,
+          global_1pt0, global_0pt1, global_0pt01, TEMPOL3_0pt02, HRRR3K
           and will be used to set parameters based on EPA domains. If dict,
-          IOAPI mapping parameters. For details, look at the defaults:
-            import pyrsig; print(pyrsig.RsigApi().grid_kw)
-          The REGRID_AGGREGATE defines how the regridded values are aggregated
-          in time. Options are None (default), daily, or all.
+          IOAPI mapping parameters. For details, look at the help on grids or
+          at the values in 12US1:
+            import pyrsig
+            help(pyrsig.grids)
+            print(pyrsig.grids.def_grid_kw['12US1'])
+          There are two special RSIG regrid keywords that control regridding:
+            - REGRID_AGGREGATE defines how the regridded values are aggregated
+              in time. Options are None (default), daily, or all.
+            - REGRID defines how RSIG regrids data. Options are weighted
+              (default) or mean. weighted uses fractional area contribution,
+              while mean uses simple mean of pixels whose centroid is in a cell
         viirsnoaa_kw : dict
           Dictionary of VIIRS NOAA filter parameters default
           {'minimum_quality': 'high'} other options 'medium' or 'low'
@@ -111,6 +135,7 @@ class RsigApi:
         server : str
           'ofmpub.epa.gov' for external  users
           'maple.hesc.epa.gov' for on EPA VPN users
+          None to test maple (preferred) and ofmpub
         compress : int
           1 to transfer files with gzip compression
           0 to transfer uncompressed files (slow)
@@ -148,6 +173,10 @@ class RsigApi:
           details.
 
         """
+        if server is None:
+            from .utils import get_server
+            server = get_server()
+
         self._description = {}
         self._capabilities = None
         self._coveragesdf = None
@@ -179,9 +208,13 @@ class RsigApi:
             grid_kw = '12US1'
 
         if isinstance(grid_kw, str):
-            if grid_kw not in _def_grid_kw:
+            if grid_kw not in grids.def_grid_kw:
                 raise KeyError('unknown grid, you must specify properites')
-            grid_kw = _def_grid_kw[grid_kw].copy()
+            grid_kw = grids.def_grid_kw[grid_kw].copy()
+
+        # if the user has not provided a regular parameter, add it for them
+        for k, v in grids.shared_grid_kw.items():
+            grid_kw.setdefault(k, v)
 
         if gridfit:
             grid_kw = customize_grid(grid_kw, self.bbox)
@@ -241,6 +274,10 @@ class RsigApi:
             purpleair_kw.setdefault(k, v)
 
         self.purpleair_kw = purpleair_kw
+        if hrrr_kw is None:
+            hrrr_kw = {}
+        hrrr_kw.setdefault('CMAQ', 1)
+        self.hrrr_kw = hrrr_kw
 
     def set_grid_kw(self, grid_kw):
         if isinstance(grid_kw, str):
@@ -491,6 +528,18 @@ class RsigApi:
         ---------
         formatstr : str
           'xdr', 'ascii', 'netcdf-ioapi', 'netcdf-coards'
+        key : str
+            Coverage name
+        bdate : date-like
+        edate : date-like
+        bbox : iterable
+        grid : bool
+        corners : bool
+            If True, return corners.
+        request : str
+            RSIG service (default GetCoverage)
+        compress : int
+            1: gzip compression (default); 0: no compress
         request : str
             'GetCoverage' or 'GetMetadata'
         all other keywords see __init__
@@ -533,6 +582,7 @@ class RsigApi:
             corners = self.corners
         grid_kw = self.grid_kw
         purpleair_kw = self.purpleair_kw
+        hrrr_kw = self.hrrr_kw
         tropomi_kw = self.tropomi_kw
         tempo_kw = self.tempo_kw
         viirsnoaa_kw = self.viirsnoaa_kw
@@ -593,6 +643,11 @@ class RsigApi:
         else:
             tempostr = ''
 
+        if key.startswith('hrrr'):
+            hrrrstr = '&CMAQ={CMAQ}'.format(**hrrr_kw)
+        else:
+            hrrrstr = ''
+
         if key.startswith('purpleair'):
             if purpleair_kw['api_key'] == 'your_key_here':
                 raise ValueError('''You must set the purpleair_kw api_key
@@ -614,7 +669,10 @@ class RsigApi:
         else:
             cornerstr = ''
 
-        if any([key.startswith(pre) for pre in _nolonlats_prefixes]):
+        if (
+            any([key.startswith(pre) for pre in _nolonlats_prefixes])
+            and formatstr != 'ascii'
+        ):
             nolonlatsstr = '&NOLONLATS=1'
         else:
             nolonlatsstr = ''
@@ -628,7 +686,7 @@ class RsigApi:
             f'&COMPRESS={compress}'
         ) + (
             purpleairstr + viirsnoaastr + tropomistr + tempostr + pandorastr
-            + calipsostr + gridstr + cornerstr + nolonlatsstr
+            + calipsostr + hrrrstr + gridstr + cornerstr + nolonlatsstr
         )
 
         outpath = (
@@ -670,7 +728,7 @@ class RsigApi:
             raise KeyError('GDTYP only implemented for ')
 
         gridstr = (
-            '&REGRID=weighted'
+            '&REGRID={REGRID}'
             + projstr
             + '&ELLIPSOID={earth_radius},{earth_radius}'
             + '&GRID={NCOLS},{NROWS},{XORIG},{YORIG},{XCELL},{YCELL}'
@@ -731,6 +789,43 @@ class RsigApi:
 
         return ds
 
+    def _datesfunc(
+        self, func, bdates, edates=None, **kwds
+    ):
+        """
+        Thin wrapper around to_* functions
+
+        Arguments
+        ---------
+        func : method
+            to_dataframe, to_ioapi or to_dataset
+        bdates : list
+          Start dates
+        edates : list
+          End dates
+        kwds : mappable
+          See func for explanation of all other keywords.
+
+        Returns
+        -------
+        out : list
+            List of outputs from func
+        """
+        if edates is None:
+            edates = bdates + pd.to_timedelta('86399s')  # default to 1day
+        outs = []
+        for bdate, edate in zip(bdates, edates):
+            try:
+                out = func(
+                    bdate=bdate, edate=edate, **kwds
+                )
+            except Exception:
+                print(f'Unable to retrieve {bdate} {edate}: {kwds}')
+                continue
+            outs.append(out)
+
+        return outs
+
     def to_dataframe(
         self, key=None, bdate=None, edate=None, bbox=None, unit_keys=True,
         parse_dates=False, corners=None, withmeta=False, verbose=0,
@@ -768,8 +863,21 @@ class RsigApi:
             Results from download
 
         """
+        from collections.abc import Iterable
         from . import xdr
         from . import bin
+        if isinstance(bdate, Iterable) and not isinstance(bdate, str):
+            kwds = dict(
+                key=key, bbox=bbox, unit_keys=unit_keys,
+                parse_dates=parse_dates, corners=corners, withmeta=withmeta,
+                verbose=verbose, backend=backend, grid=grid
+            )
+            dfs = self._datesfunc(
+                self.to_dataframe, bdates=bdate, edates=edate, **kwds
+            )
+            df = pd.concat(dfs, ignore_index=True)
+            return df
+
         assert backend in {'ascii', 'xdr', 'bin'}
         if any([key.startswith(pfx) for pfx in _shpxdrprefixes]):
             backend = 'xdr'
@@ -826,6 +934,65 @@ class RsigApi:
 
         return df
 
+    def to_geodataframe(
+        self, *args, centroid=False, keepgeomcols=False, **kwds
+    ):
+        """
+        Same as to_dataframe, but returns a geopandas.GeoDataFrame where the
+        geometry represents either the centroid point or, where possible, the
+        polygon.
+
+        Arguments
+        ---------
+        args : see to_dataframe
+        kwds : see to_dataframe
+        centroid : bool
+            If True, return a point at the centroid for polygons
+        keepgeomcols : bool
+            If True, do not drop coordinate columns
+        Returns
+        -------
+        gdf : geopandas.GeoDataFrame
+            DataFrame with polygon or point geometry where appropriate. Only
+            dataframes with corners
+        """
+        from shapely import points, polygons
+        import geopandas as gpd
+        from warnings import warn
+        crnrkeys = [
+            'longitude_sw(deg)', 'latitude_sw(deg)',
+            'longitude_se(deg)', 'latitude_se(deg)',
+            'longitude_ne(deg)', 'latitude_ne(deg)',
+            'longitude_nw(deg)', 'latitude_nw(deg)',
+            'longitude_sw(deg)', 'latitude_sw(deg)',
+        ]
+        centroidkeys = ['longitude(deg)', 'latitude(deg)']
+
+        if not kwds.get('unit_keys', True):
+            # if unit_keys is false, (deg) will not be part of the key
+            crnrkeys = [k.replace('(deg)', '') for k in crnrkeys]
+            centroidkeys = [k.replace('(deg)', '') for k in centroidkeys]
+
+        df = self.to_dataframe(*args, **kwds)
+        tmpdf = df.rename(columns=str.lower, copy=False)
+        lcols = list(tmpdf.columns)
+        # Drop coordinate keys
+        keepkeys = list(df.columns)
+        if not keepgeomcols:
+            keepkeys = [
+                k for k in keepkeys
+                if k.lower() not in (crnrkeys + centroidkeys)
+            ]
+        if all([k in lcols for k in crnrkeys]) and not centroid:
+            geom = polygons(tmpdf[crnrkeys].values.reshape(-1, 5, 2))
+        elif all([k in lcols for k in centroidkeys]):
+            geom = points(tmpdf[centroidkeys].values)
+        else:
+            warn('no geom keys; returning original dataframe')
+            return df
+        gdf = gpd.GeoDataFrame(df[keepkeys], geometry=geom, crs=4326)
+        return gdf
+
     def to_ioapi(
         self, key=None, bdate=None, edate=None, bbox=None, withmeta=False,
         removegz=False, verbose=0
@@ -860,6 +1027,18 @@ class RsigApi:
         import gzip
         import shutil
         import os
+        from collections.abc import Iterable
+        if isinstance(bdate, Iterable) and not isinstance(bdate, str):
+            import xarray as xr
+            kwds = dict(
+                key=key, bbox=bbox, withmeta=withmeta,
+                removegz=removegz, verbose=verbose
+            )
+            dss = self._datesfunc(
+                self.to_ioapi, bdates=bdate, edates=edate, **kwds
+            )
+            dss = xr.concat(dss, dim='TSTEP')
+            return dss
 
         # always use compression for network speed.
         outpath = self.get_file(
@@ -933,12 +1112,22 @@ class RsigApi:
         -------
         ds : xarray.Dataset
             Results from download
-
         """
         import gzip
         import shutil
         import os
         import xarray as xr
+        from collections.abc import Iterable
+        if isinstance(bdate, Iterable) and not isinstance(bdate, str):
+            kwds = dict(
+                key=key, bbox=bbox, withmeta=withmeta,
+                removegz=removegz, verbose=verbose
+            )
+            dss = self._datesfunc(
+                self.to_netcdf, bdates=bdate, edates=edate, **kwds
+            )
+            dss = xr.concat(dss, dim='time')
+            return dss
 
         # always use compression for network speed.
         outpath = self.get_file(
@@ -1280,5 +1469,3 @@ descriptions = _defapi.descriptions
 to_dataframe = _defapi.to_dataframe
 to_ioapi = _defapi.to_ioapi
 to_netcdf = _defapi.to_netcdf
-
-rcParams = _loadrc()

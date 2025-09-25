@@ -158,7 +158,7 @@ def from_xdr(inf, na_values=None, decompress=False, as_dataframe=True):
     elif defspec.startswith('subset'):
         df = from_subset(inf, as_dataframe=as_dataframe)
     elif defspec.startswith('regridded-swath'):
-        df = from_regriddedswath(inf)
+        df = from_regriddedswath(inf, as_dataframe=as_dataframe)
     else:
         raise IOError(
             f'{defspec} not in supported formats (profile, site, swath,'
@@ -951,7 +951,7 @@ def from_subset(bf, as_dataframe=True):
     import numpy as np
     import pandas as pd
     import xarray as xr
-    from .utils import get_proj4
+    from ..utils import get_proj4
     import pyproj
 
     headerlines = []
@@ -1008,8 +1008,9 @@ def from_subset(bf, as_dataframe=True):
     ds.attrs.update(**projattrs)
     ds.attrs.update(**vgprops)
     ds.attrs['UPNAM'] = rsig_program.ljust(16)
-    dt = pd.to_timedelta('3600s')
-    t = stime + np.arange(ntime) * dt
+    # dt = pd.to_timedelta('3600s')
+    # t = stime + np.arange(ntime) * dt
+    t = pd.date_range(stime, periods=ntime, freq='3600s')
     reftime = '1970-01-01T00:00:00+0000'
     attrs = dict(long_name='TSTEP', units=f'seconds since {reftime}')
     ds.coords['TSTEP'] = t
@@ -1042,6 +1043,7 @@ def from_subset(bf, as_dataframe=True):
     if as_dataframe:
         df = ds.astype(dtval[1:]).to_dataframe()
         time = df.index.get_level_values('TSTEP')
+        # time = pd.to_datetime(time)
         df['Timestamp(UTC)'] = time.strftime('%Y-%m-%dT%H:%M:%S+0000')
         keepcols = ['Timestamp(UTC)', 'LONGITUDE', 'LATITUDE'] + varkeys
         renamer = {vk: f'{vk}({vu})' for vk, vu in zip(varkeys, units)}
@@ -1053,7 +1055,7 @@ def from_subset(bf, as_dataframe=True):
         return ds
 
 
-def from_regriddedswath(bf):
+def from_regriddedswath(bf, as_dataframe=True):
     """
     Currently supports regridded-swath (v2.0) which has 19 header rows in text
     format. The text header rows also describe the binary portion of the file.
@@ -1110,7 +1112,7 @@ def from_regriddedswath(bf):
     """
     import numpy as np
     import pandas as pd
-    # from .utils import get_proj4
+    # from ..utils import get_proj4
 
     headerlines = []
     for i in range(19):
@@ -1166,7 +1168,27 @@ def from_regriddedswath(bf):
     })
     df.attrs.update(gattrs)
     df.attrs['rsig_program'] = rsig_program
-    return df
+    if as_dataframe:
+        return df
+    c2c = {}
+    c2c['Timestep(UTC)'] = 'Timestep'
+    c2c['LONGITUDE(deg)'] = 'LONGITUDE'
+    c2c['LATITUDE(deg)'] = 'LATITUDE'
+    c2c['COLUMN(-)'] = 'COL'
+    c2c['ROW(-)'] = 'ROW'
+    c2c[valkey] = varkeys[0]
+    df = df.rename(columns=c2c)
+    df['Timestep'] = (
+        pd.to_datetime(df['Timestep']) - pd.to_datetime('1970-01-01T00Z')
+    ).dt.total_seconds()
+    idxcols = ['Timestep', 'ROW', 'COL']
+    ds = df.set_index(idxcols).to_xarray()
+    ds['LONGITUDE'].attrs.update(units='deg')
+    ds['LATITUDE'].attrs.update(units='deg')
+    ds[varkeys[0]].attrs.update(units=units[0])
+    ds.attrs.update(gattrs)
+    ds.attrs['rsig_program'] = rsig_program
+    return ds
 
 
 if __name__ == '__main__':

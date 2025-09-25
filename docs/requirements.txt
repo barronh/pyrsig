@@ -3,6 +3,7 @@ notebook
 requests
 numpy
 matplotlib
+scipy
 pandas
 geopandas
 xarray

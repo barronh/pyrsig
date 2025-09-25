@@ -43,25 +43,21 @@ def test_describe():
 
 
 def test_customize_grid():
+    """
+    Test updated to reflect new customize_grid functionality
+    """
     from .. import customize_grid, RsigApi
-    bbox = (-90, 15, -60, 20)
+    bbox = (-90, 15, -60, 30)
     nofit = RsigApi(bbox=bbox, grid_kw='12US1', gridfit=False)
+    fit_grid_kw = customize_grid(nofit.grid_kw, bbox=bbox)
     fit = RsigApi(bbox=bbox, grid_kw='12US1', gridfit=True)
-    fitnoclip = customize_grid(nofit.grid_kw, bbox, clip=False)
     propkeys = list(nofit.grid_kw)
+    check_kw = dict(XORIG=672000., YORIG=-1728000.0, NCOLS=190, NROWS=94)
     for pk in propkeys:
-        pref = nofit.grid_kw[pk]
-        pclip = fit.grid_kw[pk]
-        pnoclip = fitnoclip[pk]
-        if pk not in ('XORIG', 'YORIG', 'NCOLS', 'NROWS'):
-            assert pref == pclip
-            assert pref == pnoclip
-    cx0, cy0 = fit.grid_kw['XORIG'], fit.grid_kw['YORIG']
-    cnc, cnr = fit.grid_kw['NCOLS'], fit.grid_kw['NROWS']
-    assert (cx0, cy0, cnc, cnr) == (804000.0, -1728000.0, 179, 25)
-    ncx0, ncy0 = fitnoclip['XORIG'], fitnoclip['YORIG']
-    ncnc, ncnr = fitnoclip['NCOLS'], fitnoclip['NROWS']
-    assert (ncx0, ncy0, ncnc, ncnr) == (804000.0, -2820000.0, 262, 116)
+        # Unless specifically changed, should match original
+        pref = check_kw.get(pk, nofit.grid_kw[pk])
+        assert pref == fit.grid_kw[pk]
+        assert pref == fit_grid_kw[pk]
 
 
 def test_findkeys():

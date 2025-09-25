@@ -3,6 +3,9 @@ Change Log
 
 Not all changes are listed, but notable changes are itemized for ease of review.
 
+* v0.11.0: Added capability for date chunk processing.
+           Added Exponentially Modified Gausian emission estimate capability.
+           Added flux divergence emission processing.
 * v0.9.0: Overhauled xdr for faster and clearer processing
           Added bin format capability for population
           Add robustness fixes for cmaq

@@ -34,7 +34,10 @@ setuptools.setup(
     extras_require={
         'polygon': [
             'geopandas',
-        ]
+        ],
+        'emiss': [
+            'scipy',
+        ],
     },
     include_package_data=True,
     zip_safe=False

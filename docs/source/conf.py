@@ -15,7 +15,8 @@ import sys
 from sphinx_gallery.sorting import ExplicitOrder
 # from sphinx_gallery.sorting import ExampleTitleSortKey 
 from sphinx_gallery.sorting import FileNameSortKey
-sys.path.insert(0, os.path.abspath('..'))
+pyrsigroot = os.path.abspath('../..')
+sys.path.insert(0, pyrsigroot)
 
 
 with open('../../pyrsig/__init__.py', 'r') as initf:
@@ -68,6 +69,7 @@ sphinx_gallery_conf = {
         '../../examples/oversample',
         '../../examples/maps',
         '../../examples/comparisons',
+        '../../examples/emissions',
     ]),
     'within_subsection_order': FileNameSortKey,
 }

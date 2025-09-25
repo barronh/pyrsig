@@ -1,9 +1,10 @@
 __all__ = [
     'get_proj4', 'customize_grid', 'def_grid_kw', 'shared_grid_kw',
-    'coverages_from_xml', 'legacy_get', 'get_file'
+    'coverages_from_xml', 'legacy_get', 'get_file', 'check_server',
+    'get_server'
 ]
 import requests
-from .grids import def_grid_kw, shared_grid_kw
+from ..grids import def_grid_kw, shared_grid_kw
 
 
 def get_proj4(attrs, earth_radius=6370000.):
@@ -76,8 +77,8 @@ def customize_grid(grid_kw, bbox, clip=True):
         adjusted such that it only covers bbox or (if clip) only covers
         the portion of bbox covered by the original grid_kw.
     """
-    import pyproj
     import numpy as np
+    from ..cmaq import get_lonlat
 
     if isinstance(grid_kw, str):
         grid_kw = def_grid_kw[grid_kw]
@@ -97,22 +98,25 @@ def customize_grid(grid_kw, bbox, clip=True):
         ogrid_kw['YORIG'] = yorig
         return ogrid_kw
 
-    proj4str = get_proj4(grid_kw)
-    proj = pyproj.Proj(proj4str)
-    llx, lly = proj(*bbox[:2])
-    urx, ury = proj(*bbox[2:])
-    midx, midy = proj((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2)
-    maxy = np.max([lly, ury, midy])
-    miny = np.min([lly, ury, midy])
-    maxx = np.max([llx, urx, midx])
-    minx = np.min([llx, urx, midx])
-
-    lli, llj = np.floor([minx, miny]).astype('i')
-    uri, urj = np.ceil([maxx, maxy]).astype('i')
+    er = grid_kw.get('earth_radius', 637e4)
+    llf = get_lonlat(grid_kw, earth_radius=er)
+    inlon = ((llf['lon'] >= bbox[0]) & (llf['lon'] <= bbox[2]))
+    inlat = ((llf['lat'] >= bbox[1]) & (llf['lat'] <= bbox[3]))
+    keep = inlon & inlat
+    COL = llf.COL.sel(COL=keep.any('ROW'))
+    ROW = llf.ROW.sel(ROW=keep.any('COL'))
+    # convert centroids (0.5, NCOLS - 0.5) to indices (0, NCOLS - 1)
+    lli = int(COL.min() // 1)
+    uri = int(COL.max() // 1) + 1
+    # convert centroids (0.5, NROWS - 0.5) to indices (0, NROWS - 1)
+    llj = int(ROW.min() // 1)
+    urj = int(ROW.max() // 1) + 1
     if clip:
         lli, llj = np.maximum(0, [lli, llj])
         uri = np.minimum(grid_kw['NCOLS'], uri)
         urj = np.minimum(grid_kw['NROWS'], urj)
+    else:
+        raise DeprecationWarning('clip is implied now.')
     ogrid_kw['XORIG'] = grid_kw['XORIG'] + lli * grid_kw['XCELL']
     ogrid_kw['YORIG'] = grid_kw['YORIG'] + llj * grid_kw['YCELL']
     ogrid_kw['NCOLS'] = uri - lli
@@ -228,7 +232,9 @@ def coverages_from_xml(txt):
 def legacy_get(url, *args, **kwds):
     """
     Previously used LegacyAdapter, but now selectively chooses adapter
-    based on package options.
+    based on domain and package options. If verify option for domain
+    is False, suppress warning because it is expected. If legacy is True,
+    use old TLS that was deprecated in openssl v3.
 
     Arguments
     ---------
@@ -244,32 +250,33 @@ def legacy_get(url, *args, **kwds):
     response : requests.Response
         Response from requests get
     """
-    from . import rcParams
+    from .. import rcParams
     import copy
     from urllib.parse import urlparse
+    from urllib3.exceptions import InsecureRequestWarning
+    import warnings
 
     session = requests.session()
     kwds = copy.copy(kwds)
-    # Maple has a bad certificate, so here if you are using maple
-    # I disable the certificate, but no the warning
-    # ofmpub had a TLS problem and required legacy verification
-    # Now allows TLS, but has self-cerification with legacy verification
+    # Option verify=False allows self-signed certificates (eg, maple)
+    # Option legacy=True allows old TLS to support ofmpub until patched
     domain = urlparse(url).netloc
     opts = {'legacy': False, 'verify': True}
     opts = rcParams['servers'].get(domain, opts)
     if opts['legacy']:
         ha = LegacyAdapter()
-    else:
-        ha = requests.adapters.HTTPAdapter()
-
-    if not opts['verify']:
-        ha.ssl_context.check_hostname = False
-        kwds.setdefault('verify', False)
-
-    if opts['legacy'] or not opts['verify']:
+        if not opts['verify']:
+            ha.ssl_context.check_hostname = False
         session.mount('https://', ha)
 
-    return session.get(url, *args, **kwds)
+    if not opts['verify']:
+        kwds.setdefault('verify', False)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", InsecureRequestWarning)
+        r = session.get(url, *args, **kwds)
+
+    return r
 
 
 def _create_unverified_tls_context(*args, **kwds):
@@ -286,8 +293,7 @@ def _create_unverified_tls_context(*args, **kwds):
 
 class LegacyAdapter(requests.adapters.HTTPAdapter):
     # "Transport adapter" that allows us to use custom ssl_context.
-
-    def __init__(self, **kwargs):
+    def __init__(self, verify=True, **kwargs):
         import ssl
         def_ctx = ssl._create_default_https_context
         ssl._create_default_https_context = _create_unverified_tls_context
@@ -333,6 +339,40 @@ def _progress(blocknum, readsize, totalsize):
             print('.', end='', flush=True)
 
 
+def check_server(server):
+    import ssl
+    from urllib.request import urlopen
+    from .. import rcParams
+
+    opts = {'legacy': False, 'verify': True}
+    opts = rcParams['servers'].get(server, opts)
+    if not opts['verify']:
+        _def_https_context = ssl._create_default_https_context
+        ssl._create_default_https_context = _create_unverified_tls_context
+    try:
+        url = f'https://{server}'
+        urlopen(url=url)
+        out = True
+    except Exception:
+        out = False
+    if not opts['verify']:
+        ssl._create_default_https_context = _def_https_context
+    return out
+
+
+def get_server(servers=None):
+    from .. import rcParams
+    if servers is None:
+        servers = ['maple.hesc.epa.gov']  # prefer maple
+        servers += list(rcParams.get('servers', []))  # try all the rest
+        servers += ['ofmpub.epa.gov']  # default to ofmpub if none found
+
+    for server in servers:
+        if check_server(server):
+            break
+    return server
+
+
 def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
     """
     Download file from RSIG using fault tolerance and optional caching
@@ -360,9 +400,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
     from urllib.request import urlretrieve
     import ssl
     import os
-    from .utils import _create_unverified_tls_context
     from urllib.parse import urlparse
-    from . import rcParams
+    from .. import rcParams
 
     domain = urlparse(url).netloc
     opts = {'legacy': False, 'verify': True}
@@ -392,6 +431,7 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
 
     outdir = os.path.dirname(outpath)
     os.makedirs(outdir, exist_ok=True)
+    laste = 'Internal Server Failure - 0 length file returned'
     while dlsize <= 0 and tries < maxtries:
         # Remove 0-sized files.
         if os.path.exists(outpath):
@@ -416,7 +456,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
             dlsize = 0
 
         if dlsize == 0:
-            print('Failed', url, t1 - t0)
+            print('Failed:', url, t1 - t0)
+            print('Failed:', str(laste))
         tries += 1
 
         if verbose > 0:
@@ -425,6 +466,8 @@ def get_file(url, outpath, maxtries=5, verbose=1, overwrite=False):
     if not opts['verify']:
         ssl._create_default_https_context = _def_https_context
     if dlsize <= 0:
+        if os.path.exists(outpath):
+            os.remove(outpath)
         raise laste
 
 
