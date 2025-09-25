@@ -110,7 +110,7 @@ ds['FDV'].attrs.update(
 # - Units are converted to moles/m2/s for more common representation
 #
 
-tau = tauh * 3600 # s
+tau = tauh * 3600  # s
 N_A = 6.022e23
 A = ds.XCELL * ds.YCELL
 # convert from moleculesNO2/cm2/s to molesNOx/m2/s
@@ -162,7 +162,7 @@ try:
     fdvNOx = fdvNOx.where(incnty)
     tauNOx = tauNOx.where(incnty)
     eNOx = eNOx.where(incnty)
-    massrate_nox = eNOx.mean(('TSTEP', 'LAY')).sum() * ds.XCELL * ds.YCELL * 46.  #  moles/m2/s to gNO2/s
+    massrate_nox = eNOx.mean(('TSTEP', 'LAY')).sum() * ds.XCELL * ds.YCELL * 46.  # moles/m2/s to gNO2/s
     mass = massrate_nox / 1e9 * 365 * 24 * 3600  # gNO2/s to Gg/yr
     label = f'{cntyname} ENOx = {mass:.1f} [GgNO2/yr]'
     print(label)

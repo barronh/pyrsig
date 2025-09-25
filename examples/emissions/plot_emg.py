@@ -31,7 +31,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyrsig
 import pandas as pd
-import xarray as xr
 
 # %%
 # Define Location and Date Range
@@ -66,7 +65,7 @@ mc = ds.COL.mean().astype('i') + 0.5  # Get nearest cell center
 mr = ds.ROW.mean().astype('i') + 0.5  # Get nearest cell center
 ds = ds.sel(ROW=slice(mr - dn, mr + dn), COL=slice(mc - dn, mc + dn))
 # removing missing values
-ds = ds.where(lambda x: x>-9e30)
+ds = ds.where(lambda x: x > -9e30)
 
 # %%
 # Get Winds At Domain Center
@@ -137,5 +136,5 @@ try:
     cnty.plot(facecolor='none', edgecolor='gray', linewidth=.6, ax=axx[0])
     road.plot(facecolor='none', edgecolor='gray', linewidth=.3, ax=axx[0])
     fig.savefig(figpath)
-except Exception:
+except Exception as e:
     print('failed to add map', str(e))
