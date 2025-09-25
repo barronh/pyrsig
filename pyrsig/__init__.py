@@ -957,7 +957,7 @@ class RsigApi:
             dataframes with corners
         """
         from shapely import points, polygons
-        import gepandas as gpd
+        import geopandas as gpd
         from warnings import warn
         crnrkeys = [
             'longitude_sw(deg)', 'latitude_sw(deg)',
@@ -986,7 +986,7 @@ class RsigApi:
         if all([k in lcols for k in crnrkeys]) and not centroid:
             geom = polygons(tmpdf[crnrkeys].values.reshape(-1, 5, 2))
         elif all([k in lcols for k in centroidkeys]):
-            geom = points(tmpdf[centroidkeys])
+            geom = points(tmpdf[centroidkeys].values)
         else:
             warn('no geom keys; returning original dataframe')
             return df

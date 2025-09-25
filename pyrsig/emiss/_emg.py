@@ -19,7 +19,7 @@ Functions:
 
 def to_polar(x, y, degrees=False):
     """
-    Convert cartesian (x, y)) to polar (r, alpha)
+    Convert cartesian (x, y) to polar (r, alpha)
     https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations
     #From_Cartesian_coordinates
 
@@ -39,7 +39,7 @@ def to_polar(x, y, degrees=False):
     Example
     -------
     import numpy as np
-    from emgsatemis import to_polar
+    from pyrsig.emiss._emg import to_polar
     us = np.array([1, 0, -1, 0, 1, -1])
     vs = np.array([0, 1, 0, -1, 1, -1])
     ws, wd = to_polar(us, vs, degrees=True)
@@ -84,7 +84,7 @@ def to_cartesian(r, alpha, theta=0, degrees=False):
     Example
     -------
     import numpy as np
-    from emgsatemis import to_cartesian
+    from pyrsig.emiss._emg import to_cartesian
     x, y = to_cartesian(np.sqrt(2), np.radians(45))
     x, y
     # (1.0000000000000002, 1.0)
@@ -124,7 +124,7 @@ def rotate_array(a, theta, degrees=False):
     Example
     -------
     import numpy as np
-    from emgsatemis import rotate_array
+    from pyrsig.emiss._emg import rotate_array
     tmpl = np.eye(5)
     tmpl[:2] = 0
     rots = np.zeros(tmpl.shape)
@@ -228,7 +228,7 @@ def emg(x, alpha, x0, sigma, mu, beta, return_parts=False):
     Example
     -------
     import numpy as np
-    from emgsatemis import emg
+    from pyrsig.emiss._emg import emg
     # Approximation of data in Goldberg[1] Figure 8a inset
     # g/y y/h * h molNOx/gNOx NO2/NOx [=] mol
     approx_alpha = 62e9 / 8760 * 1.7  / 46 / 1.32
