@@ -103,9 +103,18 @@ def save_ioapi(ds, path, format='NETCDF3_CLASSIC', **kwds):
     props['NLAYS'], props['NVARS'] = ds.sizes['LAY'], ods.sizes['VAR']
     props['XORIG'] = float(props['XORIG'] + ds.COL.min() - 0.5)
     props['YORIG'] = float(props['YORIG'] + ds.COL.min() - 0.5)
-    s = [1.]
+    nz = ods.LAY.size
+    nze = nz + 1
+    dsVGLVLS = ds.attrs.get('VGLVLS', [])
+    if len(dsVGLVLS) != nze:
+        dsVGLVLS = [1.] + [np.nan] * nz
+
+    s = [dsVGLVLS[0]]
     for i, sm in enumerate(ods.LAY):
-        s.append(2 * sm - s[-1])
+        if (sm < dsVGLVLS[i]) and (sm > dsVGLVLS[i + 1]):
+            s.append(dsVGLVLS[i + 1])
+        else:
+            s.append(2 * sm - s[-1])
 
     props['VAR-LIST'] = varlist
     props['VGLVLS'] = np.array(s, dtype='f')
