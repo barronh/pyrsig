@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Pairing CMAQ with AirNow Ozone &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Pairing CMAQ with TropOMI Columns" href="plot_cmaqtropomi.html" />
+    <link rel="prev" title="Comparison examples" href="index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-comparisons-plot-cmaqairnow-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="pairing-cmaq-with-airnow-ozone">
+<span id="sphx-glr-auto-examples-comparisons-plot-cmaqairnow-py"></span><h1>Pairing CMAQ with AirNow Ozone<a class="headerlink" href="#pairing-cmaq-with-airnow-ozone" title="Permalink to this heading">¶</a></h1>
+<p>This example performs a simple comparison of CMAQ to AirNow for ozone.</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../../_images/sphx_glr_plot_cmaqairnow_001.png" srcset="../../_images/sphx_glr_plot_cmaqairnow_001.png" alt="LAY = 0.9987" class = "sphx-glr-multi-img"/></li>
+<li><img src="../../_images/sphx_glr_plot_cmaqairnow_002.png" srcset="../../_images/sphx_glr_plot_cmaqairnow_002.png" alt="plot cmaqairnow" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>|       |      ozone |        CMAQ_O3 |
+|:------|-----------:|---------------:|
+| count | 28945      | 28945          |
+| mean  |    33.4034 |    33.1923     |
+| std   |    16.2082 |    14.3956     |
+| min   |     0      |     0.0621035  |
+| 25%   |    22      |    22.5295     |
+| 50%   |    32.5    |    31.7413     |
+| 75%   |    44      |    42.6466     |
+| max   |   113      |   282.538      |
+| r     |     1      |     0.771677   |
+| mb    |     0      |    -0.21112    |
+| nmb   |     0      |    -0.00632032 |
+| fmb   |     0      |    -0.00634036 |
+| ioa   |     1      |     0.87246    |
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pyrsig</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pycno</span>
+
+
+<span class="n">cmaqkey</span> <span class="o">=</span> <span class="s1">&#39;cmaq.equates.conus.aconc.O3&#39;</span>
+<span class="n">datakey</span> <span class="o">=</span> <span class="s1">&#39;airnow.ozone&#39;</span>
+
+<span class="n">api</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">RsigApi</span><span class="p">()</span>
+
+<span class="c1"># Return CMAQ for default bbox (-126, 24, -66, -50) for a single day</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">to_ioapi</span><span class="p">(</span><span class="n">cmaqkey</span><span class="p">,</span> <span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2018-07-01&#39;</span><span class="p">)</span>
+
+<span class="c1"># pair_rsigcmaq will match the bbox, bdate, and edate from the CMAQ dataset.</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">cmaq</span><span class="o">.</span><span class="n">pair_rsigcmaq</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="s1">&#39;O3&#39;</span><span class="p">,</span> <span class="n">datakey</span><span class="p">)</span>
+<span class="c1"># Or, use persist=True to save pairing to disk and return output path instead.</span>
+<span class="c1"># import pandas as pd</span>
+<span class="c1"># outpath = pyrsig.cmaq.pair_rsigcmaq(ds, &#39;O3&#39;, datakey, persist=True)</span>
+<span class="c1"># df = pd.read_csv(outpath)</span>
+
+<span class="c1"># Calculate stats table with common quantile, correlation, and bias metrics</span>
+<span class="n">statsdf</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">quickstats</span><span class="p">(</span><span class="n">df</span><span class="p">[[</span><span class="s1">&#39;ozone&#39;</span><span class="p">,</span> <span class="s1">&#39;CMAQ_O3&#39;</span><span class="p">]],</span> <span class="s1">&#39;ozone&#39;</span><span class="p">)</span>
+<span class="c1"># Print them for the user to review.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">statsdf</span><span class="o">.</span><span class="n">to_markdown</span><span class="p">())</span>
+
+<span class="n">dds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;O3&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;TSTEP&#39;</span><span class="p">)</span>
+<span class="n">ddf</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">qm</span> <span class="o">=</span> <span class="n">dds</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="n">qm</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">ddf</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">ddf</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">ddf</span><span class="o">.</span><span class="n">ozone</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">qm</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">qm</span><span class="o">.</span><span class="n">cmap</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;w&#39;</span>
+<span class="p">)</span>
+<span class="n">pycno</span><span class="o">.</span><span class="n">cno</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">crs_proj4</span><span class="p">)</span><span class="o">.</span><span class="n">drawstates</span><span class="p">()</span>
+<span class="n">qm</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;ozone_map.png&#39;</span><span class="p">)</span>
+
+<span class="n">vmax</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;ozone&#39;</span><span class="p">,</span> <span class="s1">&#39;CMAQ_O3&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hexbin</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ozone&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;CMAQ_O3&#39;</span><span class="p">,</span> <span class="n">mincnt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Obs Ozone [ppb]&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;CMAQ [ppb]&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;gainsboro&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axline</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">slope</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;1:1&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">collections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">colorbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;ozone_scatter.png&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  45.573 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-comparisons-plot-cmaqairnow-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/6325adfec247c7d7d9e17fb2d6a29cfe/plot_cmaqairnow.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_cmaqairnow.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/0fb361011a2966175c63b803b9ba50f9/plot_cmaqairnow.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_cmaqairnow.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">pyrsig Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#get-data-examples">Get data examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#timeseries-examples">Timeseries examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#oversample-examples">Oversample examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#maps-examples">Maps examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#comparison-examples">Comparison examples</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#emission-examples">Emission examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/pyrsig.html">pyrsig package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">pyrsig Example Gallery</a><ul>
+  <li><a href="index.html">Comparison examples</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Comparison examples</a></li>
+      <li>Next: <a href="plot_cmaqtropomi.html" title="next chapter">Pairing CMAQ with TropOMI Columns</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/auto_examples/comparisons/plot_cmaqairnow.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>pyrsig package &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyrsig.bin package" href="pyrsig.bin.html" />
+    <link rel="prev" title="Calculate Emissions by Flux Divergence" href="../auto_examples/emissions/plot_fluxdiv.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="pyrsig-package">
+<h1>pyrsig package<a class="headerlink" href="#pyrsig-package" title="Permalink to this heading">¶</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pyrsig.bin.html">pyrsig.bin package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pyrsig.cmaq.html">pyrsig.cmaq package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pyrsig.data.html">pyrsig.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pyrsig.emiss.html">pyrsig.emiss package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pyrsig.grids.html">pyrsig.grids package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pyrsig.tests.html">pyrsig.tests package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pyrsig.utils.html">pyrsig.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pyrsig.xdr.html">pyrsig.xdr package</a></li>
+</ul>
+</div>
+</section>
+<section id="module-pyrsig">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyrsig" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyrsig.RsigApi">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyrsig.</span></span><span class="sig-name descname"><span class="pre">RsigApi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bdate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_kw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tropomi_kw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">purpleair_kw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viirsnoaa_kw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tempo_kw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pandora_kw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calipso_kw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hrrr_kw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corners</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gridfit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>RsigApi is a python-based interface to RSIG’s web-based API</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – Default key for query (e.g., ‘aqs.o3’, ‘purpleair.pm25_corrected’,
+or ‘tropomi.offl.no2.nitrogendioxide_tropospheric_column’)</p></li>
+<li><p><strong>bdate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – beginning date (inclusive) defaults to yesterday at 0Z</p></li>
+<li><p><strong>edate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – ending date (inclusive) defaults to bdate + 23:59:59</p></li>
+<li><p><strong>bbox</strong> (<em>tuple</em>) – wlon, slat, elon, nlat in decimal degrees (-180 to 180)</p></li>
+<li><p><strong>grid_kw</strong> (<em>dict</em>) – <p>If str, must be 12US1, 1US1, 12US2, 1US2, 36US3, 108NHEMI2, 36NHEMI2,
+global_1pt0, global_0pt1, global_0pt01, TEMPOL3_0pt02, HRRR3K
+and will be used to set parameters based on EPA domains. If dict,
+IOAPI mapping parameters. For details, look at the help on grids or
+at the values in 12US1:</p>
+<blockquote>
+<div><p>import pyrsig
+help(pyrsig.grids)
+print(pyrsig.grids.def_grid_kw[‘12US1’])</p>
+</div></blockquote>
+<dl class="simple">
+<dt>There are two special RSIG regrid keywords that control regridding:</dt><dd><ul>
+<li><p>REGRID_AGGREGATE defines how the regridded values are aggregated
+in time. Options are None (default), daily, or all.</p></li>
+<li><p>REGRID defines how RSIG regrids data. Options are weighted
+(default) or mean. weighted uses fractional area contribution,
+while mean uses simple mean of pixels whose centroid is in a cell</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>viirsnoaa_kw</strong> (<em>dict</em>) – Dictionary of VIIRS NOAA filter parameters default
+{‘minimum_quality’: ‘high’} other options ‘medium’ or ‘low’</p></li>
+<li><p><strong>tropomi_kw</strong> (<em>dict</em>) – Dictionary of TropOMI filter parameters default
+{‘minimum_quality’: 75, ‘maximum_cloud_fraction’: 1.0} options
+are 0-100 and 0-1.</p></li>
+<li><p><strong>purpleair_kw</strong> (<em>dict</em>) – <dl class="simple">
+<dt>Dictionary of purpleair filter parameters and api_key.</dt><dd><p>’out_in_flag’: 0, # options 0, 2, ‘’
+‘freq’: ‘hourly’, # options hourly, daily, monthly, yearly, none
+‘maximum_difference’: 5, # integer
+‘maximum_ratio’: 0.70, # float
+‘agg_pct’: 75, # 0-100
+‘default_humidity’: 50,
+‘api_key’: ‘your_key_here’</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>tempo_kw</strong> (<em>dict</em>) – <dl class="simple">
+<dt>Dictionary of TEMPO filter parameters default</dt><dd><p>’api_key’: ‘your_key_here’ # ‘password’
+‘minimum_quality’: ‘normal’
+‘maximum_cloud_fraction’: 1.0
+‘maximum_solar_zenith_angle’: 70.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>pandora_kw</strong> (<em>dict</em>) – Dictionary of Pandora filter parameters default
+{‘minimum_quality’: ‘high’} other options ‘medium’ or ‘low’</p></li>
+<li><p><strong>calipso_kw</strong> (<em>dict</em>) – Dictionary of Calipso filter parameters default
+{‘MINIMUM_CAD’: 20, ‘MAXIMUM_UNCERTAINTY’: 99}</p></li>
+<li><p><strong>server</strong> (<em>str</em>) – ‘ofmpub.epa.gov’ for external  users
+‘maple.hesc.epa.gov’ for on EPA VPN users
+None to test maple (preferred) and ofmpub</p></li>
+<li><p><strong>compress</strong> (<em>int</em>) – 1 to transfer files with gzip compression
+0 to transfer uncompressed files (slow)</p></li>
+<li><p><strong>encoding</strong> (<em>dict</em>) – IF encoding is provided, netCDF files will be stored as NetCDF4
+with encoding for all variables. If _FillValue is provided, it will
+not be applied to TFLAG and COUNT.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>) – If True, overwrite downloaded files in workdir.
+If False, reuse downloaded files in workdir.</p></li>
+<li><p><strong>workdir</strong> (<em>str</em>) – Working directory (must exist) defaults to ‘.’</p></li>
+<li><p><strong>gridfit</strong> (<em>bool</em>) – Default (False) keep grid as supplied.
+If True, redefine grid to remove cells outside the bbox.</p></li>
+<li><p><strong>Properties</strong> – </p></li>
+<li><p><strong>----------</strong> – </p></li>
+<li><p><strong>grid_kw</strong> – Dictionary of regridding IOAPI properties. Defaults to 12US1</p></li>
+<li><p><strong>viirsnoaa_kw</strong> – Dictionary of filter properties</p></li>
+<li><p><strong>tropomi_kw</strong> – Dictionary of filter properties</p></li>
+<li><p><strong>tempo_kw</strong> – Dictionary of filter properties</p></li>
+<li><p><strong>purpleair_kw</strong> – Dictionary of filter properties and api_key. Unlike other options,
+purpleair_kw will not work with the defaults. The user <em>must</em> update
+teh api_key property to their own key. Contact PurpleAir for more
+details.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.capabilities">
+<span class="sig-name descname"><span class="pre">capabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">as_dataframe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.capabilities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.capabilities" title="Permalink to this definition">¶</a></dt>
+<dd><p>At this time, the capabilities does not list cmaq.*</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.describe">
+<span class="sig-name descname"><span class="pre">describe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_dataframe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.describe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>describe returns details about the coverage specified by key. Details
+include spatial bounding box, time coverage, time resolution, variable
+label, and a short description.</p>
+<p>DescribeCoverage with a COVERAGE should be faster than descriptions
+because it only returns a small xml chunk. Currently, DescribeCoverage
+with a COVERAGE specified is unreliable because of malformed xml. If
+this fails, describe will instead request all coverages and query the
+specific coverage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>as_dataframe</strong> (<em>bool</em>) – Defaults to True and descriptions are returned as a dataframe.
+If False, returns a list of elements.</p></li>
+<li><p><strong>raw</strong> (<em>bool</em>) – Return raw xml instead of parsing. Useful for debugging.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>coverages</strong> – dataframe or list of parsed descriptions</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or list</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>df = rsigapi.describe(‘airnow.no2’)
+print(df.to_csv())
+# ,name,label,description,bbox_str,beginPosition,timeResolution
+# 0,no2,no2(ppb),UTC hourly mean surface measured nitrogen …,
+# … -157 21 -51 64,2003-01-02T00:00:00Z,PT1H</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.descriptions">
+<span class="sig-name descname"><span class="pre">descriptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.descriptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.descriptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Experimental and may change.</p>
+<p>descriptions returns details about all coverages. Details include
+spatial bounding box, time coverage, time resolution, variable label,
+and a short description.</p>
+<p>Currently, parses capabilities using xml.etree.ElementTree and returns
+coverages from details available in CoverageOffering elements from
+DescribeCoverage.</p>
+<p>Currently cleaning up data xml elements that are bad and doing a
+per-coverage parsing to increase fault tolerance in the xml.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>refresh</strong> (<em>bool</em>) – If True, get new copy and save to ~/.pyrsig/descriptons.xml
+If False (default), reload from saved if available.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em>) – If verbose is greater than 0, show warnings from parsing.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>coverages</strong> – dataframe or list of parsed descriptions</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or list</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>rsigapi = pyrsig.RsigApi()
+desc = rsigapi.descriptions()
+print(desc.query(‘prefix == “tropomi”’).name.unique())
+# [‘tropomi.nrti.no2.nitrogendioxide_tropospheric_column’
+#  … 43 other name here
+#  ‘tropomi.rpro.ch4.methane_mixing_ratio_bias_corrected’]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.get_file">
+<span class="sig-name descname"><span class="pre">get_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formatstr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bdate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corners</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GetCoverage'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.get_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.get_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build url, outpath, and download the file. Returns outpath</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.keys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>offline</strong> (<em>bool</em>) – If True, uses small cached set of tested coverages.
+If False, finds all coverages from capabilities service.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.resize_grid">
+<span class="sig-name descname"><span class="pre">resize_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.resize_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.resize_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update grid_kw property so that it only covers the bbox by adjusting
+the XORIG, YORIG, NCOLS and NROWS. If clip is True, this has the affect
+of reducing the number of rows and columns. This is useful when the
+area of interest is much smaller than the grid defined in grid_kw.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>clip</strong> (<em>bool</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.set_grid_kw">
+<span class="sig-name descname"><span class="pre">set_grid_kw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid_kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.set_grid_kw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.set_grid_kw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.to_dataframe">
+<span class="sig-name descname"><span class="pre">to_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bdate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parse_dates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corners</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withmeta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ascii'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.to_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>All arguments default to those provided during initialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – Default key for query (e.g., ‘aqs.o3’, ‘purpleair.pm25_corrected’,
+or ‘tropomi.offl.no2.nitrogendioxide_tropospheric_column’)</p></li>
+<li><p><strong>bdate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – beginning date (inclusive) defaults to yesterday at 0Z</p></li>
+<li><p><strong>edate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – ending date (inclusive) defaults to bdate + 23:59:59</p></li>
+<li><p><strong>bbox</strong> (<em>tuple</em>) – wlon, slat, elon, nlat in decimal degrees (-180 to 180)</p></li>
+<li><p><strong>unit_keys</strong> (<em>bool</em>) – If True, keep unit in column name.
+If False, move last parenthetical part of key to attrs of Series.</p></li>
+<li><p><strong>parse_dates</strong> (<em>bool</em>) – If True, parse Timestamp(UTC)</p></li>
+<li><p><strong>withmeta</strong> (<em>bool</em>) – If True, add ‘GetMetadata’ results as a “metadata” attribute of the
+dataframe. This is useful for understanding the underlying datasets
+used to create the result.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em>) – level of verbosity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>df</strong> – Results from download</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.to_dataset">
+<span class="sig-name descname"><span class="pre">to_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bdate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corners</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withmeta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.to_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.to_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only works with queries that return subset or grid.</p>
+<p>All arguments default to those provided during initialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – Default key for query (e.g., ‘aqs.o3’, ‘purpleair.pm25_corrected’,
+or ‘tropomi.offl.no2.nitrogendioxide_tropospheric_column’)</p></li>
+<li><p><strong>bdate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – beginning date (inclusive) defaults to yesterday at 0Z</p></li>
+<li><p><strong>edate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – ending date (inclusive) defaults to bdate + 23:59:59</p></li>
+<li><p><strong>bbox</strong> (<em>tuple</em>) – wlon, slat, elon, nlat in decimal degrees (-180 to 180)</p></li>
+<li><p><strong>withmeta</strong> (<em>bool</em>) – If True, add ‘GetMetadata’ results as a “metadata” attribute of the
+dataframe. This is useful for understanding the underlying datasets
+used to create the result.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em>) – level of verbosity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ds</strong> – Results from download</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.to_geodataframe">
+<span class="sig-name descname"><span class="pre">to_geodataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centroid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepgeomcols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.to_geodataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.to_geodataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as to_dataframe, but returns a geopandas.GeoDataFrame where the
+geometry represents either the centroid point or, where possible, the
+polygon.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>see to_dataframe</em>) – </p></li>
+<li><p><strong>kwds</strong> (<em>see to_dataframe</em>) – </p></li>
+<li><p><strong>centroid</strong> (<em>bool</em>) – If True, return a point at the centroid for polygons</p></li>
+<li><p><strong>keepgeomcols</strong> (<em>bool</em>) – If True, do not drop coordinate columns</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>gdf</strong> – DataFrame with polygon or point geometry where appropriate. Only
+dataframes with corners</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>geopandas.GeoDataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.to_ioapi">
+<span class="sig-name descname"><span class="pre">to_ioapi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bdate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withmeta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">removegz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.to_ioapi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.to_ioapi" title="Permalink to this definition">¶</a></dt>
+<dd><p>All arguments default to those provided during initialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – Default key for query (e.g., ‘aqs.o3’, ‘purpleair.pm25_corrected’,
+or ‘tropomi.offl.no2.nitrogendioxide_tropospheric_column’)</p></li>
+<li><p><strong>bdate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – beginning date (inclusive) defaults to yesterday at 0Z</p></li>
+<li><p><strong>edate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – ending date (inclusive) defaults to bdate + 23:59:59</p></li>
+<li><p><strong>bbox</strong> (<em>tuple</em>) – wlon, slat, elon, nlat in decimal degrees (-180 to 180)</p></li>
+<li><p><strong>withmeta</strong> (<em>bool</em>) – If True, add ‘GetMetadata’ results at an attribute “metadata” to the
+netcdf file. This is useful for understanding the underlying datasets
+used to create the result.</p></li>
+<li><p><strong>removegz</strong> (<em>bool</em>) – If True, then remove the downloaded gz file. Bad for caching.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ds</strong> – Results from download</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigApi.to_netcdf">
+<span class="sig-name descname"><span class="pre">to_netcdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bdate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withmeta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">removegz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigApi.to_netcdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigApi.to_netcdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>All arguments default to those provided during initialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – Default key for query (e.g., ‘aqs.o3’, ‘purpleair.pm25_corrected’,
+or ‘tropomi.offl.no2.nitrogendioxide_tropospheric_column’)</p></li>
+<li><p><strong>bdate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – beginning date (inclusive) defaults to yesterday at 0Z</p></li>
+<li><p><strong>edate</strong> (<em>str</em><em> or </em><em>pd.Datetime</em>) – ending date (inclusive) defaults to bdate + 23:59:59</p></li>
+<li><p><strong>bbox</strong> (<em>tuple</em>) – wlon, slat, elon, nlat in decimal degrees (-180 to 180)</p></li>
+<li><p><strong>grid</strong> (<em>bool</em>) – Add column and row variables with grid assignments.</p></li>
+<li><p><strong>withmeta</strong> (<em>bool</em>) – If True, add ‘GetMetadata’ results at an attribute “metadata” to the
+netcdf file.</p></li>
+<li><p><strong>removegz</strong> (<em>bool</em>) – If True, then remove the downloaded gz file. Bad for caching.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ds</strong> – Results from download</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyrsig.RsigGui">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyrsig.</span></span><span class="sig-name descname"><span class="pre">RsigGui</span></span><a class="reference internal" href="../_modules/pyrsig.html#RsigGui"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigGui" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>RsigGui Object designed for IPython with ipywidgets in Jupyter</p>
+<p>Example:
+gui = RsigGui()
+gui.form  # As last line in cell, displays controls for user
+gui.plotopts()  # Plots current options
+gui.check()  # Check bounding box and date options make sense
+rsigapi = gui.get_api() # Convert gui to standard api
+# proceed with normal RsigApi usage</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.bbox">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bbox</span></span><a class="headerlink" href="#pyrsig.RsigGui.bbox" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.bdate">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bdate</span></span><a class="headerlink" href="#pyrsig.RsigGui.bdate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.check">
+<span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'return'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigGui.check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigGui.check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.date_range">
+<span class="sig-name descname"><span class="pre">date_range</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigGui.date_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigGui.date_range" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.edate">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edate</span></span><a class="headerlink" href="#pyrsig.RsigGui.edate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.form">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">form</span></span><a class="headerlink" href="#pyrsig.RsigGui.form" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.from_api">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigGui.from_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigGui.from_api" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.get_api">
+<span class="sig-name descname"><span class="pre">get_api</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigGui.get_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigGui.get_api" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.grid_kw">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">grid_kw</span></span><a class="headerlink" href="#pyrsig.RsigGui.grid_kw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.key">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">key</span></span><a class="headerlink" href="#pyrsig.RsigGui.key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.plotopts">
+<span class="sig-name descname"><span class="pre">plotopts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig.html#RsigGui.plotopts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.RsigGui.plotopts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyrsig.RsigGui.workdir">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workdir</span></span><a class="headerlink" href="#pyrsig.RsigGui.workdir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.open_ioapi">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.</span></span><span class="sig-name descname"><span class="pre">open_ioapi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metapath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">earth_radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6370000.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig/cmaq.html#open_ioapi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.open_ioapi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open an IOAPI file, add coordinate data, and optionally add RSIG metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to IOAPI formatted files.</p></li>
+<li><p><strong>metapath</strong> (<em>str</em>) – Path to metadata associated with the RSIG query. The metadata will be
+added as metadata global property.</p></li>
+<li><p><strong>earth_radius</strong> (<em>float</em>) – Assumed radius of the earth. 6370000 is the WRF default.</p></li>
+<li><p><strong>kwds</strong> (<em>mappable</em>) – Passed to xr.open_dataset</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ds</strong> – Dataset with IOAPI metadata</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.open_mfioapi">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.</span></span><span class="sig-name descname"><span class="pre">open_mfioapi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metapaths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">earth_radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6370000.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig/cmaq.html#open_mfioapi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.open_mfioapi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimal version of open_mfdataset that is compatible with open_ioapi.
+preprocess :  keyword defaults to add_ioapi_meta
+concat_dim :  keyword defaults to ‘TSTEP’</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paths</strong> (<em>iterable</em>) – Paths to ioapi files to be opened.</p></li>
+<li><p><strong>metapaths</strong> (<em>iterable</em>) – Paths to be added as a string metadata</p></li>
+<li><p><strong>earth_radius</strong> (<em>float</em>) – Radius of the earth for projection.</p></li>
+<li><p><strong>kwargs</strong> – See xr.open_mfdataset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pyrsig package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-pyrsig">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../auto_examples/emissions/plot_fluxdiv.html" title="previous chapter">Calculate Emissions by Flux Divergence</a></li>
+      <li>Next: <a href="pyrsig.bin.html" title="next chapter">pyrsig.bin package</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/api/pyrsig.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

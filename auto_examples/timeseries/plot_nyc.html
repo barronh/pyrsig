@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>NYC VIIRS AOD vs TropOMI NO2 &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Phoenix AQS vs TropOMI" href="plot_phoenix.html" />
+    <link rel="prev" title="El Paso AirNow vs TEMPO" href="plot_elpaso.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-timeseries-plot-nyc-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="nyc-viirs-aod-vs-tropomi-no2">
+<span id="sphx-glr-auto-examples-timeseries-plot-nyc-py"></span><h1>NYC VIIRS AOD vs TropOMI NO2<a class="headerlink" href="#nyc-viirs-aod-vs-tropomi-no2" title="Permalink to this heading">¶</a></h1>
+<p>Timeseries comparison of VIIRS AOD and TropOMI in NYC.</p>
+<img src="../../_images/sphx_glr_plot_nyc_001.png" srcset="../../_images/sphx_glr_plot_nyc_001.png" alt="plot nyc" class = "sphx-glr-single-img"/><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyrsig</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;nyc&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Create an RSIG api isntance</span>
+<span class="c1"># Define a Time and Space Scope: here end of February around Phoenix</span>
+<span class="n">rsigapi</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">RsigApi</span><span class="p">(</span>
+    <span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2022-01-20&#39;</span><span class="p">,</span> <span class="n">edate</span><span class="o">=</span><span class="s1">&#39;2022-01-25&#39;</span><span class="p">,</span>
+    <span class="n">bbox</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">74.8</span><span class="p">,</span> <span class="mf">40.32</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.43</span><span class="p">,</span> <span class="mf">41.4</span><span class="p">),</span> <span class="n">workdir</span><span class="o">=</span><span class="s1">&#39;nyc&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Get TropOMI NO2</span>
+<span class="n">tomino2df</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span>
+    <span class="s1">&#39;tropomi.offl.no2.nitrogendioxide_tropospheric_column&#39;</span><span class="p">,</span>
+    <span class="n">unit_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Get VIIRS AOD</span>
+<span class="n">viirsaoddf</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span>
+    <span class="s1">&#39;viirsnoaa.jrraod.AOD550&#39;</span><span class="p">,</span> <span class="n">unit_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Create spatial medians for TropOMI and AQS</span>
+<span class="n">tomids</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">tomino2df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="s1">&#39;nitrogendioxide_tropospheric_column&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">viirsds</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">viirsaoddf</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="s1">&#39;AOD550&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Create axes with shared x</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                       <span class="n">gridspec_kw</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">bottom</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mf">0.95</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">labelrotation</span> <span class="o">=</span> <span class="mi">90</span><span class="p">)</span>
+<span class="n">tax</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+
+<span class="c1"># Add VIIRS AOD</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">viirsds</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">viirsds</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add TropOMI NO2</span>
+<span class="n">tax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tomids</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">tomids</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+
+<span class="c1"># Configure axes</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;VIIRS AOD&#39;</span><span class="p">)</span>
+<span class="n">tax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.7e16</span><span class="p">),</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;TropOMI NO2 molecules/cm$^2$&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># Or save out figure</span>
+<span class="c1"># fig.savefig(&#39;nyc.png&#39;)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  17.287 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-timeseries-plot-nyc-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/1722a1f3ace8b29cc668749d93d92a57/plot_nyc.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_nyc.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/1a06601ce4b68892b2b3938fb90fa85c/plot_nyc.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_nyc.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">pyrsig Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#get-data-examples">Get data examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#timeseries-examples">Timeseries examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#oversample-examples">Oversample examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#maps-examples">Maps examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#comparison-examples">Comparison examples</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#emission-examples">Emission examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/pyrsig.html">pyrsig package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">pyrsig Example Gallery</a><ul>
+  <li><a href="index.html">Timeseries examples</a><ul>
+      <li>Previous: <a href="plot_elpaso.html" title="previous chapter">El Paso AirNow vs TEMPO</a></li>
+      <li>Next: <a href="plot_phoenix.html" title="next chapter">Phoenix AQS vs TropOMI</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/auto_examples/timeseries/plot_nyc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

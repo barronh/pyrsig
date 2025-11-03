@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyrsig.tests.test_xdr &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyrsig.tests.test_xdr</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="test_polygon"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_polygon">[docs]</a><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_polygon</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">td</span><span class="p">:</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span><span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2023-03-01&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">td</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="s1">&#39;hms.smoke&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="test_swath"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_swath">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">test_swath</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">td</span><span class="p">:</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span><span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2023-07-01&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">td</span><span class="p">)</span>
+        <span class="n">dkey</span> <span class="o">=</span> <span class="s1">&#39;tropomi.offl.no2.nitrogendioxide_tropospheric_column&#39;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dkey</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;xdr&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="test_site"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_site">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">test_site</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">td</span><span class="p">:</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span><span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2023-07-01&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">td</span><span class="p">)</span>
+        <span class="n">dkey</span> <span class="o">=</span> <span class="s1">&#39;airnow.ozone&#39;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dkey</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;xdr&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="test_profile"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_profile">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">test_profile</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">td</span><span class="p">:</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span><span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2023-07-01&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">td</span><span class="p">)</span>
+        <span class="n">dkey</span> <span class="o">=</span> <span class="s1">&#39;pandora.L2_rnvs3p1_8.nitrogen_dioxide_vertical_column_amount&#39;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dkey</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;xdr&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="test_point"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_point">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">test_point</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+    <span class="k">return</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">td</span><span class="p">:</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span><span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2023-07-01&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">td</span><span class="p">)</span>
+        <span class="c1"># rsigapi.purpleair_kw[&#39;api_key&#39;] = &#39;cannot test without api&#39;</span>
+        <span class="n">dkey</span> <span class="o">=</span> <span class="s1">&#39;purpleair.pm25_corrected&#39;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dkey</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;xdr&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="test_calipso"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_calipso">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">test_calipso</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">td</span><span class="p">:</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">150</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="mi">55</span><span class="p">)</span>
+        <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span><span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2022-07-01&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">td</span><span class="p">)</span>
+        <span class="c1"># rsigapi.purpleair_kw[&#39;api_key&#39;] = &#39;cannot test without api&#39;</span>
+        <span class="n">dkey</span> <span class="o">=</span> <span class="s1">&#39;calipso.l2_05kmapro.Total_Backscatter_Coefficient_532&#39;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dkey</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;xdr&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="test_grid"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_grid">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">test_grid</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">td</span><span class="p">:</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">180</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">90</span><span class="p">)</span>
+        <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span>
+            <span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2016-07-01T17&#39;</span><span class="p">,</span> <span class="n">edate</span><span class="o">=</span><span class="s1">&#39;2016-07-01T17:59:59&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">td</span>
+        <span class="p">)</span>
+        <span class="c1"># rsigapi.purpleair_kw[&#39;api_key&#39;] = &#39;cannot test without api&#39;</span>
+        <span class="n">dkey</span> <span class="o">=</span> <span class="s1">&#39;cmaq.equates.conus.aconc.SFC_TMP&#39;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dkey</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;xdr&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="test_subsetgrid"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_subsetgrid">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">test_subsetgrid</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">RsigApi</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">td</span><span class="p">:</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">150</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">,</span> <span class="mi">55</span><span class="p">)</span>
+        <span class="n">rsigapi</span> <span class="o">=</span> <span class="n">RsigApi</span><span class="p">(</span>
+            <span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2016-07-01T17&#39;</span><span class="p">,</span> <span class="n">edate</span><span class="o">=</span><span class="s1">&#39;2016-07-01T17:59:59&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">td</span>
+        <span class="p">)</span>
+        <span class="c1"># rsigapi.purpleair_kw[&#39;api_key&#39;] = &#39;cannot test without api&#39;</span>
+        <span class="n">dkey</span> <span class="o">=</span> <span class="s1">&#39;cmaq.equates.hemi.aconc.SFC_TMP&#39;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dkey</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;xdr&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="test_regriddedswath"><a class="viewcode-back" href="../../../api/pyrsig.tests.html#pyrsig.tests.test_xdr.test_regriddedswath">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">test_regriddedswath</span><span class="p">():</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;skipped test_regriddedswath&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/pyrsig.html">pyrsig package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../pyrsig.html">pyrsig</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

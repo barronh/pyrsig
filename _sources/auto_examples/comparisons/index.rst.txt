@@ -1,0 +1,64 @@
+
+
+.. _sphx_glr_auto_examples_comparisons:
+
+.. _comparison_examples:
+
+Comparison examples
+-------------------
+
+Examples showing comparison of CMAQ to various datasets that illustrate the
+power of pyrsig.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example performs a simple comparison of CMAQ to AirNow for ozone.">
+
+.. only:: html
+
+  .. image:: /auto_examples/comparisons/images/thumb/sphx_glr_plot_cmaqairnow_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_comparisons_plot_cmaqairnow.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Pairing CMAQ with AirNow Ozone</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example performs a simple comparison of CMAQ to TropOMI. TropOMI retrieves total column HC...">
+
+.. only:: html
+
+  .. image:: /auto_examples/comparisons/images/thumb/sphx_glr_plot_cmaqtropomi_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_comparisons_plot_cmaqtropomi.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Pairing CMAQ with TropOMI Columns</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/comparisons/plot_cmaqairnow
+   /auto_examples/comparisons/plot_cmaqtropomi
+

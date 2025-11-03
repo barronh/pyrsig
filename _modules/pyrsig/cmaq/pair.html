@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyrsig.cmaq.pair &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyrsig.cmaq.pair</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;pair_rsigcmaq&#39;</span><span class="p">]</span>
+<span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">pair_rsigcmaq is designed to pair RSIG data with CMAQ files.</span>
+
+<span class="s2">Example:</span>
+
+<span class="s2">    from pair_rsigcmaq import pair_rsigcmaq</span>
+<span class="s2">    import pandas a pd</span>
+
+<span class="s2">    outpath = pair_rsigcmaq(&#39;CMAQ_ACONC_20160101&#39;, &#39;O3&#39;, &#39;airnow.ozone&#39;)</span>
+<span class="s2">    df = pd.read_csv(outpath)</span>
+<span class="s2">    # Print descriptive statistics</span>
+<span class="s2">    print(df[[&#39;ozone&#39;, &#39;CMAQ_O3&#39;]].describe().to_csv())</span>
+<span class="s2">    # Print correlation statistics</span>
+<span class="s2">    print(df[[&#39;ozone&#39;, &#39;CMAQ_O3&#39;]].corr().to_csv())</span>
+
+<span class="s2">More details:</span>
+
+<span class="s2">    from pair_rsigcmaq import pair_rsigcmaq</span>
+<span class="s2">    help(pair_rsigcmaq)</span>
+
+<span class="s2">Or use as a script:</span>
+
+<span class="s2">    python -m pyrsig.cmaq.pair --help</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyrsig</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyproj</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">basename</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">RawTextHelpFormatter</span><span class="p">,</span> <span class="n">ArgumentParser</span>
+
+<span class="n">_prsr_description</span> <span class="o">=</span> <span class="p">(</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Pair CMAQ with data in RSIG using time and horizontal position.</span>
+<span class="sd">Seven examples are provided below:</span>
+
+<span class="sd">Pair AirNow ozone, co, and no2:</span>
+
+<span class="sd">%(prog)s airnow.ozone O3  CMAQv54_ACONC.202317*</span>
+<span class="sd">%(prog)s airnow.co    CO  CMAQv54_ACONC.202317*</span>
+<span class="sd">%(prog)s airnow.no2   NO2  CMAQv54_ACONC.202317*</span>
+
+<span class="sd">Pair AirNow pm25 with an ELMO output:</span>
+
+<span class="sd">%(prog)s airnow.pm25  PM25 CMAQv54_AELMO.202317*</span>
+
+<span class="sd">Pair Pandora NO2, TropOMI NO2, or VIIRS AOD with a PHOTDIAG1 file:</span>
+
+<span class="sd">%(prog)s pandora.L2_rnvs3p1_8.nitrogen_dioxide_vertical_column_amount&quot;&quot;&quot;</span>
+    <span class="o">+</span> <span class="s2">&quot;&quot;&quot; NO2_COLUMN CMAQ_PHOTDIAG1.202317*</span>
+<span class="si">%(prog)s</span><span class="s2"> tropomi.nrti.no2.nitrogendioxide_tropospheric_column&quot;&quot;&quot;</span>
+    <span class="o">+</span> <span class="s2">&quot;&quot;&quot; NO2_COLUMN CMAQ_PHOTDIAG1.202317*</span>
+<span class="si">%(prog)s</span><span class="s2"> viirsnoaa.jrraod.AOD550 AOD_W550_ANGST CMAQ_PHOTDIAG1.202317*</span>
+
+<span class="s2">For a full list of species that RSIG can pair, use the --help-rsig</span>
+
+<span class="si">%(prog)s</span><span class="s2"> --help-rsig</span>
+<span class="s2">&quot;&quot;&quot;</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="pair_rsigcmaq"><a class="viewcode-back" href="../../../api/pyrsig.cmaq.html#pyrsig.cmaq.pair.pair_rsigcmaq">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">pair_rsigcmaq</span><span class="p">(</span>
+    <span class="n">qds</span><span class="p">,</span> <span class="n">qkey</span><span class="p">,</span> <span class="n">datakey</span><span class="p">,</span> <span class="n">bdate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">edate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;CMAQ_&#39;</span><span class="p">,</span>
+    <span class="n">persist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    qds : xarray.Dataset or str</span>
+<span class="sd">        If a str, it must be the path to CMAQ file.</span>
+<span class="sd">        If an xarray.Dataset, it must have CMAQ structure and:</span>
+<span class="sd">        - crs_proj4 added by pyrsig.open_ioapi</span>
+<span class="sd">        - optionally, encoding[&#39;source&#39;] string describing the file</span>
+<span class="sd">    qkey : str</span>
+<span class="sd">        CMAQ variable key (must be in the CMAQ file)</span>
+<span class="sd">    datakey : str</span>
+<span class="sd">        RSIG variable key</span>
+<span class="sd">    bdate : datetime</span>
+<span class="sd">        Starting date time. If None, infer from file.</span>
+<span class="sd">    edate : datetime</span>
+<span class="sd">        Ending date time. If None, infer from file.</span>
+<span class="sd">    bbox : tuple</span>
+<span class="sd">        ll_lon, ll_lat, ur_lon, ur_lat in decimal degrees East and North</span>
+<span class="sd">        If bbox is None, it will be inferred from the file.</span>
+<span class="sd">    persist : bool</span>
+<span class="sd">        If True (default: False), save to disk and return output path</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        Level of verbosity. Negative omits warning about cached paired files.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    outpath : str</span>
+<span class="sd">        path to output</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">workdir</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+    <span class="n">p1s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_timedelta</span><span class="p">(</span><span class="s1">&#39;1s&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qds</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">qpath</span> <span class="o">=</span> <span class="n">qds</span>
+        <span class="n">pyrsig</span><span class="o">.</span><span class="n">open_ioapi</span><span class="p">(</span><span class="n">qpath</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">qpath</span> <span class="o">=</span> <span class="n">qds</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown_cmaq&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">qpath</span><span class="p">)</span>
+    <span class="c1"># Open CMAQ ACONC file</span>
+    <span class="n">qds</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">open_ioapi</span><span class="p">(</span><span class="n">qpath</span><span class="p">)</span>
+    <span class="n">Y</span><span class="p">,</span> <span class="n">X</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">qds</span><span class="o">.</span><span class="n">ROW</span><span class="p">,</span> <span class="n">qds</span><span class="o">.</span><span class="n">COL</span><span class="p">)</span>
+    <span class="n">proj</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">qds</span><span class="o">.</span><span class="n">crs_proj4</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bbox</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">qlon</span><span class="p">,</span> <span class="n">qlat</span> <span class="o">=</span> <span class="n">proj</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">Y</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">lonb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">qlon</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">latb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">qlat</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">lonb</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">latb</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lonb</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">latb</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">bbox</span><span class="p">)</span>
+
+    <span class="n">api</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">RsigApi</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">workdir</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">bdate</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">edate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dates</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">qds</span><span class="o">.</span><span class="n">TSTEP</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bdate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bdate</span> <span class="o">=</span> <span class="n">dates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">edate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">edate</span> <span class="o">=</span> <span class="n">dates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">dates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">dates</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="n">p1s</span>
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">bdate</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">edate</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">opath</span> <span class="o">=</span> <span class="n">bdate</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">workdir</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">datakey</span><span class="si">}</span><span class="s1">_and_</span><span class="si">{</span><span class="n">basename</span><span class="p">(</span><span class="n">qpath</span><span class="p">)</span><span class="si">}</span><span class="s1">.csv&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">opath</span><span class="p">)</span> <span class="ow">and</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Keeping </span><span class="si">{</span><span class="n">opath</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">opath</span>
+
+    <span class="c1"># Acquire (or use cached) pandora data</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span>
+        <span class="n">datakey</span><span class="p">,</span> <span class="n">bdate</span><span class="o">=</span><span class="n">bdate</span><span class="p">,</span> <span class="n">edate</span><span class="o">=</span><span class="n">edate</span><span class="p">,</span>
+        <span class="n">unit_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Get a translate lat/lon to x/y</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">proj</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;LONGITUDE&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;LATITUDE&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Extract model at observed times and locations</span>
+    <span class="n">qvar</span> <span class="o">=</span> <span class="n">qds</span><span class="p">[</span><span class="n">qkey</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span>
+        <span class="n">TSTEP</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(),</span>
+        <span class="n">COL</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(),</span>
+        <span class="n">ROW</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(),</span>
+        <span class="n">method</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span>
+    <span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">qkey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qvar</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">if</span> <span class="n">persist</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">opath</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">opath</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">prsr</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="n">_prsr_description</span><span class="p">,</span> <span class="n">formatter_class</span><span class="o">=</span><span class="n">RawTextHelpFormatter</span>
+    <span class="p">)</span>
+    <span class="n">prsr</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--help-rsig&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">args1</span><span class="p">,</span> <span class="n">othr</span> <span class="o">=</span> <span class="n">prsr</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">args1</span><span class="o">.</span><span class="n">help_rsig</span><span class="p">:</span>
+        <span class="n">api</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">RsigApi</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;RSIG Supports:&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">api</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39; - </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">prsr</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--bbox&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">prsr</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;rsigkey&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;RSIG id (see pyrsig.RsigApi().keys())&#39;</span><span class="p">)</span>
+    <span class="n">prsr</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;cmaqkey&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;e.g., O3, NO2, NO2_COLUMN&#39;</span><span class="p">)</span>
+    <span class="n">helpstr</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;Paths to CMAQ outputs like ACONC or PHOTDIAG1 or AELMO&#39;</span>
+        <span class="o">+</span> <span class="s1">&#39;(e.g., ./CMAQ_cb6r5.12US1.ACONC.20160101&#39;</span>
+    <span class="p">)</span>
+    <span class="n">prsr</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;cmaqpaths&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="n">helpstr</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">prsr</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">bbox</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">bbox</span>
+    <span class="n">datakey</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">rsigkey</span>
+    <span class="n">qkey</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">cmaqkey</span>
+
+    <span class="k">for</span> <span class="n">qpath</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">cmaqpaths</span><span class="p">:</span>
+        <span class="n">pair_rsigcmaq</span><span class="p">(</span><span class="n">qpath</span><span class="p">,</span> <span class="n">qkey</span><span class="o">=</span><span class="n">qkey</span><span class="p">,</span> <span class="n">datakey</span><span class="o">=</span><span class="n">datakey</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">bbox</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/pyrsig.html">pyrsig package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../pyrsig.html">pyrsig</a><ul>
+  <li><a href="../cmaq.html">pyrsig.cmaq</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

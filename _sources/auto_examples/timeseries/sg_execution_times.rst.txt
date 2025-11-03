@@ -1,0 +1,21 @@
+
+:orphan:
+
+.. _sphx_glr_auto_examples_timeseries_sg_execution_times:
+
+
+Computation times
+=================
+**00:59.156** total execution time for **auto_examples_timeseries** files:
+
++----------------------------------------------------------------------------------------+-----------+--------+
+| :ref:`sphx_glr_auto_examples_timeseries_plot_phoenix.py` (``plot_phoenix.py``)         | 00:29.796 | 0.0 MB |
++----------------------------------------------------------------------------------------+-----------+--------+
+| :ref:`sphx_glr_auto_examples_timeseries_plot_nyc.py` (``plot_nyc.py``)                 | 00:17.287 | 0.0 MB |
++----------------------------------------------------------------------------------------+-----------+--------+
+| :ref:`sphx_glr_auto_examples_timeseries_plot_elpaso.py` (``plot_elpaso.py``)           | 00:05.177 | 0.0 MB |
++----------------------------------------------------------------------------------------+-----------+--------+
+| :ref:`sphx_glr_auto_examples_timeseries_plot_pittsburg.py` (``plot_pittsburg.py``)     | 00:04.069 | 0.0 MB |
++----------------------------------------------------------------------------------------+-----------+--------+
+| :ref:`sphx_glr_auto_examples_timeseries_plot_cmaqpandora.py` (``plot_cmaqpandora.py``) | 00:02.826 | 0.0 MB |
++----------------------------------------------------------------------------------------+-----------+--------+

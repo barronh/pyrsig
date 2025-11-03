@@ -1,0 +1,21 @@
+pyrsig.cmaq package
+===================
+
+Submodules
+----------
+
+pyrsig.cmaq.pair module
+-----------------------
+
+.. automodule:: pyrsig.cmaq.pair
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pyrsig.cmaq
+   :members:
+   :undoc-members:
+   :show-inheritance:

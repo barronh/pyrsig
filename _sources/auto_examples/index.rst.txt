@@ -1,0 +1,519 @@
+:orphan:
+
+pyrsig Example Gallery
+======================
+
+This gallery houses examples on how to use pyrsig to do various
+analyses. This includes downloading and visualizing the data.
+
+Some examples require some features of pyrsig that are not required
+for minimal functionality. To install all the necessary libaries
+for any example, run the command below (use --user if not an admin):
+
+.. code-block:: bash
+
+   python -m pip install --user pyrsig pycno pyproj netcdf4
+
+In notebooks (e.g., on Google Colab), this can be done live with
+the command below (may require kernel restart):
+
+.. code-block:: python
+
+   %pip install --user pyrsig pycno pyproj netcdf4
+
+To run an example in a notebook:
+
+1. Copy the command above into a new cell and run it.
+2. Click on example below to see code.
+3. Copy the code from the example into a new cell and run it.
+
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    </div>
+
+
+Get data examples
+-----------------
+
+Examples showing how to get data.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get a list of RSIG coverage that are available. The offline list is a quick refere...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_0_capabilities_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_0_capabilities.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get List of Possible Coverages</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get AQS observations as a Pandas DataFrame. Replace aqs.ozone with airnow.ozone to...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_1_aqsno2_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_1_aqsno2.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get DataFrame for AQS ozone</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get TropOMI NO2 tropospheric column densities as a pandas DataFrame.">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_2_tropomidf_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_2_tropomidf.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get DataFrame for TropOMI NO2</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get TropOMI as an xarray Dataset. This example downloads a NetCDF file with COARDS...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_3_tropomicoards_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_3_tropomicoards.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get COARDS formatted NetCDF TropOMI NO2</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get TropOMI as an xarray Dataset. This example downloads a NetCDF file with IOAPI ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_4_tropominc_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_4_tropominc.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get IOAPI formatted NetCDF TropOMI NO2</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Shows how to get PurpleAir measurements as a DataFrame. PurpleAir, unlike other coverages, requ...">
+
+.. only:: html
+
+  .. image:: /auto_examples/getdata/images/thumb/sphx_glr_get_5_purpleairpm_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_getdata_get_5_purpleairpm.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Get DataFrame for PurpleAir PM25</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+Timeseries examples
+-------------------
+
+Examples showing timeseries analyses that illustrate the power of pyrsig.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of NO2 columns from CMAQ and Pandora over a small window over New York/Ne...">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_cmaqpandora_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_cmaqpandora.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">CMAQ vs Pandora</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of NO2 from AirNow and TEMPO in El Paso, TX during unvalidated release 20...">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_elpaso_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_elpaso.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">El Paso AirNow vs TEMPO</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of VIIRS AOD and TropOMI in NYC.">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_nyc_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_nyc.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">NYC VIIRS AOD vs TropOMI NO2</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of NO2 from AQS and TropOMI in Phoenix.">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_phoenix_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_phoenix.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Phoenix AQS vs TropOMI</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Timeseries comparison of NO2 from the Pittsburg Pandora during unvalidated release 2023-12-17 t...">
+
+.. only:: html
+
+  .. image:: /auto_examples/timeseries/images/thumb/sphx_glr_plot_pittsburg_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_timeseries_plot_pittsburg.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Pittsburg Pandora vs TEMPO</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+Oversample examples
+-------------------
+
+Examples showing data oversampling of satellite data on a Lambert Conformal
+Conic grid and a simple lon/lat grid.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Create a 4km gridded product on a Continental US grid, but only download data over NC.">
+
+.. only:: html
+
+  .. image:: /auto_examples/oversample/images/thumb/sphx_glr_plot_conus4k_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_oversample_plot_conus4k.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Oversample CONUS at 4k</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Create a 0.1 degree gridded product over NC.">
+
+.. only:: html
+
+  .. image:: /auto_examples/oversample/images/thumb/sphx_glr_plot_ncpt1_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_oversample_plot_ncpt1.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Oversample NC at 0.1 degree</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+Maps examples
+-------------------
+
+Examples showing how to make specific maps.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Get HMS Smoke from RSIG and create daily plots.">
+
+.. only:: html
+
+  .. image:: /auto_examples/maps/images/thumb/sphx_glr_plot_hmssmoke_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_maps_plot_hmssmoke.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Plot Smoke Polygons</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example performs a simple health benefit assessment by pairing model concentrations with p...">
+
+.. only:: html
+
+  .. image:: /auto_examples/maps/images/thumb/sphx_glr_plot_mortality_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_maps_plot_mortality.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Pairing Population with Concentration</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Get TropOMI from RSIG and save as GeoJSON and shapefiles.">
+
+.. only:: html
+
+  .. image:: /auto_examples/maps/images/thumb/sphx_glr_plot_shapefile_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_maps_plot_shapefile.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">GIS TropOMI Processing</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+Comparison examples
+-------------------
+
+Examples showing comparison of CMAQ to various datasets that illustrate the
+power of pyrsig.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example performs a simple comparison of CMAQ to AirNow for ozone.">
+
+.. only:: html
+
+  .. image:: /auto_examples/comparisons/images/thumb/sphx_glr_plot_cmaqairnow_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_comparisons_plot_cmaqairnow.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Pairing CMAQ with AirNow Ozone</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example performs a simple comparison of CMAQ to TropOMI. TropOMI retrieves total column HC...">
+
+.. only:: html
+
+  .. image:: /auto_examples/comparisons/images/thumb/sphx_glr_plot_cmaqtropomi_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_comparisons_plot_cmaqtropomi.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Pairing CMAQ with TropOMI Columns</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+Emission examples
+-----------------
+
+Examples showing how to estimate emissions based on satellite data paired with
+meteorology data. These examples use NO2 and winds from HRRR on the HRRR
+Lambert Conformal Conic grid.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example uses Dallas Fort Worth Texas as an illustrative application of this technique. For...">
+
+.. only:: html
+
+  .. image:: /auto_examples/emissions/images/thumb/sphx_glr_plot_emg_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_emissions_plot_emg.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Calculate Emissions by Fitting a Modified Guassian</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example uses Phoenix Arizona to illustrate the flux-divergence technique. As an illustrati...">
+
+.. only:: html
+
+  .. image:: /auto_examples/emissions/images/thumb/sphx_glr_plot_fluxdiv_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_emissions_plot_fluxdiv.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Calculate Emissions by Flux Divergence</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+   :includehidden:
+
+
+   /auto_examples/getdata/index.rst
+   /auto_examples/timeseries/index.rst
+   /auto_examples/oversample/index.rst
+   /auto_examples/maps/index.rst
+   /auto_examples/comparisons/index.rst
+   /auto_examples/emissions/index.rst
+
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-gallery
+
+    .. container:: sphx-glr-download sphx-glr-download-python
+
+      :download:`Download all examples in Python source code: auto_examples_python.zip </auto_examples/auto_examples_python.zip>`
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+      :download:`Download all examples in Jupyter notebooks: auto_examples_jupyter.zip </auto_examples/auto_examples_jupyter.zip>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_

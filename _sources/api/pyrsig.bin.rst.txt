@@ -1,0 +1,10 @@
+pyrsig.bin package
+==================
+
+Module contents
+---------------
+
+.. automodule:: pyrsig.bin
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Pairing Population with Concentration &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="GIS TropOMI Processing" href="plot_shapefile.html" />
+    <link rel="prev" title="Plot Smoke Polygons" href="plot_hmssmoke.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-maps-plot-mortality-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="pairing-population-with-concentration">
+<span id="sphx-glr-auto-examples-maps-plot-mortality-py"></span><h1>Pairing Population with Concentration<a class="headerlink" href="#pairing-population-with-concentration" title="Permalink to this heading">¶</a></h1>
+<p>This example performs a simple health benefit assessment by pairing model
+concentrations with population datasets in RSIG. The population dataset comes
+from the Integrated Climate and Land Use Scenarios (ICLUS). The concentration
+dataset comes from the EPA’s Air QUAlity TimE Series Project (EQUATES) project.
+The concentration response function (CRF) uses Krewski 2009.</p>
+<p>Conceptualy, mortality or morbitidy (M) is attributed to cause (i) based on an
+attributable fraction (F) as a function of space (x). For air quality
+applications, the F_x is a function of pollutant concentrations or mixing
+ratios. Often, M_x is known at a coarser spatial resolution than is ideal. In
+that case, M_x may be translated into a fractional baseline incidence (y0_x)
+and used to estimate M_x using spatially resolved P_x.</p>
+<p>m_x = M_x * F_x = y0_x * P_x * F_x</p>
+<p>In this example, the problem is (over)simplified in three ways:
+1. Mortality is applied at the county-level assuming no intracounty variation.
+2. It assumes the age-stratification is nationally homogenous.
+3. It assumes that baseline incidence is nationally homogenous.</p>
+<p>The example datasets and CRF can be replaced. The geopandas package read_file
+function can be used to open shapefiles with M_x at polygons. So, you could
+create age-specific mortality incidence at census tract level to improve this
+example.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely</span><span class="w"> </span><span class="kn">import</span> <span class="n">polygons</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pycno</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyrsig</span>
+
+
+<span class="n">datakey</span> <span class="o">=</span> <span class="s1">&#39;cmaq.equates.conus.aconc.PM25&#39;</span>
+<span class="n">ckey</span> <span class="o">=</span> <span class="s1">&#39;PM25&#39;</span>
+</pre></div>
+</div>
+<section id="concentration-reponse-function-formulation">
+<h2>Concentration Reponse Function Formulation<a class="headerlink" href="#concentration-reponse-function-formulation" title="Permalink to this heading">¶</a></h2>
+<ul>
+<li><p>Krewski 2009 PM25
+* all-cause mortality risk 1.06 per 10 micrograms/m3
+* 30+ year-old population</p></li>
+<li><p>Simplifying Assumptions
+* Baseline mortality incidence is spatiall uniform</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>[GDB IHME](vizhub.healthdata.org/gbd-results) for 2019 in the US</p></li>
+<li><p>all cause deaths =   2853165.03</p></li>
+<li><p>population       = 329996155.19</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Age distribution is spatially unfiorm
+* Age distribution from the US Census ACSST5Y2020
+* US population 30 years or older: 201686433
+* US population total            : 329824950</p></li>
+</ul>
+</li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.06</span><span class="p">)</span> <span class="o">/</span> <span class="mi">10</span>
+<span class="n">y0</span> <span class="o">=</span> <span class="mf">2853165.03</span> <span class="o">/</span> <span class="mf">329996155.19</span>
+<span class="n">f_pop</span> <span class="o">=</span> <span class="mi">201686433</span> <span class="o">/</span> <span class="mi">329824950</span>
+
+
+<span class="n">bdates</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2019-01-01&#39;</span><span class="p">,</span> <span class="s1">&#39;2019-12-31&#39;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;1d&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;**WARNING**: using 1 day/month as representative of monthly average&#39;</span><span class="p">)</span>
+<span class="n">bdates</span> <span class="o">=</span> <span class="n">bdates</span><span class="p">[</span><span class="mi">15</span><span class="p">::</span><span class="mi">30</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>**WARNING**: using 1 day/month as representative of monthly average
+</pre></div>
+</div>
+</section>
+<section id="retrieve-conc-from-rsig-or-cache">
+<h2>Retrieve Conc from RSIG (or cache)<a class="headerlink" href="#retrieve-conc-from-rsig-or-cache" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dss</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">bdate</span> <span class="ow">in</span> <span class="n">bdates</span><span class="p">:</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">to_ioapi</span><span class="p">(</span><span class="n">datakey</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">180</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span> <span class="n">bdate</span><span class="o">=</span><span class="n">bdate</span><span class="p">)</span>
+    <span class="n">dss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="p">[[</span><span class="n">ckey</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="s1">&#39;TSTEP&#39;</span><span class="p">,</span> <span class="s1">&#39;LAY&#39;</span><span class="p">),</span> <span class="n">keep_attrs</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+<span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dss</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;TSTEP&#39;</span><span class="p">)</span>
+<span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
+<span class="n">units</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">ckey</span><span class="p">]</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="retrieve-pop-from-rsig-or-cache">
+<h2>Retrieve Pop from RSIG (or cache)<a class="headerlink" href="#retrieve-pop-from-rsig-or-cache" title="Permalink to this heading">¶</a></h2>
+<p>population available for pacific, gulf, and atlantic and is returned as a
+geopandas.GeoDataFrame. These populations are at the county scale, which
+limits the spatial resolution of the analysis to sizes of counties.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">popdf</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span>
+    <span class="s1">&#39;landuse.atlantic.population_iclus1&#39;</span><span class="p">,</span>
+    <span class="n">bdate</span><span class="o">=</span><span class="s1">&#39;2010-01-01T000000Z&#39;</span><span class="p">,</span> <span class="n">edate</span><span class="o">=</span><span class="s1">&#39;2090-01-01T235959Z&#39;</span>
+<span class="p">)</span>
+<span class="n">popdf</span><span class="o">.</span><span class="n">crs</span> <span class="o">=</span> <span class="mi">4326</span>
+</pre></div>
+</div>
+</section>
+<section id="convert-conc-to-geodataframe">
+<h2>Convert Conc to GeoDataFrame<a class="headerlink" href="#convert-conc-to-geodataframe" title="Permalink to this heading">¶</a></h2>
+<p>Converting Conc to a GeoDataFrame for compatibility with population.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;TSTEP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+
+<span class="c1"># Create a GeoDataFrame in grid cell units</span>
+<span class="n">cell_off</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">.5</span><span class="p">,</span> <span class="mf">.5</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">.5</span><span class="p">,</span> <span class="mf">.5</span><span class="p">]]])</span>
+<span class="n">xy</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()[[</span><span class="s1">&#39;COL&#39;</span><span class="p">,</span> <span class="s1">&#39;ROW&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+<span class="n">geom</span> <span class="o">=</span> <span class="n">polygons</span><span class="p">(</span><span class="n">xy</span> <span class="o">+</span> <span class="n">cell_off</span><span class="p">)</span>
+<span class="n">cgdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">crs_proj4</span><span class="p">)</span>
+<span class="n">bmdf</span> <span class="o">=</span> <span class="n">cgdf</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">bmdf</span><span class="p">[</span><span class="s1">&#39;COL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bmdf</span><span class="p">[</span><span class="s1">&#39;COL&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">.5</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+<span class="n">bmdf</span><span class="p">[</span><span class="s1">&#39;ROW&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bmdf</span><span class="p">[</span><span class="s1">&#39;ROW&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">.5</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+<span class="n">bmdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">datakey</span><span class="si">}</span><span class="s1">.shp&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="area-weight-conc-at-population">
+<h2>Area Weight Conc at Population<a class="headerlink" href="#area-weight-conc-at-population" title="Permalink to this heading">¶</a></h2>
+<p>Create area weighted concentrations at the population polygon level.
+1. Create intersection
+2. Calculate intersection fraction from each grid cell
+3. Weight concentration by area</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">intxdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">overlay</span><span class="p">(</span><span class="n">cgdf</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span> <span class="n">popdf</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">cgdf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">())</span>
+<span class="n">intxdf</span><span class="p">[</span><span class="s1">&#39;intx_area&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">intxdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">area</span>
+<span class="n">intx_total_area</span> <span class="o">=</span> <span class="n">intxdf</span><span class="p">[[</span><span class="s1">&#39;index&#39;</span><span class="p">,</span> <span class="s1">&#39;intx_area&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">intxdf</span><span class="p">[</span><span class="s1">&#39;overlapped_area&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">intx_total_area</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">intxdf</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">area_factor</span> <span class="o">=</span> <span class="n">intxdf</span><span class="p">[</span><span class="s1">&#39;intx_area&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">intxdf</span><span class="p">[</span><span class="s1">&#39;overlapped_area&#39;</span><span class="p">]</span>
+<span class="c1"># Calculate area weighted concentration as C and use 2010 population as P</span>
+<span class="n">intxdf</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;areawt_</span><span class="si">{</span><span class="n">ckey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">intxdf</span><span class="p">[</span><span class="n">ckey</span><span class="p">]</span> <span class="o">*</span> <span class="n">area_factor</span>
+<span class="n">finaldf</span> <span class="o">=</span> <span class="n">intxdf</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+    <span class="n">C</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;areawt_</span><span class="si">{</span><span class="n">ckey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;sum&#39;</span><span class="p">),</span>
+    <span class="n">P</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;BC_2010POP&#39;</span><span class="p">,</span> <span class="s1">&#39;first&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Convert to geodataframe pulling geometry from original pop dataframe</span>
+<span class="n">pgeom</span> <span class="o">=</span> <span class="n">popdf</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">finaldf</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span>
+<span class="n">finaldf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">finaldf</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">pgeom</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="mi">4326</span><span class="p">)</span>
+
+<span class="n">F</span> <span class="o">=</span> <span class="n">finaldf</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">beta</span> <span class="o">*</span> <span class="n">finaldf</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">])</span>
+<span class="n">M</span> <span class="o">=</span> <span class="n">finaldf</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">*</span> <span class="n">finaldf</span><span class="p">[</span><span class="s1">&#39;P&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">f_pop</span>
+<span class="n">finaldf</span><span class="p">[</span><span class="s1">&#39;M_i&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">F</span>
+<span class="n">M_i</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">finaldf</span><span class="p">[</span><span class="s1">&#39;M_i&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<span class="n">P</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">finaldf</span><span class="p">[</span><span class="s1">&#39;P&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<span class="n">M</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+<span class="n">C_p</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">finaldf</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;C * P&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">P</span><span class="p">)</span>
+
+<span class="c1"># Now make the plot</span>
+<span class="n">gskw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axx</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">gridspec_kw</span><span class="o">=</span><span class="n">gskw</span><span class="p">)</span>
+<span class="n">lkw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ckey</span><span class="si">}</span><span class="s1"> [</span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s1">]&#39;</span><span class="p">)</span>
+<span class="n">finaldf</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">legend_kwds</span><span class="o">=</span><span class="n">lkw</span><span class="p">)</span>
+<span class="n">tprops</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">x</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">horizontalalignment</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="n">backgroundcolor</span><span class="o">=</span><span class="s1">&#39;w&#39;</span>
+<span class="p">)</span>
+<span class="n">tprops</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">axx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">transAxes</span>
+<span class="n">axx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="s1">&#39;$</span><span class="se">\\</span><span class="s1">overline{C^p}$ = &#39;</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">C_p</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">tprops</span><span class="p">)</span>
+<span class="n">lkw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Population [#]&#39;</span><span class="p">)</span>
+<span class="n">finaldf</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">legend_kwds</span><span class="o">=</span><span class="n">lkw</span><span class="p">)</span>
+<span class="n">tprops</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">axx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">transAxes</span>
+<span class="n">axx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="s1">&#39;$</span><span class="se">\\</span><span class="s1">sum</span><span class="si">{P}</span><span class="s1">$ = &#39;</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">P</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">tprops</span><span class="p">)</span>
+<span class="n">pycno</span><span class="o">.</span><span class="n">cno</span><span class="p">()</span><span class="o">.</span><span class="n">drawstates</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span>
+    <span class="s1">&#39;$M_i = f_a y_0 P_x F_x$ = &#39;</span>
+    <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">f_pop</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> * </span><span class="si">{</span><span class="n">y0</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1"> * P$_x$ * &#39;</span>
+    <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;(1 - exp(-</span><span class="si">{</span><span class="n">beta</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1"> C$_x$)) = </span><span class="si">{</span><span class="n">M_i</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ckey</span><span class="si">}</span><span class="s1">_mortality.png&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_plot_mortality_001.png" srcset="../../_images/sphx_glr_plot_mortality_001.png" alt="$M_i = f_a y_0 P_x F_x$ = 0.61 * 0.00865 * P$_x$ * (1 - exp(-0.005827 C$_x$)) = 22628" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 1 minutes  13.890 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-maps-plot-mortality-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/7bf6365f4d06af6ac8a58bf528588fca/plot_mortality.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_mortality.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/aed06328d9e8e87176f2ecf72c50a5e6/plot_mortality.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_mortality.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">pyrsig Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#get-data-examples">Get data examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#timeseries-examples">Timeseries examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#oversample-examples">Oversample examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#maps-examples">Maps examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#comparison-examples">Comparison examples</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#emission-examples">Emission examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/pyrsig.html">pyrsig package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">pyrsig Example Gallery</a><ul>
+  <li><a href="index.html">Maps examples</a><ul>
+      <li>Previous: <a href="plot_hmssmoke.html" title="previous chapter">Plot Smoke Polygons</a></li>
+      <li>Next: <a href="plot_shapefile.html" title="next chapter">GIS TropOMI Processing</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/auto_examples/maps/plot_mortality.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

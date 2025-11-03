@@ -1,0 +1,10 @@
+pyrsig.xdr package
+==================
+
+Module contents
+---------------
+
+.. automodule:: pyrsig.xdr
+   :members:
+   :undoc-members:
+   :show-inheritance:

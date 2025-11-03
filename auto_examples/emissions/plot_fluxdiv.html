@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Calculate Emissions by Flux Divergence &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="pyrsig package" href="../../api/pyrsig.html" />
+    <link rel="prev" title="Calculate Emissions by Fitting a Modified Guassian" href="plot_emg.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-emissions-plot-fluxdiv-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="calculate-emissions-by-flux-divergence">
+<span id="sphx-glr-auto-examples-emissions-plot-fluxdiv-py"></span><h1>Calculate Emissions by Flux Divergence<a class="headerlink" href="#calculate-emissions-by-flux-divergence" title="Permalink to this heading">¶</a></h1>
+<p>This example uses Phoenix Arizona to illustrate the flux-divergence technique.
+As an illustration, it is oversimplified to use just 4 days, and should be
+extended to a whole year to get a more robust estimate. Further, the value of
+tau is simply assumed. These elements would need more work before application.</p>
+<p>Steps:
+1. Create a 3km custom L3 NO2 product on the HRRR grid,
+2. Retrieve HRRR winds at cell centers for the same domain,
+3. Fit Eq 3 of Goldberg et al. (10.5194/acp-22-10875-2022),
+4. Assume a plausible tau parameter and estimate emissions.</p>
+<p>Application from 2023-05-01 to 2023-05-04 with a 6h lifteime (tau=6h) yields a
+Maricopa annualized emission rate of 47.2 GgNO2/yr. This value is higher than
+the NEI 2020[1] reported 43668 short tons (39.6 GgNO2/yr) and lower than the
+NEI 2017[2] value of 59891 short tons (54.3 GgNO2/yr).</p>
+<p>Extending to this application to the whole 2023 year yields 49.6 GgNO2/yr. And,
+there are many sensitivities that one can test with respect to sampling time.
+Further, the results are very sensitive to the assumed value of tau which
+is not spatially constant or well known.</p>
+<p>[1] <a class="reference external" href="https://enviro.epa.gov/envirofacts/embed/nei?pType=TIER&amp;pReport=county&amp;pState=&amp;pState=04&amp;pPollutant=&amp;pPollutant=NOX&amp;pSector=&amp;pYear=2020&amp;pCounty=04013&amp;pTier=&amp;pWho=NEI">https://enviro.epa.gov/envirofacts/embed/nei?pType=TIER&amp;pReport=county&amp;pState=&amp;pState=04&amp;pPollutant=&amp;pPollutant=NOX&amp;pSector=&amp;pYear=2020&amp;pCounty=04013&amp;pTier=&amp;pWho=NEI</a>
+[2] <a class="reference external" href="https://enviro.epa.gov/envirofacts/embed/nei?pType=TIER&amp;pReport=county&amp;pState=&amp;pState=04&amp;pPollutant=&amp;pPollutant=NOX&amp;pSector=&amp;pYear=2017&amp;pCounty=04013&amp;pTier=&amp;pWho=NEI">https://enviro.epa.gov/envirofacts/embed/nei?pType=TIER&amp;pReport=county&amp;pState=&amp;pState=04&amp;pPollutant=&amp;pPollutant=NOX&amp;pSector=&amp;pYear=2017&amp;pCounty=04013&amp;pTier=&amp;pWho=NEI</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyrsig</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+</pre></div>
+</div>
+<section id="define-location-and-date-range">
+<h2>Define Location and Date Range<a class="headerlink" href="#define-location-and-date-range" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Location is a single point</p></li>
+<li><p>Date range can be a few days at a time</p></li>
+<li><p>bbox is the box to retrieve VCDs</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cntyname</span> <span class="o">=</span> <span class="s1">&#39;Maricopa&#39;</span>
+<span class="n">loc</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">112.0777</span><span class="p">,</span> <span class="mf">33.4482</span><span class="p">)</span>  <span class="c1"># Phoenix Arizona - fit is not good due to multiple loci</span>
+<span class="c1"># cntyname = &#39;Harris&#39;</span>
+<span class="c1"># loc = (-95.1, 29.720621)  # Houston Texas</span>
+<span class="n">dates</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s1">&#39;2023-05-01T00Z&#39;</span><span class="p">,</span> <span class="s1">&#39;2023-05-04T00Z&#39;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;1d&#39;</span><span class="p">)</span>
+<span class="n">bbox</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">loc</span> <span class="o">+</span> <span class="n">loc</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1.5</span>
+<span class="n">tauh</span> <span class="o">=</span> <span class="mi">6</span>
+</pre></div>
+</div>
+</section>
+<section id="get-tropomi-no2-over-bbox">
+<h2>Get TropOMI NO2 Over bbox<a class="headerlink" href="#get-tropomi-no2-over-bbox" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rsig</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">RsigApi</span><span class="p">(</span>
+    <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">cntyname</span><span class="p">,</span> <span class="n">grid_kw</span><span class="o">=</span><span class="s1">&#39;HRRR3K&#39;</span><span class="p">,</span> <span class="n">gridfit</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">vkey</span> <span class="o">=</span> <span class="s1">&#39;tropomi.offl.no2.nitrogendioxide_tropospheric_column&#39;</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">rsig</span><span class="o">.</span><span class="n">to_ioapi</span><span class="p">(</span><span class="n">bdate</span><span class="o">=</span><span class="n">dates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">vkey</span><span class="p">)</span>
+
+<span class="c1"># removing missing values</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mf">9e30</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="get-winds-across-domain">
+<h2>Get Winds Across Domain<a class="headerlink" href="#get-winds-across-domain" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>retrieve the HRRR 80m wind components</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wkey</span> <span class="o">=</span> <span class="s1">&#39;hrrr.wind_80m&#39;</span>
+<span class="n">wds</span> <span class="o">=</span> <span class="n">rsig</span><span class="o">.</span><span class="n">to_ioapi</span><span class="p">(</span><span class="n">bdate</span><span class="o">=</span><span class="n">dates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">wkey</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mf">9e30</span><span class="p">)</span>
+<span class="n">wds</span> <span class="o">=</span> <span class="n">wds</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">TSTEP</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">TSTEP</span><span class="p">)</span>
+<span class="c1"># Add wind components to the VCD dataset</span>
+<span class="n">ds</span><span class="p">[</span><span class="s1">&#39;WIND_80M_U&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wds</span><span class="p">[</span><span class="s1">&#39;wind_80m_u&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">wds</span><span class="p">[</span><span class="s1">&#39;wind_80m_u&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+<span class="n">ds</span><span class="p">[</span><span class="s1">&#39;WIND_80M_V&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wds</span><span class="p">[</span><span class="s1">&#39;wind_80m_v&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">wds</span><span class="p">[</span><span class="s1">&#39;wind_80m_v&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+</pre></div>
+</div>
+</section>
+<section id="calculate-the-column-divergence">
+<h2>Calculate the Column Divergence<a class="headerlink" href="#calculate-the-column-divergence" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;DCDX&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;NO2&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="n">ds</span><span class="p">[</span><span class="s1">&#39;DCDY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;NO2&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+<span class="k">for</span> <span class="n">ti</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">TSTEP</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%F</span><span class="s1">T%HZ&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;NO2&#39;</span><span class="p">][</span><span class="n">ti</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">dcdx</span><span class="p">,</span> <span class="n">dcdy</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">emiss</span><span class="o">.</span><span class="n">divergence</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ds</span><span class="o">.</span><span class="n">XCELL</span><span class="p">,</span> <span class="n">ds</span><span class="o">.</span><span class="n">YCELL</span><span class="p">,</span> <span class="n">withdiag</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;DCDX&#39;</span><span class="p">][</span><span class="n">ti</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">dcdx</span>
+        <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;DCDY&#39;</span><span class="p">][</span><span class="n">ti</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">dcdy</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2023-05-01T00Z
+2023-05-01T01Z
+2023-05-01T02Z
+2023-05-01T03Z
+2023-05-01T04Z
+2023-05-01T05Z
+2023-05-01T06Z
+2023-05-01T07Z
+2023-05-01T08Z
+2023-05-01T09Z
+2023-05-01T10Z
+2023-05-01T11Z
+2023-05-01T12Z
+2023-05-01T13Z
+2023-05-01T14Z
+2023-05-01T15Z
+2023-05-01T16Z
+2023-05-01T17Z
+2023-05-01T18Z
+2023-05-01T19Z
+2023-05-01T20Z
+2023-05-01T21Z
+2023-05-01T22Z
+2023-05-01T23Z
+2023-05-02T00Z
+2023-05-02T01Z
+2023-05-02T02Z
+2023-05-02T03Z
+2023-05-02T04Z
+2023-05-02T05Z
+2023-05-02T06Z
+2023-05-02T07Z
+2023-05-02T08Z
+2023-05-02T09Z
+2023-05-02T10Z
+2023-05-02T11Z
+2023-05-02T12Z
+2023-05-02T13Z
+2023-05-02T14Z
+2023-05-02T15Z
+2023-05-02T16Z
+2023-05-02T17Z
+2023-05-02T18Z
+2023-05-02T19Z
+2023-05-02T20Z
+2023-05-02T21Z
+2023-05-02T22Z
+2023-05-02T23Z
+2023-05-03T00Z
+2023-05-03T01Z
+2023-05-03T02Z
+2023-05-03T03Z
+2023-05-03T04Z
+2023-05-03T05Z
+2023-05-03T06Z
+2023-05-03T07Z
+2023-05-03T08Z
+2023-05-03T09Z
+2023-05-03T10Z
+2023-05-03T11Z
+2023-05-03T12Z
+2023-05-03T13Z
+2023-05-03T14Z
+2023-05-03T15Z
+2023-05-03T16Z
+2023-05-03T17Z
+2023-05-03T18Z
+2023-05-03T19Z
+2023-05-03T20Z
+2023-05-03T21Z
+2023-05-03T22Z
+2023-05-03T23Z
+2023-05-04T00Z
+2023-05-04T01Z
+2023-05-04T02Z
+2023-05-04T03Z
+2023-05-04T04Z
+2023-05-04T05Z
+2023-05-04T06Z
+2023-05-04T07Z
+2023-05-04T08Z
+2023-05-04T09Z
+2023-05-04T10Z
+2023-05-04T11Z
+2023-05-04T12Z
+2023-05-04T13Z
+2023-05-04T14Z
+2023-05-04T15Z
+2023-05-04T16Z
+2023-05-04T17Z
+2023-05-04T18Z
+2023-05-04T19Z
+2023-05-04T20Z
+2023-05-04T21Z
+2023-05-04T22Z
+2023-05-04T23Z
+</pre></div>
+</div>
+</section>
+<section id="multiply-by-orthogonal-wind-components">
+<h2>Multiply by Orthogonal Wind Components<a class="headerlink" href="#multiply-by-orthogonal-wind-components" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="p">[</span><span class="s1">&#39;FDV&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;DCDX&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;WIND_80M_U&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;DCDY&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;WIND_80M_V&#39;</span><span class="p">]</span>
+<span class="n">ds</span><span class="p">[</span><span class="s1">&#39;FDV&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">long_name</span><span class="o">=</span><span class="s1">&#39;column divergence&#39;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s1">&#39;div(V w) = dV/dx*u + dV/dy*v&#39;</span><span class="p">,</span>
+    <span class="n">units</span><span class="o">=</span><span class="s1">&#39;molecules/cm2/s&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="add-chemical-lifetime-correction-for-emissions">
+<h2>Add Chemical Lifetime Correction for Emissions<a class="headerlink" href="#add-chemical-lifetime-correction-for-emissions" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>tau is a simple assumption of 6h, but should be improved
+for specific application by allowing it to vary in space and time.</p></li>
+<li><p>Units are converted to moles/m2/s for more common representation</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tau</span> <span class="o">=</span> <span class="n">tauh</span> <span class="o">*</span> <span class="mi">3600</span>  <span class="c1"># s</span>
+<span class="n">N_A</span> <span class="o">=</span> <span class="mf">6.022e23</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">XCELL</span> <span class="o">*</span> <span class="n">ds</span><span class="o">.</span><span class="n">YCELL</span>
+<span class="c1"># convert from moleculesNO2/cm2/s to molesNOx/m2/s</span>
+<span class="n">fdvNOx</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;FDV&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">N_A</span> <span class="o">*</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="mf">1.32</span>
+<span class="n">fdvNOx</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">long_name</span><span class="o">=</span><span class="s1">&#39;fdv component&#39;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s1">&#39;div(V w) * 1.32&#39;</span><span class="p">,</span>
+    <span class="n">units</span><span class="o">=</span><span class="s1">&#39;moles/m2/s&#39;</span>
+<span class="p">)</span>
+<span class="n">tauNOx</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;NO2&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">/</span> <span class="n">N_A</span> <span class="o">*</span> <span class="mf">1e4</span> <span class="o">*</span> <span class="mf">1.32</span>
+<span class="n">tauNOx</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">long_name</span><span class="o">=</span><span class="s1">&#39;VCD/tau component&#39;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s1">&#39;V / tau * 1.32&#39;</span><span class="p">,</span>
+    <span class="n">units</span><span class="o">=</span><span class="s1">&#39;moles/m2/s&#39;</span>
+<span class="p">)</span>
+<span class="n">eNOx</span> <span class="o">=</span> <span class="n">fdvNOx</span> <span class="o">+</span> <span class="n">tauNOx</span>
+<span class="n">eNOx</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">long_name</span><span class="o">=</span><span class="s1">&#39;emissions of NOx&#39;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s1">&#39;(div(V w) + V / tau) * 1.32&#39;</span><span class="p">,</span>
+    <span class="n">units</span><span class="o">=</span><span class="s1">&#39;moles/m2/s&#39;</span>
+<span class="p">)</span>
+<span class="n">ds</span><span class="p">[</span><span class="s1">&#39;emiss_nox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">eNOx</span>
+<span class="n">outds</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[[</span><span class="s1">&#39;FDV&#39;</span><span class="p">,</span> <span class="s1">&#39;emiss_nox&#39;</span><span class="p">]]</span>
+<span class="n">outds</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">)</span>
+<span class="n">outds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cntyname</span><span class="si">}</span><span class="s1">/flux.nc&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="plot-emission-results">
+<h2>Plot Emission Results<a class="headerlink" href="#plot-emission-results" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Create a simple plot of emissions</p></li>
+<li><p>Then intersect cells with Maricopa county and sum for county total</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axx</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">axx</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;gainsboro&#39;</span><span class="p">)</span>
+<span class="n">figpath</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cntyname</span><span class="si">}</span><span class="s1">/flux.png&#39;</span>
+
+<span class="c1"># Requires geopandas to add county and primary roads</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">shapely</span>
+    <span class="n">cntypath</span> <span class="o">=</span> <span class="s1">&#39;https://www2.census.gov/geo/tiger/TIGER2023/COUNTY/tl_2023_us_county.zip&#39;</span>
+    <span class="n">roadpath</span> <span class="o">=</span> <span class="s1">&#39;https://www2.census.gov/geo/tiger/TIGER2023/PRIMARYROADS/tl_2023_us_primaryroads.zip&#39;</span>
+    <span class="n">cnty</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">cntypath</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">bbox</span><span class="p">))</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">crs_proj4</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">eNOx</span><span class="o">.</span><span class="n">ROW</span><span class="p">,</span> <span class="n">eNOx</span><span class="o">.</span><span class="n">COL</span><span class="p">)</span>
+    <span class="n">cntypoly</span> <span class="o">=</span> <span class="n">cnty</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;NAME == &quot;</span><span class="si">{</span><span class="n">cntyname</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">unary_union</span>
+    <span class="n">incnty</span> <span class="o">=</span> <span class="n">cntypoly</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">shapely</span><span class="o">.</span><span class="n">points</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)))</span>  <span class="c1"># Is each cell in Maricopa?</span>
+    <span class="n">incnty</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">incnty</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;ROW&#39;</span><span class="p">,</span> <span class="s1">&#39;COL&#39;</span><span class="p">))</span>
+    <span class="n">fdvNOx</span> <span class="o">=</span> <span class="n">fdvNOx</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">incnty</span><span class="p">)</span>
+    <span class="n">tauNOx</span> <span class="o">=</span> <span class="n">tauNOx</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">incnty</span><span class="p">)</span>
+    <span class="n">eNOx</span> <span class="o">=</span> <span class="n">eNOx</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">incnty</span><span class="p">)</span>
+    <span class="n">massrate_nox</span> <span class="o">=</span> <span class="n">eNOx</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="s1">&#39;TSTEP&#39;</span><span class="p">,</span> <span class="s1">&#39;LAY&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">ds</span><span class="o">.</span><span class="n">XCELL</span> <span class="o">*</span> <span class="n">ds</span><span class="o">.</span><span class="n">YCELL</span> <span class="o">*</span> <span class="mf">46.</span>  <span class="c1"># moles/m2/s to gNO2/s</span>
+    <span class="n">mass</span> <span class="o">=</span> <span class="n">massrate_nox</span> <span class="o">/</span> <span class="mf">1e9</span> <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span>  <span class="c1"># gNO2/s to Gg/yr</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cntyname</span><span class="si">}</span><span class="s1"> ENOx = </span><span class="si">{</span><span class="n">mass</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> [GgNO2/yr]&#39;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">road</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">roadpath</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">bbox</span><span class="p">))</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">crs_proj4</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axx</span><span class="o">.</span><span class="n">ravel</span><span class="p">():</span>
+        <span class="n">cnty</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">.6</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">road</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">.3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;top&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;failed to add map&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+<span class="n">qm</span> <span class="o">=</span> <span class="n">eNOx</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="s1">&#39;TSTEP&#39;</span><span class="p">,</span> <span class="s1">&#39;LAY&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fdvNOx</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="s1">&#39;TSTEP&#39;</span><span class="p">,</span> <span class="s1">&#39;LAY&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">norm</span><span class="o">=</span><span class="n">qm</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">qm</span><span class="o">.</span><span class="n">cmap</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">tauNOx</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="s1">&#39;TSTEP&#39;</span><span class="p">,</span> <span class="s1">&#39;LAY&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">norm</span><span class="o">=</span><span class="n">qm</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">qm</span><span class="o">.</span><span class="n">cmap</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">axx</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">figpath</span><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_plot_fluxdiv_001.png" srcset="../../_images/sphx_glr_plot_fluxdiv_001.png" alt="plot fluxdiv" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/pyrsig/pyrsig/examples/emissions/plot_fluxdiv.py:159: DeprecationWarning: The &#39;unary_union&#39; attribute is deprecated, use the &#39;union_all()&#39; method instead.
+  cntypoly = cnty.query(f&#39;NAME == &quot;{cntyname}&quot;&#39;).unary_union
+Maricopa ENOx = 50.1 [GgNO2/yr]
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  35.746 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-emissions-plot-fluxdiv-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/e3a497d2169899633cdc068e63b1f1b0/plot_fluxdiv.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_fluxdiv.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/01585152b577ee44704b34de133610f6/plot_fluxdiv.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_fluxdiv.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">pyrsig Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#get-data-examples">Get data examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#timeseries-examples">Timeseries examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#oversample-examples">Oversample examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#maps-examples">Maps examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#comparison-examples">Comparison examples</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#emission-examples">Emission examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/pyrsig.html">pyrsig package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">pyrsig Example Gallery</a><ul>
+  <li><a href="index.html">Emission examples</a><ul>
+      <li>Previous: <a href="plot_emg.html" title="previous chapter">Calculate Emissions by Fitting a Modified Guassian</a></li>
+      <li>Next: <a href="../../api/pyrsig.html" title="next chapter">pyrsig package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/auto_examples/emissions/plot_fluxdiv.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

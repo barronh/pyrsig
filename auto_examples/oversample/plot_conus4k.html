@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Oversample CONUS at 4k &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Oversample NC at 0.1 degree" href="plot_ncpt1.html" />
+    <link rel="prev" title="Oversample examples" href="index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-oversample-plot-conus4k-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="oversample-conus-at-4k">
+<span id="sphx-glr-auto-examples-oversample-plot-conus4k-py"></span><h1>Oversample CONUS at 4k<a class="headerlink" href="#oversample-conus-at-4k" title="Permalink to this heading">¶</a></h1>
+<p>Create a 4km gridded product on a Continental US grid, but only download
+data over NC.</p>
+<img src="../../_images/sphx_glr_plot_conus4k_001.png" srcset="../../_images/sphx_glr_plot_conus4k_001.png" alt="TSTEP = 2020-01-01, LAY = 0.9975" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2020-01-01 00:00:00
+2020-01-02 00:00:00
+2020-01-03 00:00:00
+2020-01-04 00:00:00
+2020-01-05 00:00:00
+2020-01-06 00:00:00
+2020-01-07 00:00:00
+2020-01-08 00:00:00
+2020-01-09 00:00:00
+2020-01-10 00:00:00
+did not find a match in any of xarray&#39;s currently installed IO backends [&#39;netcdf4&#39;, &#39;scipy&#39;]. Consider explicitly selecting one of the installed engines via the ``engine`` parameter, or installing additional IO dependencies, see:
+https://docs.xarray.dev/en/stable/getting-started-guide/installing.html
+https://docs.xarray.dev/en/stable/user-guide/io.html
+2020-01-11 00:00:00
+2020-01-12 00:00:00
+2020-01-13 00:00:00
+2020-01-14 00:00:00
+2020-01-15 00:00:00
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/pycno/__init__.py:538: UserWarning: Downloading: https://www.giss.nasa.gov/tools/panoply/overlays/MWDB_Coasts_NA_3.cnob to /home/runner/.pycno/MWDB_Coasts_NA_3.cnob
+  warnings.warn(&#39;Downloading: &#39; + url + &#39; to &#39; + str(datapatho))
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyrsig</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pycno</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+
+<span class="c1"># Create a working directory</span>
+<span class="n">gdnam</span> <span class="o">=</span> <span class="s1">&#39;4US1&#39;</span>
+<span class="n">bdate</span> <span class="o">=</span> <span class="s1">&#39;2020-01-01&#39;</span>
+<span class="n">edate</span> <span class="o">=</span> <span class="s1">&#39;2020-01-15&#39;</span>
+<span class="n">wdir</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">gdnam</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">bdate</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">gdnam</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">rsigapi</span> <span class="o">=</span> <span class="n">pyrsig</span><span class="o">.</span><span class="n">RsigApi</span><span class="p">(</span>
+    <span class="n">bdate</span><span class="o">=</span><span class="n">bdate</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">85</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="o">-</span><span class="mi">75</span><span class="p">,</span> <span class="mi">37</span><span class="p">),</span>
+    <span class="n">encoding</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;zlib&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;complevel&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;_FillValue&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">9.999e36</span><span class="p">},</span>
+    <span class="n">workdir</span><span class="o">=</span><span class="n">wdir</span><span class="p">,</span> <span class="n">grid_kw</span><span class="o">=</span><span class="n">gdnam</span>
+<span class="p">)</span>
+
+<span class="c1"># Update to download daily averages instead of hourly</span>
+<span class="n">rsigapi</span><span class="o">.</span><span class="n">grid_kw</span><span class="p">[</span><span class="s1">&#39;REGRID_AGGREGATE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;daily&#39;</span>
+
+<span class="c1"># Loop over days</span>
+<span class="n">dss</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">bdate</span> <span class="ow">in</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">bdate</span><span class="p">,</span> <span class="n">edate</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">bdate</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">rsigapi</span><span class="o">.</span><span class="n">to_ioapi</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s1">&#39;tropomi.offl.no2.nitrogendioxide_tropospheric_column&#39;</span><span class="p">,</span> <span class="n">bdate</span><span class="o">=</span><span class="n">bdate</span><span class="p">)</span>
+        <span class="n">dss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+<span class="c1"># Create a simple long-term average</span>
+<span class="n">outds</span> <span class="o">=</span> <span class="n">dss</span><span class="p">[</span><span class="mi">0</span><span class="p">][[</span><span class="s1">&#39;DAILY_NO2&#39;</span><span class="p">,</span> <span class="s1">&#39;COUNT&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">TSTEP</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">LAY</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">outds</span><span class="p">[</span><span class="s1">&#39;DAILY_NO2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">outds</span><span class="p">[</span><span class="s1">&#39;DAILY_NO2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">outds</span><span class="p">[</span><span class="s1">&#39;COUNT&#39;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">dss</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">TSTEP</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">LAY</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">outds</span><span class="p">[</span><span class="s1">&#39;DAILY_NO2&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;DAILY_NO2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;COUNT&#39;</span><span class="p">]</span>
+    <span class="n">outds</span><span class="p">[</span><span class="s1">&#39;COUNT&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;COUNT&#39;</span><span class="p">]</span>
+
+<span class="n">Z</span> <span class="o">=</span> <span class="n">outds</span><span class="p">[</span><span class="s1">&#39;DAILY_NO2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">outds</span><span class="p">[</span><span class="s1">&#39;DAILY_NO2&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">outds</span><span class="p">[</span><span class="s1">&#39;COUNT&#39;</span><span class="p">])</span>
+
+<span class="c1"># Make a plot with a medium grey background and state boundaries</span>
+<span class="n">qm</span> <span class="o">=</span> <span class="n">Z</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="n">qm</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;gainsboro&#39;</span><span class="p">)</span>
+<span class="n">pycno</span><span class="o">.</span><span class="n">cno</span><span class="p">(</span><span class="n">dss</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;crs_proj4&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">drawstates</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">qm</span><span class="o">.</span><span class="n">axes</span><span class="p">)</span>
+
+<span class="c1"># Show the figure</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># Or save the figure</span>
+<span class="c1"># qm.figure.savefig(&#39;conus4k.png&#39;)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  40.685 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-oversample-plot-conus4k-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/fbffdd6a2b6b90471a77459ec9a1d7d4/plot_conus4k.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_conus4k.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/d0c18e9a4d2ea6b520e33ee2bb9d233a/plot_conus4k.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_conus4k.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">pyrsig Example Gallery</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#get-data-examples">Get data examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#timeseries-examples">Timeseries examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#oversample-examples">Oversample examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#maps-examples">Maps examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#comparison-examples">Comparison examples</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#emission-examples">Emission examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/pyrsig.html">pyrsig package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">pyrsig Example Gallery</a><ul>
+  <li><a href="index.html">Oversample examples</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Oversample examples</a></li>
+      <li>Next: <a href="plot_ncpt1.html" title="next chapter">Oversample NC at 0.1 degree</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/auto_examples/oversample/plot_conus4k.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
