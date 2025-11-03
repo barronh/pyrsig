@@ -2,7 +2,7 @@ __all__ = [
     'RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'emiss',
     'grids'
 ]
-__version__ = '0.11.0'
+__version__ = '0.11.1'
 
 from . import cmaq
 from .cmaq import open_ioapi, open_mfioapi
