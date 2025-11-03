@@ -4,8 +4,6 @@ on:
   release:
     types: [released]
   workflow_dispatch:
-    branches:
-      - main
 jobs:
   build:
     name: Build distro
