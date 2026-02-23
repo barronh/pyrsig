@@ -607,7 +607,7 @@ def from_point(bf):
     # Line 4-5: Dimensions
     # Line 6-7: Variable names
     # Line 8-9: Units
-    # Line 10-12: definition of data chunks lines
+    # Line 10-11: definition of data chunks lines
     #   Next npoint * 80 characters are notes for each point
     #   Next nvariable * npoint * 8 bytes are data[variables][]
 
@@ -622,7 +622,9 @@ def from_point(bf):
     Timestamp Longitude Latitude PM25_emission
     # Variable units:
     yyyymmddhhmmss deg deg kg
+    # char notes[points][80] and                    <=== optional
     # IEEE-754 64-bit reals data[variables][points]:
+
     """
     import numpy as np
     import pandas as pd
@@ -640,8 +642,13 @@ def from_point(bf):
             varkeys = _l.decode().strip().split()
         elif i == 8:
             units = _l.decode().strip().split()
+        elif i == 9:
+            hasnotes = 'notes' in _l.decode()
+            if not hasnotes:
+                break
 
-    notes = [bf.read(80).decode().strip() for i in range(npoint)]
+    if hasnotes:
+        notes = [bf.read(80).decode().strip() for i in range(npoint)]
 
     # Use numpy to unpack frombuffer becuase it is faster than unpack
     vals = np.frombuffer(bf.read(), dtype='>d').reshape(nvar, npoint)
@@ -651,9 +658,10 @@ def from_point(bf):
         for varkey in varkeys
     ]
     varwunits = [varkey + f'({units[i]})' for i, varkey in enumerate(varkeys)]
-    data = {
-        'NOTE': notes,
-    }
+    data = {}
+    if hasnotes:
+        data['NOTE'] = notes
+
     for vi, varwunit in enumerate(varwunits):
         data[varwunit] = vals[vi].ravel().astype(f'={vals.dtype.char}')
 
@@ -669,7 +677,9 @@ def from_point(bf):
     varwunits[ti] = 'Timestamp(UTC)'
 
     df['Timestamp(UTC)'] = timestamps
-    outkeys = varwunits + ['NOTE']
+    outkeys = varwunits
+    if hasnotes:
+        outkeys += ['NOTE']
     df = df[outkeys].rename(
         columns={'PM25_ATM_HOURLY(ug/m3)': 'pm25_atm_hourly(ug/m3)'}
     )
@@ -1159,7 +1169,7 @@ def from_regriddedswath(bf, as_dataframe=True):
     gdn = 'unknown'  # gdnam
     gattrs = getgridprops(gdn, crshdr, crsparts, projparts, gridparts, vgparts)
     df = pd.DataFrame({
-        'Timestep(UTC)': times.astype(f'={times.dtype.char}'),
+        'Timestamp(UTC)': times.astype(f'={times.dtype.char}'),
         'LONGITUDE(deg)': lons.astype(f'={lons.dtype.char}'),
         'LATITUDE(deg)': lats.astype(f'={lats.dtype.char}'),
         'COLUMN(-)': cols.astype(f'={cols.dtype.char}'),
@@ -1171,17 +1181,17 @@ def from_regriddedswath(bf, as_dataframe=True):
     if as_dataframe:
         return df
     c2c = {}
-    c2c['Timestep(UTC)'] = 'Timestep'
+    c2c['Timestamp(UTC)'] = 'Timestamp'
     c2c['LONGITUDE(deg)'] = 'LONGITUDE'
     c2c['LATITUDE(deg)'] = 'LATITUDE'
     c2c['COLUMN(-)'] = 'COL'
     c2c['ROW(-)'] = 'ROW'
     c2c[valkey] = varkeys[0]
     df = df.rename(columns=c2c)
-    df['Timestep'] = (
-        pd.to_datetime(df['Timestep']) - pd.to_datetime('1970-01-01T00Z')
+    df['Timestamp'] = (
+        pd.to_datetime(df['Timestamp']) - pd.to_datetime('1970-01-01T00Z')
     ).dt.total_seconds()
-    idxcols = ['Timestep', 'ROW', 'COL']
+    idxcols = ['Timestamp', 'ROW', 'COL']
     ds = df.set_index(idxcols).to_xarray()
     ds['LONGITUDE'].attrs.update(units='deg')
     ds['LATITUDE'].attrs.update(units='deg')

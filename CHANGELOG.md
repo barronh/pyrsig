@@ -3,6 +3,13 @@ Change Log
 
 Not all changes are listed, but notable changes are itemized for ease of review.
 
+* v0.12.0: Added CAMx usability options.
+           Added extra_kw options. Needs improved documentation and integration
+           with other keyword options.
+           Added minor keywords for pair_cmaq and checkserver
+           One xdr format used Timestep instead of Timestamp, which has been
+           fixed
+           Added version specificity
 * v0.11.0: Added capability for date chunk processing.
            Added Exponentially Modified Gausian emission estimate capability.
            Added flux divergence emission processing.

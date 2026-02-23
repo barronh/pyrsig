@@ -339,7 +339,7 @@ def _progress(blocknum, readsize, totalsize):
             print('.', end='', flush=True)
 
 
-def check_server(server):
+def check_server(server, timeout=5):
     import ssl
     from urllib.request import urlopen
     from .. import rcParams
@@ -351,7 +351,7 @@ def check_server(server):
         ssl._create_default_https_context = _create_unverified_tls_context
     try:
         url = f'https://{server}'
-        urlopen(url=url)
+        urlopen(url=url, timeout=timeout)
         out = True
     except Exception:
         out = False
@@ -360,7 +360,7 @@ def check_server(server):
     return out
 
 
-def get_server(servers=None):
+def get_server(servers=None, timeout=5):
     from .. import rcParams
     if servers is None:
         servers = ['maple.hesc.epa.gov']  # prefer maple
@@ -368,7 +368,7 @@ def get_server(servers=None):
         servers += ['ofmpub.epa.gov']  # default to ofmpub if none found
 
     for server in servers:
-        if check_server(server):
+        if check_server(server, timeout=timeout):
             break
     return server
 

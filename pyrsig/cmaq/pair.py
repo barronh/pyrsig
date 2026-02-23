@@ -65,7 +65,7 @@ For a full list of species that RSIG can pair, use the --help-rsig
 
 def pair_rsigcmaq(
     qds, qkey, datakey, bdate=None, edate=None, bbox=None, prefix='CMAQ_',
-    persist=False, verbose=0
+    persist=False, verbose=0, **api_kw
 ):
     """
     Arguments
@@ -90,13 +90,15 @@ def pair_rsigcmaq(
         If True (default: False), save to disk and return output path
     verbose : int
         Level of verbosity. Negative omits warning about cached paired files.
+    api_kw : mappable
+        Keywords (e.g, workdir='.') to construct RsigApi
 
     Returns
     -------
     outpath : str
         path to output
     """
-    workdir = '.'
+    workdir = api_kw.get('workdir', '.')
     p1s = pd.to_timedelta('1s')
     if isinstance(qds, str):
         qpath = qds
@@ -118,7 +120,7 @@ def pair_rsigcmaq(
         if verbose > 0:
             print(bbox)
 
-    api = pyrsig.RsigApi(bbox=bbox, workdir=workdir)
+    api = pyrsig.RsigApi(bbox=bbox, **api_kw)
 
     if bdate is None or edate is None:
         dates = pd.to_datetime(qds.TSTEP.values)

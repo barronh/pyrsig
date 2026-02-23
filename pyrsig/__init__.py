@@ -2,7 +2,7 @@ __all__ = [
     'RsigApi', 'RsigGui', 'open_ioapi', 'open_mfioapi', 'cmaq', 'emiss',
     'grids'
 ]
-__version__ = '0.11.1'
+__version__ = '0.12.0'
 
 from . import cmaq
 from .cmaq import open_ioapi, open_mfioapi
@@ -30,7 +30,7 @@ _noregrid_prefixes = ('cmaq', 'regridded', 'hrrr', 'tempo.l3')
 # Requesting xdr format for polygons supports one of two formats:
 # xdr : contains binary chunks described by a 10-line ascii header
 # bin : contains binary chunks described by a 1-line ascii header
-_shpxdrprefixes = ['hms.']
+_shpxdrprefixes = ['hms.smoke']
 _shpbinprefixes = [
     'landuse.atlantic.population_iclus',
     'landuse.gulf.population_iclus',
@@ -72,6 +72,7 @@ class RsigApi:
         self, key=None, bdate=None, edate=None, bbox=None, grid_kw=None,
         tropomi_kw=None, purpleair_kw=None, viirsnoaa_kw=None, tempo_kw=None,
         pandora_kw=None, calipso_kw=None, hrrr_kw=None,
+        extra_kw=None,
         server=None, compress=1, corners=1, encoding=None,
         overwrite=False, workdir='.', gridfit=False
     ):
@@ -128,7 +129,8 @@ class RsigApi:
             'maximum_solar_zenith_angle': 70.
         pandora_kw : dict
           Dictionary of Pandora filter parameters default
-          {'minimum_quality': 'high'} other options 'medium' or 'low'
+          'minimum_quality': 'high' # other options 'medium' or 'low'
+          'aggregate': 'none' # other options 'hourly'
         calipso_kw : dict
           Dictionary of Calipso filter parameters default
           {'MINIMUM_CAD': 20, 'MAXIMUM_UNCERTAINTY': 99}
@@ -250,6 +252,7 @@ class RsigApi:
             pandora_kw = {}
 
         pandora_kw.setdefault('minimum_quality', 'high')
+        pandora_kw.setdefault('aggregate', 'none')
 
         self.pandora_kw = pandora_kw
 
@@ -278,6 +281,10 @@ class RsigApi:
             hrrr_kw = {}
         hrrr_kw.setdefault('CMAQ', 1)
         self.hrrr_kw = hrrr_kw
+
+        if extra_kw is None:
+            extra_kw = {}
+        self.extra_kw = extra_kw
 
     def set_grid_kw(self, grid_kw):
         if isinstance(grid_kw, str):
@@ -609,9 +616,9 @@ class RsigApi:
             viirsnoaastr = ''
 
         if key.startswith('pandora'):
-            pandorastr = '&MINIMUM_QUALITY={minimum_quality}'.format(
-                **pandora_kw
-            )
+            pandorastr = (
+                '&MINIMUM_QUALITY={minimum_quality}&AGGREGATE={aggregate}'
+            ).format(**pandora_kw)
         else:
             pandorastr = ''
 
@@ -677,6 +684,11 @@ class RsigApi:
         else:
             nolonlatsstr = ''
 
+        extra = ''
+        for xpre, xval in self.extra_kw.items():
+            if key.startswith(xpre):
+                extra += xval
+
         url = (
             f'https://{self.server}/rsig/rsigserver?SERVICE=wcs&VERSION=1.0.0'
             f'&REQUEST={request}&FORMAT={formatstr}'
@@ -686,7 +698,7 @@ class RsigApi:
             f'&COMPRESS={compress}'
         ) + (
             purpleairstr + viirsnoaastr + tropomistr + tempostr + pandorastr
-            + calipsostr + hrrrstr + gridstr + cornerstr + nolonlatsstr
+            + calipsostr + hrrrstr + gridstr + cornerstr + nolonlatsstr + extra
         )
 
         outpath = (
@@ -1370,6 +1382,9 @@ def findkeys(
     temporal=None, bbox=None, case=False, flags=0, verbose=1, **kwds
 ):
     """
+    Find all RSIG dataset keys that match a space (bbox) and time (temporal)
+    domain. Optionally, restrict based on other keywords (e.g., name)
+
     Arguments
     ---------
     temporal : str
@@ -1382,7 +1397,7 @@ def findkeys(
         Regex module flags, e.g. re.IGNORECASE.
     kwds : mappable
         Regular expressions for columns (eg., name='tempo.*') see descdf
-        returns for more columns
+        returns for more input columns
     verbose : int
         Level of verbosity
 
@@ -1392,6 +1407,10 @@ def findkeys(
         Has columns: name, label, description, bbox_str, beginPosition,
         timeResolution, endPosition, and prefix
     """
+    import re
+
+    if not case:
+        flags = int(flags | re.IGNORECASE)
     api = RsigApi()
     df = api.descriptions().fillna('')
     for k, v in kwds.items():

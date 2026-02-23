@@ -206,23 +206,20 @@ def add_ioapi_meta(ds, metapath=None, earth_radius=6370000., path=''):
         pass
 
     if 'VGLVLS' in f.attrs:
-        lvls = f.attrs['VGLVLS']
-        if len(lvls) > 1:
+        lvls = np.array(f.attrs['VGLVLS'])
+        nk = f.sizes.get('LAY', 1)
+        if lvls.size == (nk + 1):
             f.coords['LAY'] = (lvls[:-1] + lvls[1:]) / 2.
-        else:
+        elif nk == 1:
             f.coords['LAY'] = [np.mean(lvls)]
 
-    nrs = [f.sizes.get('ROW', None), f.attrs.get('NROWS', None)]
-    for nr in nrs:
-        if nr is not None:
-            f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
-            break
+    nr = f.sizes.get('ROW', f.attrs.get('NROWS', None))
+    if nr is not None:
+        f.coords['ROW'] = np.arange(f.attrs['NROWS']) + 0.5
 
-    ncs = [f.sizes.get('COL', None), f.attrs.get('NCOLS', None)]
-    for nc in ncs:
-        if nc is not None:
-            f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
-            break
+    nc = f.sizes.get('COL', f.attrs.get('NCOLS', None))
+    if nc is not None:
+        f.coords['COL'] = np.arange(f.attrs['NCOLS']) + 0.5
 
     try:
         proj4str = get_proj4(f.attrs, earth_radius=earth_radius)
