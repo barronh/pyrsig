@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>pyrsig.emiss package &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyrsig.grids package" href="pyrsig.grids.html" />
+    <link rel="prev" title="pyrsig.data package" href="pyrsig.data.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="pyrsig-emiss-package">
+<h1>pyrsig.emiss package<a class="headerlink" href="#pyrsig-emiss-package" title="Permalink to this heading">¶</a></h1>
+<section id="module-pyrsig.emiss">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyrsig.emiss" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.emiss.divergence">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.emiss.</span></span><span class="sig-name descname"><span class="pre">divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withdiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig/emiss/_flux.html#divergence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.emiss.divergence" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate gradient of c in w-e and s-n directions
+and optionally in the ne-sw and se-nw diagonals</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>c</strong> (<em>array</em>) – 2-dimensional array of column densities</p></li>
+<li><p><strong>dy</strong> (<em>float</em><em> or </em><em>array</em>) – pixel edge length in the y direction</p></li>
+<li><p><strong>dx</strong> (<em>float</em><em> or </em><em>array</em>) – pixel edge length in the x direction</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>dcdx, dcdy[, dcdr, dcds]</strong> – tuple of 2 or 4 divergence</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<dl class="simple">
+<dt>Adapted from <a class="reference external" href="https://github.com/Kang-Sun-CfA/Oversampling_matlab/blob">https://github.com/Kang-Sun-CfA/Oversampling_matlab/blob</a></dt><dd><p>/v0.2/popy.py#L1711C1-L1732C1</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.emiss.emg">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.emiss.</span></span><span class="sig-name descname"><span class="pre">emg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig/emiss/_emg.html#emg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.emiss.emg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eq 1 of Goldberg et al.[1] as described</p>
+<p>e = 1/x0 exp(mu/x0 + sigma^2 / (2 x0^2) - x / x0)
+G = F((x - mu)/sigma - sigma/x_o)
+f = e * G
+y = alpha f + beta</p>
+<p>Note: F is the Gaussian cumulative distribution function”</p>
+<p>[1] Goldberg et al. doi: 10.5194/acp-22-10875-2022</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array</em>) – x0 is the e-folding distance downwind, representing the length scale
+of the NO2 decay</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Mass distributed across distance</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – sigma is the standard deviation of the Gaussian function, representing
+the Gaussian smoothing length scale</p></li>
+<li><p><strong>mu</strong> (<em>float</em>) – mu is the location of the apparent source relative to the assumed
+pollution source center</p></li>
+<li><p><strong>beta</strong> (<em>float</em>) – Background line density</p></li>
+<li><p><strong>return_parts</strong> (<em>bool</em>) – If False (default), return final output.
+If True, return parts for further analysis</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out</strong> – If False (default), return y (alpha * e * G + beta)
+If True, return alpha, e, G, beta and alpha * e * G + beta</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array or tuple</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>import numpy as np
+from pyrsig.emiss._emg import emg
+# Approximation of data in Goldberg[1] Figure 8a inset
+# g/y y/h * h molNOx/gNOx NO2/NOx [=] mol
+approx_alpha = 62e9 / 8760 * 1.7  / 46 / 1.32
+approx_x0 = 20e3 # iteratively identified
+exparams = {</p>
+<blockquote>
+<div><p>‘alpha’: approx_alpha, ‘x0’: approx_x0,
+‘sigma’: 28e3, ‘mu’: -8000.,
+‘beta’: 2.2,</p>
+</div></blockquote>
+<p>}
+x = np.arange(-75e3, 105e3, 5000)
+y = emg(x, <a href="#id1"><span class="problematic" id="id2">**</span></a>exparams)
+print(np.array2string(np.round(x / 1000, 1).astype(‘i’)))
+print(np.array2string(np.round(y, 1)))
+# [-75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10  -5   0   5  10
+#   15  20  25  30  35  40  45  50  55  60  65  70  75  80  85  90  95 100]
+# [2.3 2.3 2.3 2.4 2.5 2.6 2.7 2.9 3.1 3.3 3.6 3.8 4.1 4.3 4.4 4.5 4.6 4.6
+#  4.6 4.4 4.3 4.1 3.9 3.7 3.5 3.3 3.1 2.9 2.8 2.7 2.6 2.5 2.4 2.4 2.4 2.3]</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.emiss.fitemg">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.emiss.</span></span><span class="sig-name descname"><span class="pre">fitemg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vcds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">us</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degrees</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nxplume</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig/emiss/_emg.html#fitemg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.emiss.fitemg" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vcds</strong> (<em>xr.DataArray</em>) – Vertical column densities 3d (t, y, x) where (x, y) must be square
+(x == y). Units seem to work best when mol/m2. The area unit must
+match the length unit of dx.</p></li>
+<li><p><strong>us</strong> (<em>array-like</em>) – 1d (t,) U component of wind in the x direction at center x/y</p></li>
+<li><p><strong>vs</strong> (<em>array-like</em>) – 1d (t,) V component of wind in the y direction at center x/y</p></li>
+<li><p><strong>dx</strong> (<em>float</em>) – edge length in units commensurate with vcds (typically m)</p></li>
+<li><p><strong>nxplume</strong> (<em>int</em>) – Number of cells to sum in the cross-plume direction after rotation when
+calculating the line density (mol/m) along the plume. Defaults to the
+half width minus 1.</p></li>
+<li><p><strong>degrees</strong> (<em>bool</em>) – Perform calculations of wind direction in degrees (default=True)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fitresult</strong> – vldhat: best fit function
+ws: wind speeds
+wd: wind directions
+wsmean: mean of wind speeds
+rots: rotated rasters</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyrsig.emiss.fitemg1d">
+<span class="sig-prename descclassname"><span class="pre">pyrsig.emiss.</span></span><span class="sig-name descname"><span class="pre">fitemg1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vld</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">addvldhat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyrsig/emiss/_emg.html#fitemg1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyrsig.emiss.fitemg1d" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vld</strong> (<em>np.array</em>) – shape (n,) is the line density assuming focal point at n // 2</p></li>
+<li><p><strong>dx</strong> (<em>float</em>) – Width in length units (consistent with units of b, eg, b [=] mol/m2
+then dx [=] m)</p></li>
+<li><p><strong>addvldhat</strong> (<em>bool</em>) – If True (default), add the fit line (vldhat) to the output</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out</strong> – x, vld, params (from fitemg1d), and (optionally) vldhat</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>from pyrsig.emiss import fitemg1d
+from scipy.stats import exponnorm
+# Approximation of data in Goldberg[1] Figure 8a inset
+# g/y y/h * h molNOx/gNOx NO2/NOx [=] mol
+approx_alpha = 62e9 / 8760 * 1.7  / 46 / 1.32
+approx_x0 = 20e3 # iteratively identified
+alpha = 198155
+x0 = 20e3
+sigma = 28e3
+mu = -8000.
+beta = 2.2
+x = np.arange(-75e3, 156e3, 5e3)
+f = exponnorm(K=approx_x0 / sigma, loc=mu, scale=sigma).pdf(x)
+y = approx_alpha * f + beta
+yerr = np.random.normal(size=y.size) * 0.1
+yfit = fitemg1d(y, dx=1e3)
+print(np.array2string(np.round(x / 1000, 1).astype(‘i’)))
+print(np.array2string(np.round(y, 1)))
+print(np.array2string(np.round(yfit[‘vldhat’], 1)))
+# [-75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10  -5   0   5  10
+#   15  20  25  30  35  40  45  50  55  60  65  70  75  80  85  90  95 100
+#  105 110 115 120 125 130 135 140 145 150 155]
+# [2.3 2.3 2.3 2.4 2.5 2.6 2.7 2.9 3.1 3.3 3.6 3.8 4.1 4.3 4.4 4.5 4.6 4.6
+#  4.6 4.4 4.3 4.1 3.9 3.7 3.5 3.3 3.1 2.9 2.8 2.7 2.6 2.5 2.4 2.4 2.4 2.3
+#  2.3 2.3 2.3 2.2 2.2 2.2 2.2 2.2 2.2 2.2 2.2]
+# [2.3 2.3 2.3 2.4 2.5 2.6 2.7 2.9 3.1 3.3 3.6 3.8 4.1 4.3 4.4 4.5 4.6 4.6
+#  4.6 4.4 4.3 4.1 3.9 3.7 3.5 3.3 3.1 2.9 2.8 2.7 2.6 2.5 2.4 2.4 2.4 2.3
+#  2.3 2.3 2.3 2.2 2.2 2.2 2.2 2.2 2.2 2.2 2.2]</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="pyrsig.html">pyrsig package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="pyrsig.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrsig.html#module-pyrsig">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="pyrsig.html">pyrsig package</a><ul>
+      <li>Previous: <a href="pyrsig.data.html" title="previous chapter">pyrsig.data package</a></li>
+      <li>Next: <a href="pyrsig.grids.html" title="next chapter">pyrsig.grids package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/api/pyrsig.emiss.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

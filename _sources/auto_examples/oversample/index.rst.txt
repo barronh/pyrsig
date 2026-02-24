@@ -1,0 +1,64 @@
+
+
+.. _sphx_glr_auto_examples_oversample:
+
+.. _oversample_examples:
+
+Oversample examples
+-------------------
+
+Examples showing data oversampling of satellite data on a Lambert Conformal
+Conic grid and a simple lon/lat grid.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Create a 4km gridded product on a Continental US grid, but only download data over NC.">
+
+.. only:: html
+
+  .. image:: /auto_examples/oversample/images/thumb/sphx_glr_plot_conus4k_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_oversample_plot_conus4k.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Oversample CONUS at 4k</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Create a 0.1 degree gridded product over NC.">
+
+.. only:: html
+
+  .. image:: /auto_examples/oversample/images/thumb/sphx_glr_plot_ncpt1_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_oversample_plot_ncpt1.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Oversample NC at 0.1 degree</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/oversample/plot_conus4k
+   /auto_examples/oversample/plot_ncpt1
+

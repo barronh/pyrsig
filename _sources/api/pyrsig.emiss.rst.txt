@@ -1,0 +1,10 @@
+pyrsig.emiss package
+====================
+
+Module contents
+---------------
+
+.. automodule:: pyrsig.emiss
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,77 @@
+pyrsig.tests package
+====================
+
+Submodules
+----------
+
+pyrsig.tests.test\_api module
+-----------------------------
+
+.. automodule:: pyrsig.tests.test_api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrsig.tests.test\_bin module
+-----------------------------
+
+.. automodule:: pyrsig.tests.test_bin
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrsig.tests.test\_coards module
+--------------------------------
+
+.. automodule:: pyrsig.tests.test_coards
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrsig.tests.test\_dataframes module
+------------------------------------
+
+.. automodule:: pyrsig.tests.test_dataframes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrsig.tests.test\_gui module
+-----------------------------
+
+.. automodule:: pyrsig.tests.test_gui
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrsig.tests.test\_ioapi module
+-------------------------------
+
+.. automodule:: pyrsig.tests.test_ioapi
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrsig.tests.test\_misc module
+------------------------------
+
+.. automodule:: pyrsig.tests.test_misc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrsig.tests.test\_xdr module
+-----------------------------
+
+.. automodule:: pyrsig.tests.test_xdr
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pyrsig.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:

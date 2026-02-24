@@ -1,0 +1,65 @@
+
+
+.. _sphx_glr_auto_examples_emissions:
+
+.. _emission_examples:
+
+Emission examples
+-----------------
+
+Examples showing how to estimate emissions based on satellite data paired with
+meteorology data. These examples use NO2 and winds from HRRR on the HRRR
+Lambert Conformal Conic grid.
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example uses Dallas Fort Worth Texas as an illustrative application of this technique. For...">
+
+.. only:: html
+
+  .. image:: /auto_examples/emissions/images/thumb/sphx_glr_plot_emg_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_emissions_plot_emg.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Calculate Emissions by Fitting a Modified Guassian</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example uses Phoenix Arizona to illustrate the flux-divergence technique. As an illustrati...">
+
+.. only:: html
+
+  .. image:: /auto_examples/emissions/images/thumb/sphx_glr_plot_fluxdiv_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_emissions_plot_fluxdiv.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Calculate Emissions by Flux Divergence</div>
+    </div>
+
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/emissions/plot_emg
+   /auto_examples/emissions/plot_fluxdiv
+

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>pyrsig.grids package &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyrsig.tests package" href="pyrsig.tests.html" />
+    <link rel="prev" title="pyrsig.emiss package" href="pyrsig.emiss.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="pyrsig-grids-package">
+<h1>pyrsig.grids package<a class="headerlink" href="#pyrsig-grids-package" title="Permalink to this heading">¶</a></h1>
+<section id="module-pyrsig.grids">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyrsig.grids" title="Permalink to this heading">¶</a></h2>
+<dl>
+<dt>def_grid_kw<span class="classifier">dict</span></dt><dd><p>Keys are names of known grids. Values are dictionary of keywords for IOAPI
+grid defintion and RSIG regridding options:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>IOAPI parameters:</dt><dd><dl class="simple">
+<dt>GDNAM<span class="classifier">str</span></dt><dd><p>Name of the grid (e.g., ‘12US1’)</p>
+</dd>
+<dt>GDTYP<span class="classifier">int</span></dt><dd><p>IOAPI numbered grid type (e.g., 2: lambert conformal;
+6: polar stereographic)</p>
+</dd>
+<dt>NCOLS<span class="classifier">int</span></dt><dd><p>number of columns (e.g., 459)</p>
+</dd>
+<dt>NROWS<span class="classifier">int</span></dt><dd><p>number of rows (e.g., 299)</p>
+</dd>
+<dt>XORIG<span class="classifier">float</span></dt><dd><p>The projected x-coordinate of the bottom left corner of the
+bottom-most left-most cell in meters (e.g., -2556000.0)</p>
+</dd>
+<dt>YORIG<span class="classifier">float</span></dt><dd><p>The projected y-coordinate of the bottom left corner of the
+bottom-most left-most cell in meters (e.g., -1728000.0)</p>
+</dd>
+<dt>XCELL<span class="classifier">float</span></dt><dd><p>Width of grid cell in meters (e.g., 12000.)</p>
+</dd>
+<dt>YCELL<span class="classifier">float</span></dt><dd><p>Height of grid cell in meters (e.g., 12000.)</p>
+</dd>
+<dt>P_ALP<span class="classifier">float</span></dt><dd><p>First of three parameters whose meaning depends on GDTYP
+- GDTYP=2: the first true standard latitude (e.g., 33)
+- GDTYP=6: either 1 for north pole or -1 for south pole.</p>
+</dd>
+<dt>P_BET<span class="classifier">float</span></dt><dd><p>Second of three parameters whose meaning depends on GDTYP
+- GDTYP=2: the second true standard latitude (e.g., 45)
+- GDTYP=6: the secant latitude (i.e., of true scale)</p>
+</dd>
+<dt>P_GAM<span class="classifier">float</span></dt><dd><p>Thrid of three parameters whose meaning depends on GDTYP
+- GDTYP=2: the central meridian (e.g., -97)
+- GDTYP=6: the central meridian (e.g., -98)</p>
+</dd>
+<dt>XCENT<span class="classifier">float</span></dt><dd><p>The longitude for the center (0,0) of the projected system.
+(.e.g, -97.0)</p>
+</dd>
+<dt>YCENT<span class="classifier">float</span></dt><dd><p>The latitude for the center (0,0) of the projected system.
+(.e.g, 40..0)</p>
+</dd>
+<dt>VGTYP<span class="classifier">int</span></dt><dd><p>Vertical grid coordinate where 7 terrain following fractional
+pressure (s=(p-ptop)/(psurf - ptop)) or -9999 is the new WRF
+hybrid vertical coordinate that transitions to constant
+pressure at s=0.2</p>
+</dd>
+<dt>VGTOP<span class="classifier">float</span></dt><dd><p>Top of the vertical domain in Pascals (e.g., 5000.)</p>
+</dd>
+<dt>NLAYS<span class="classifier">int</span></dt><dd><p>Number of vertical layers (e.g., 35)</p>
+</dd>
+</dl>
+</dd>
+<dt>RSIG regridding options:</dt><dd><dl class="simple">
+<dt>earth_radius<span class="classifier">float</span></dt><dd><ol class="arabic simple" start="6370000">
+<li></li>
+</ol>
+</dd>
+<dt>g<span class="classifier">float</span></dt><dd><p>Gravitational acceleration in m/s**2 (e.g., 9.81)</p>
+</dd>
+<dt>R<span class="classifier">float</span></dt><dd><p>Ideal gas constant in J/kg/K (e.g., 287.04)</p>
+</dd>
+<dt>A<span class="classifier">float</span></dt><dd><p>Atmospheric lapse rate in K (e.g., 50.)</p>
+</dd>
+<dt>T0<span class="classifier">float</span></dt><dd><p>Reference temperature in Kelvin (e.g., 290.)</p>
+</dd>
+<dt>P0<span class="classifier">float</span></dt><dd><p>Reference pressure in Pascals (e.g., 1000e2)</p>
+</dd>
+<dt>REGRID_AGGREGATE<span class="classifier">str</span></dt><dd><p>Options: ‘None’, ‘daily’, ‘all’</p>
+</dd>
+<dt>REGRID<span class="classifier">str</span></dt><dd><p>Options: ‘weighted’ or ‘mean’
+weighted uses fractional area weights
+mean is the simple average of pixels with centroids in the grid</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<p>A=50., T0=290, P0=1000e2, REGRID_AGGREGATE=’None’, REGRID=’weighted’</p>
+</dd>
+</dl>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="pyrsig.html">pyrsig package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="pyrsig.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrsig.html#module-pyrsig">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="pyrsig.html">pyrsig package</a><ul>
+      <li>Previous: <a href="pyrsig.emiss.html" title="previous chapter">pyrsig.emiss package</a></li>
+      <li>Next: <a href="pyrsig.tests.html" title="next chapter">pyrsig.tests package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/api/pyrsig.grids.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyrsig.data &#8212; pyrsig 0.4.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyrsig.data</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get_descriptions&#39;</span><span class="p">,</span> <span class="s1">&#39;make_descriptions&#39;</span><span class="p">]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">join</span><span class="p">,</span> <span class="n">expanduser</span><span class="p">,</span> <span class="n">exists</span>
+
+<span class="n">_pkgdatapath</span> <span class="o">=</span> <span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+<span class="n">_userdescpath</span> <span class="o">=</span> <span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~/.pyrsig/DescribeCoverage.csv&#39;</span><span class="p">)</span>
+<span class="n">_pkgdescpath</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">_pkgdatapath</span><span class="p">,</span> <span class="s1">&#39;DescribeCoverage.csv&#39;</span><span class="p">)</span>
+<span class="n">_userrcpath</span> <span class="o">=</span> <span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~/.pyrsig/pyrsigrc.json&#39;</span><span class="p">)</span>
+<span class="n">_pkgrcpath</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">_pkgdatapath</span><span class="p">,</span> <span class="s1">&#39;pyrsigrc.json&#39;</span><span class="p">)</span>
+<span class="n">_describecoverages</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">loadrc</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load package options from either ~/.pyrsig/pyrsigrc.yml or the pyrsig/data</span>
+<span class="sd">    equivalent path</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    None</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    opts : dict</span>
+<span class="sd">        Dictionary of options</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">_pkgrcpath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkg</span><span class="p">:</span>
+        <span class="n">pkgopts</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+
+    <span class="n">opts</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">pkgopts</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">exists</span><span class="p">(</span><span class="n">_userrcpath</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">_userrcpath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">usr</span><span class="p">:</span>
+            <span class="n">usropts</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">usr</span><span class="p">)</span>
+            <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">usropts</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">opts</span>
+
+
+<div class="viewcode-block" id="get_descriptions"><a class="viewcode-back" href="../../api/pyrsig.data.html#pyrsig.data.get_descriptions">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">get_descriptions</span><span class="p">(</span><span class="n">server</span><span class="o">=</span><span class="s1">&#39;ofmpub.epa.gov&#39;</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make a refreshed user copy or find the installed package version of</span>
+<span class="sd">    descriptions.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    server : str</span>
+<span class="sd">        Path to server (ofmpub.epa.gov or maple.hesc.epa.gov)</span>
+<span class="sd">    refresh : bool</span>
+<span class="sd">        If True, refresh a user copy of descriptions from DescribeCoverage</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        Level of verbosity</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    descdf : pandas.DataFrame</span>
+<span class="sd">        Description of known coverages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+    <span class="k">if</span> <span class="n">refresh</span><span class="p">:</span>
+        <span class="n">make_descriptions</span><span class="p">(</span><span class="n">_userdescpath</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="n">server</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">exists</span><span class="p">(</span><span class="n">_userdescpath</span><span class="p">):</span>
+        <span class="n">descpath</span> <span class="o">=</span> <span class="n">_userdescpath</span>
+    <span class="k">elif</span> <span class="n">exists</span><span class="p">(</span><span class="n">_pkgdescpath</span><span class="p">):</span>
+        <span class="n">descpath</span> <span class="o">=</span> <span class="n">_pkgdescpath</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">refresh</span><span class="p">:</span>
+        <span class="c1"># None found, force refresh</span>
+        <span class="k">return</span> <span class="n">get_descriptions</span><span class="p">(</span><span class="n">server</span><span class="o">=</span><span class="n">server</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">descpath</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="make_descriptions"><a class="viewcode-back" href="../../api/pyrsig.data.html#pyrsig.data.make_descriptions">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">make_descriptions</span><span class="p">(</span><span class="n">descpath</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="s1">&#39;ofmpub.epa.gov&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    descpath : str</span>
+<span class="sd">        Path to make a copy of descriptions from DescribeCoverage</span>
+<span class="sd">    server : str</span>
+<span class="sd">        Path to server (ofmpub.epa.gov or maple.hesc.epa.gov)</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        Level of verbosity</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_describecoverages</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">coverages_from_xml</span><span class="p">,</span> <span class="n">legacy_get</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Refreshing descriptions...&#39;</span><span class="p">)</span>
+    <span class="c1"># Start Cleaning Section</span>
+    <span class="c1"># BHH 2023-05-10</span>
+    <span class="c1"># This section provides &quot;cleaning&quot; to the xml content provided by</span>
+    <span class="c1"># DescribeCoverage. This should not have to happen and should be</span>
+    <span class="c1"># removable at some point in the future.</span>
+    <span class="c1"># Working with TP to fix xml</span>
+
+    <span class="n">descmidre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">&#39;\&lt;/CoverageDescription\&gt;.+?\&lt;CoverageDescription.+?\&gt;&#39;</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span>
+    <span class="p">)</span>
+    <span class="n">mismatchtempre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">&#39;\&lt;/lonLatEnvelope\&gt;\s+\&lt;/spatialDomain\&gt;&#39;</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Regex, replacement</span>
+    <span class="n">resubsdesc</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">descmidre</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>  <span class="c1"># concated coverages have extra open/close tags</span>
+        <span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;&lt;=&#39;</span><span class="p">),</span> <span class="s1">&#39;&amp;lt;=&#39;</span><span class="p">),</span>  <span class="c1"># associated with &lt;= 32 in Modis</span>
+        <span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;qa_value &lt;&#39;</span><span class="p">),</span> <span class="s1">&#39;qa_value &amp;lt;&#39;</span><span class="p">),</span>  <span class="c1"># w/ tropomi.ntri</span>
+        <span class="p">(</span>
+            <span class="n">mismatchtempre</span><span class="p">,</span>
+            <span class="s1">&#39;&lt;/lonLatEnvelope&gt;&lt;domainSet&gt;&lt;spatialDomain&gt;&lt;/spatialDomain&gt;&#39;</span><span class="p">,</span>
+        <span class="p">),</span>  <span class="c1"># Missing open block for spatialDomain in goes (eg imager.calb)</span>
+        <span class="p">(</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;&lt;/CoverageOffering&gt;\s+&lt;/CoverageOfferingBrief&gt;&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;&lt;/CoverageOffering&gt;&#39;</span><span class="p">,</span>
+        <span class="p">),</span>  <span class="c1"># Ceiliometers have wrong opening tags and extra close tag</span>
+        <span class="p">(</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;CoverageOfferingBrief&#39;</span><span class="p">),</span> <span class="s1">&#39;CoverageOffering&#39;</span>
+        <span class="p">),</span>  <span class="c1"># Ceiliometers have wrong opening tags and extra close tag</span>
+        <span class="p">(</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+                <span class="sa">r</span><span class="s1">&#39;&lt;rangeSet&gt;\s+&lt;RangeSet&gt;\s+&lt;supportedCRSs&gt;&#39;</span><span class="p">,</span>
+                <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span>
+            <span class="p">),</span>
+            <span class="s1">&#39;&lt;rangeSet&gt;&lt;RangeSet&gt;&lt;/RangeSet&gt;&lt;/rangeSet&gt;&lt;supportedCRSs&gt;&#39;</span>
+        <span class="p">),</span>  <span class="c1"># Ceiliometers have missing rangeset content and closing tags</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">_describecoverages</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Requesting...&#39;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">_describecoverages</span> <span class="o">=</span> <span class="n">legacy_get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;https://</span><span class="si">{</span><span class="n">server</span><span class="si">}</span><span class="s1">/rsig/rsigserver?SERVICE=wcs&amp;VERSION=&#39;</span>
+            <span class="s1">&#39;1.0.0&amp;REQUEST=DescribeCoverage&#39;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+        <span class="n">ctext</span> <span class="o">=</span> <span class="n">_describecoverages</span>
+
+        <span class="k">for</span> <span class="n">reg</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">resubsdesc</span><span class="p">:</span>
+            <span class="n">ctext</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">ctext</span><span class="p">)</span>
+
+        <span class="c1"># End Cleaning Section</span>
+        <span class="n">_describecoverages</span> <span class="o">=</span> <span class="n">ctext</span>
+
+    <span class="n">ctext</span> <span class="o">=</span> <span class="n">_describecoverages</span>
+
+    <span class="c1"># Selecting coverages and removing garbage when necessary.</span>
+    <span class="n">cleanre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">&#39;\&lt;/name\&gt;.+?\&lt;/CoverageOffering\&gt;&#39;</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span>
+    <span class="p">)</span>
+    <span class="c1"># &lt;CoverageOffering&gt;.+?&lt;/CoverageOffering&gt;</span>
+    <span class="n">coverre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">&#39;\&lt;CoverageOffering\&gt;.+?\&lt;/CoverageOffering\&gt;&#39;</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span>
+    <span class="p">)</span>
+
+    <span class="n">coverages</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">limited_details</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rex</span> <span class="ow">in</span> <span class="n">coverre</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">ctext</span><span class="p">):</span>
+        <span class="n">secttxt</span> <span class="o">=</span> <span class="n">ctext</span><span class="p">[</span><span class="n">rex</span><span class="o">.</span><span class="n">start</span><span class="p">():</span><span class="n">rex</span><span class="o">.</span><span class="n">end</span><span class="p">()]</span>
+        <span class="n">secttxt</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;&lt;CoverageDescription version=&quot;1.0.0&quot;&#39;</span>
+            <span class="o">+</span> <span class="s1">&#39; xmlns=&quot;http://www.opengeospatial.org/standards/wcs&quot;&#39;</span>
+            <span class="o">+</span> <span class="s1">&#39; xmlns:gml=&quot;http://www.opengis.net/gml&quot;&#39;</span>
+            <span class="o">+</span> <span class="s1">&#39; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot;&gt;&#39;</span>
+            <span class="o">+</span> <span class="n">secttxt</span> <span class="o">+</span> <span class="s1">&#39;&lt;/CoverageDescription&gt;&#39;</span>
+        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">coverage</span> <span class="o">=</span> <span class="n">coverages_from_xml</span><span class="p">(</span><span class="n">secttxt</span><span class="p">)</span>
+            <span class="n">coverages</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">coverage</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">secttxt</span> <span class="o">=</span> <span class="n">cleanre</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+                    <span class="s1">&#39;&lt;/name&gt;&lt;/CoverageOffering&gt;&#39;</span><span class="p">,</span> <span class="n">secttxt</span>
+                <span class="p">)</span>
+                <span class="n">coverage</span> <span class="o">=</span> <span class="n">coverages_from_xml</span><span class="p">(</span><span class="n">secttxt</span><span class="p">)</span>
+                <span class="n">coverages</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">coverage</span><span class="p">)</span>
+                <span class="n">limited_details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e2</span><span class="p">:</span>
+                <span class="c1"># If a secondary error was raised, print it... but raise</span>
+                <span class="c1"># the original error</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">e2</span>
+
+    <span class="n">nlimited</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">limited_details</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">nlimited</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">limitedstr</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">limited_details</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Limited details for </span><span class="si">{</span><span class="n">nlimited</span><span class="si">}</span><span class="s1"> coverages: </span><span class="si">{</span><span class="n">limitedstr</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">coverages</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">coverages</span><span class="p">)</span>
+    <span class="n">coverages</span><span class="p">[</span><span class="s1">&#39;bbox_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coverages</span><span class="p">[</span><span class="s1">&#39;bbox_str&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span>
+        <span class="s1">&#39;-180 -90 180 90&#39;</span>
+    <span class="p">)</span>
+    <span class="n">coverages</span><span class="p">[</span><span class="s1">&#39;endPosition&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coverages</span><span class="p">[</span><span class="s1">&#39;endPosition&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">)</span>
+    <span class="n">coverages</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coverages</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">coverages</span> <span class="o">=</span> <span class="n">coverages</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;tag&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># If you have arrived here, it means the file did not exist</span>
+    <span class="c1"># or was intended to be refreshed. So, make it.</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">descpath</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">coverages</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">descpath</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyrsig</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">pyrsig User’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_examples/index.html">pyrsig Example Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/pyrsig.html">pyrsig package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../pyrsig.html">pyrsig</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023, Barron H. Henderson.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
